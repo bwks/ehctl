@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 mod config;
-use config::load_config;
+use config::ExtraHopConfig;
 
 mod model;
 use model::{Appliance, Customization, Device, ExtraHop, RunningConfig};
@@ -9,7 +9,7 @@ use model::{Appliance, Customization, Device, ExtraHop, RunningConfig};
 mod client;
 use client::ExtraHopClient;
 
-use chrono::{DateTime, Local};
+use chrono::Local;
 use clap::{Arg, Command};
 use serde_json;
 use std::collections::HashMap;
@@ -133,7 +133,6 @@ async fn get_running_config(client: &ExtraHopClient) -> Result<(), Box<dyn std::
 
     if response.status() == 200 {
         let json_data: serde_json::Value = serde_json::from_str(&response.text().await?)?;
-        // let json_string = serde_json::to_string_pretty(&json_data)?;
 
         let config = RunningConfig { json: json_data };
 
@@ -144,7 +143,6 @@ async fn get_running_config(client: &ExtraHopClient) -> Result<(), Box<dyn std::
             Err(_) => exit(1),
         };
         Ok(())
-        // config.show();
     } else {
         println!("unable to get running config");
         eprintln!("{:#?}", response.error_for_status());
@@ -187,10 +185,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let backup = matches.is_present("backup");
 
-    let time_now: DateTime<Local> = Local::now();
+    let time_now = Local::now();
     let timestamp = time_now.format("%Y-%m-%d--%H-%M-%S");
 
-    let configs = load_config();
+    let configs = ExtraHopConfig::new();
 
     let mut results = vec![];
     let mut appliances: HashMap<String, Vec<Appliance>> = HashMap::new();
@@ -210,76 +208,85 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             create_customization(&client).await?
         }
 
-        if get == "appliances" {
-            let result = get_appliances(&client).await?;
-            appliances.insert(String::from(&client.hostname), result);
-        }
-
-        if get == "customizations" {
-            let result = get_customizations(&client).await?;
-            customizations.insert(String::from(&client.hostname), result);
-        }
-
-        if get == "devices" {
-            let result = get_devices(&client).await?;
-            devices.insert(String::from(&client.hostname), result);
-        }
-
-        if get == "extrahop" {
-            // println!("{}: ", client.hostname);
-            let result = get_extrahop(&client).await?;
-            results.push(result);
-        }
-
-        if get == "config" {
-            // println!("{}: ", client.hostname);
-            _ = get_running_config(&client).await?;
-        }
-    }
-
-    if get == "customizations" {
-        for (key, mut value) in customizations {
-            value.sort_by(|a, b| b.id.cmp(&a.id));
-
-            println!("{}:", key);
-            let table = Table::new(value);
-            println!("{}", table);
+        match get {
+            "appliances" => {
+                let result = get_appliances(&client).await?;
+                appliances.insert(String::from(&client.hostname), result);
+            }
+            "customizations" => {
+                let result = get_customizations(&client).await?;
+                customizations.insert(String::from(&client.hostname), result);
+            }
+            "devices" => {
+                let result = get_devices(&client).await?;
+                devices.insert(String::from(&client.hostname), result);
+            }
+            "extrahop" => {
+                // println!("{}: ", client.hostname);
+                let result = get_extrahop(&client).await?;
+                results.push(result);
+            }
+            "config" => {
+                // println!("{}: ", client.hostname);
+                _ = get_running_config(&client).await?;
+            }
+            _ => {
+                println!("unknown endpoint");
+                exit(1)
+            }
         }
     }
-    if get == "extrahop" {
-        let table = Table::new(results).with(Disable::Column(1..=1));
-        println!("{}", table);
-    }
-    if get == "appliances" {
-        for (key, value) in appliances {
-            println!("{}:", key);
-            for a in value.iter() {
-                let table = Table::new(vec![a])
-                    .with(
-                        Modify::new(Row(1..))
-                            // .with(MinWidth::new(50))
-                            .with(MaxWidth::wrapping(50)),
-                    )
-                    .with(Rotate::Left);
+
+    match get {
+        "customizations" => {
+            for (key, mut value) in customizations {
+                value.sort_by(|a, b| b.id.cmp(&a.id));
+
+                println!("{}:", key);
+                let table = Table::new(value);
                 println!("{}", table);
             }
         }
-    }
-    if get == "devices" {
-        for (key, value) in devices {
-            println!("{}:", key);
-            for d in value.iter() {
-                // let table = Table::new(vec![d])
-                //     .with(
-                //         Modify::new(Row(1..))
-                //             // .with(MinWidth::new(50))
-                //             .with(MaxWidth::wrapping(50)),
-                //     )
-                //     .with(Rotate::Left);
-                // println!("{}", table);
-                println!("{:#?}", d)
+        "extrahop" => {
+            let table = Table::new(results).with(Disable::Column(1..=1));
+            println!("{}", table);
+        }
+        "appliances" => {
+            for (key, value) in appliances {
+                println!("{}:", key);
+                for a in value.iter() {
+                    let table = Table::new(vec![a])
+                        .with(
+                            Modify::new(Row(1..))
+                                // .with(MinWidth::new(50))
+                                .with(MaxWidth::wrapping(50)),
+                        )
+                        .with(Rotate::Left);
+                    println!("{}", table);
+                }
             }
         }
+        "devices" => {
+            for (key, value) in devices {
+                println!("{}:", key);
+                for d in value.iter() {
+                    // let table = Table::new(vec![d])
+                    //     .with(
+                    //         Modify::new(Row(1..))
+                    //             // .with(MinWidth::new(50))
+                    //             .with(MaxWidth::wrapping(50)),
+                    //     )
+                    //     .with(Rotate::Left);
+                    // println!("{}", table);
+                    println!("{:#?}", d)
+                }
+            }
+        }
+        _ => {
+            println!("unknown endpoint");
+            exit(1)
+        }
     }
+
     Ok(())
 }

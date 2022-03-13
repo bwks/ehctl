@@ -5,7 +5,7 @@ use std::process::exit;
 use toml;
 
 #[derive(Debug, Deserialize)]
-pub struct ExtraHopCredentials {
+pub struct ExtraHopConfig {
     #[serde(default)]
     pub eca: Vec<ExtraHopCredential>,
     #[serde(default)]
@@ -22,35 +22,32 @@ pub struct ExtraHopCredential {
     pub allow_insecure_tls: bool,
 }
 
-#[derive(Debug, Deserialize)]
-struct Config {
-    appliances: String,
-}
+impl ExtraHopConfig {
+    pub fn new() -> Self {
+        let home_dir = match env::var("HOME") {
+            Ok(c) => c,
+            Err(_) => {
+                println!("could not access $HOME environment variable");
+                exit(1);
+            }
+        };
 
-pub fn load_config() -> ExtraHopCredentials {
-    let home_dir = match env::var("HOME") {
-        Ok(c) => c,
-        Err(_) => {
-            println!("could not access $HOME environment variable");
-            exit(1);
-        }
-    };
+        let filename = format!("{}/.config/ehctl/config.toml", &home_dir);
 
-    let filename = format!("{}/.config/ehctl/config.toml", &home_dir);
-
-    let contents = match fs::read_to_string(&filename) {
-        Ok(c) => c,
-        Err(_) => {
-            eprintln!("could not read file {}", &filename);
-            exit(1);
-        }
-    };
-    let credentials: ExtraHopCredentials = match toml::from_str(&contents) {
-        Ok(c) => c,
-        Err(e) => {
-            eprintln!("unable to load data from {}, got error {}", &filename, e);
-            exit(1);
-        }
-    };
-    return credentials;
+        let contents = match fs::read_to_string(&filename) {
+            Ok(c) => c,
+            Err(_) => {
+                eprintln!("could not read file {}", &filename);
+                exit(1);
+            }
+        };
+        let config: Self = match toml::from_str(&contents) {
+            Ok(c) => c,
+            Err(e) => {
+                eprintln!("unable to load data from {}, got error {}", &filename, e);
+                exit(1);
+            }
+        };
+        return config;
+    }
 }
