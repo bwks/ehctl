@@ -61,6 +61,8 @@ impl CLI {
             "extrahop" => cli.getter = Getters::Extrahop,
             _ => cli.getter = Getters::None,
         }
-        cli
+        Self {
+            ..cli
+        }
     }
 }
