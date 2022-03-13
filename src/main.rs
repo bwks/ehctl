@@ -9,8 +9,10 @@ use model::{Appliance, Customization, Device, ExtraHop, RunningConfig};
 mod client;
 use client::ExtraHopClient;
 
+mod cli;
+use cli::{cli, Getters};
+
 use chrono::Local;
-use clap::{Arg, Command};
 use serde_json;
 use std::collections::HashMap;
 use std::fs::File;
@@ -47,7 +49,6 @@ async fn get_devices(client: &ExtraHopClient) -> Result<Vec<Device>, Box<dyn std
     }
 }
 
-// tokio let's us use "async" on our main function
 async fn get_customizations(
     client: &ExtraHopClient,
 ) -> Result<Vec<Customization>, Box<dyn std::error::Error>> {
@@ -65,7 +66,6 @@ async fn get_customizations(
     }
 }
 
-// tokio let's us use "async" on our main function
 async fn save_customization(
     client: &ExtraHopClient,
     id: i64,
@@ -111,7 +111,6 @@ async fn create_customization(client: &ExtraHopClient) -> Result<(), Box<dyn std
     Ok(())
 }
 
-// tokio let's us use "async" on our main function
 async fn get_extrahop(client: &ExtraHopClient) -> Result<ExtraHop, Box<dyn std::error::Error>> {
     let url = format!("{}/extrahop", client.base_url);
     let response = client.reqwest_client.get(url).send().await?;
@@ -150,40 +149,9 @@ async fn get_running_config(client: &ExtraHopClient) -> Result<(), Box<dyn std::
     }
 }
 
-// tokio let's us use "async" on our main function
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // TODO: Move the app section to `cli.rs`
-    // basic app information
-    let app = Command::new("ehopctl")
-        .version("1.0")
-        .about("Extrahop CLI")
-        .author("Brad Searle");
-
-    // Define the name command line option
-    let get_option = Arg::new("get-endpoint")
-        .long("get") // allow --get
-        .short('g')
-        .takes_value(true)
-        .help("ExtraHop API GET")
-        .required(false);
-
-    let backup_option = Arg::new("backup")
-        .long("backup") // allow --get
-        .takes_value(false)
-        .help("Backup ExtraHop customizations")
-        .required(false);
-
-    // now add in the argument we want to parse
-    let app = app.arg(get_option).arg(backup_option);
-
-    // extract the matches
-    let matches = app.get_matches();
-
-    // Extract the actual get
-    let get = matches.value_of("get-endpoint").unwrap_or("none");
-
-    let backup = matches.is_present("backup");
+    let options = cli();
 
     let time_now = Local::now();
     let timestamp = time_now.format("%Y-%m-%d--%H-%M-%S");
@@ -204,30 +172,29 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             timestamp.to_string(),
         );
 
-        if backup {
+        if options.backup {
             create_customization(&client).await?
         }
 
-        match get {
-            "appliances" => {
+        match options.getter {
+            Getters::Appliances => {
+                // String::from("appliances") => {
                 let result = get_appliances(&client).await?;
                 appliances.insert(String::from(&client.hostname), result);
             }
-            "customizations" => {
+            Getters::Customizations => {
                 let result = get_customizations(&client).await?;
                 customizations.insert(String::from(&client.hostname), result);
             }
-            "devices" => {
+            Getters::Devices => {
                 let result = get_devices(&client).await?;
                 devices.insert(String::from(&client.hostname), result);
             }
-            "extrahop" => {
-                // println!("{}: ", client.hostname);
+            Getters::Extrahop => {
                 let result = get_extrahop(&client).await?;
                 results.push(result);
             }
-            "config" => {
-                // println!("{}: ", client.hostname);
+            Getters::Config => {
                 _ = get_running_config(&client).await?;
             }
             _ => {
@@ -237,8 +204,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    match get {
-        "customizations" => {
+    match options.getter {
+        Getters::Customizations => {
             for (key, mut value) in customizations {
                 value.sort_by(|a, b| b.id.cmp(&a.id));
 
@@ -247,11 +214,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 println!("{}", table);
             }
         }
-        "extrahop" => {
+        Getters::Extrahop => {
             let table = Table::new(results).with(Disable::Column(1..=1));
             println!("{}", table);
         }
-        "appliances" => {
+        Getters::Appliances => {
             for (key, value) in appliances {
                 println!("{}:", key);
                 for a in value.iter() {
@@ -266,7 +233,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
         }
-        "devices" => {
+        Getters::Devices => {
             for (key, value) in devices {
                 println!("{}:", key);
                 for d in value.iter() {
@@ -282,10 +249,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
         }
-        _ => {
-            println!("unknown endpoint");
-            exit(1)
-        }
+        _ => {}
     }
 
     Ok(())
