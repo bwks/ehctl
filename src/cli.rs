@@ -9,59 +9,58 @@ pub enum Getters {
     None,
 }
 
-pub struct CliArgs {
+pub struct CLI {
     pub backup: bool,
     pub getter: Getters,
 }
 
-impl CliArgs {
+impl CLI {
     fn default() -> Self {
         Self {
             backup: false,
             getter: Getters::None,
         }
     }
-}
+    pub fn new() -> Self {
+        let app = Command::new("ehopctl")
+            .version("1.0")
+            .about("Extrahop CLI")
+            .author("Brad Searle");
 
-pub fn cli() -> CliArgs {
-    let app = Command::new("ehopctl")
-        .version("1.0")
-        .about("Extrahop CLI")
-        .author("Brad Searle");
+        // Define the name command line option
+        let get_option = Arg::new("get-endpoint")
+            .long("get") // allow --get
+            .short('g')
+            .takes_value(true)
+            .help("ExtraHop API GET")
+            .required(false);
 
-    // Define the name command line option
-    let get_option = Arg::new("get-endpoint")
-        .long("get") // allow --get
-        .short('g')
-        .takes_value(true)
-        .help("ExtraHop API GET")
-        .required(false);
+        let backup_option = Arg::new("backup")
+            .long("backup") // allow --get
+            .takes_value(false)
+            .help("Backup ExtraHop customizations")
+            .required(false);
 
-    let backup_option = Arg::new("backup")
-        .long("backup") // allow --get
-        .takes_value(false)
-        .help("Backup ExtraHop customizations")
-        .required(false);
+        let app = app.arg(get_option).arg(backup_option);
 
-    let app = app.arg(get_option).arg(backup_option);
+        let options = app.get_matches();
 
-    let options = app.get_matches();
+        let getter = options.value_of("get-endpoint").unwrap_or("none");
 
-    let getter = options.value_of("get-endpoint").unwrap_or("none");
+        let backup = options.is_present("backup");
 
-    let backup = options.is_present("backup");
+        let mut cli = CLI::default();
 
-    let mut cli_args = CliArgs::default();
+        cli.backup = backup;
 
-    cli_args.backup = backup;
-
-    match getter {
-        "appliances" => cli_args.getter = Getters::Appliances,
-        "config" => cli_args.getter = Getters::Config,
-        "customizations" => cli_args.getter = Getters::Customizations,
-        "devices" => cli_args.getter = Getters::Devices,
-        "extrahop" => cli_args.getter = Getters::Extrahop,
-        _ => cli_args.getter = Getters::None,
+        match getter {
+            "appliances" => cli.getter = Getters::Appliances,
+            "config" => cli.getter = Getters::Config,
+            "customizations" => cli.getter = Getters::Customizations,
+            "devices" => cli.getter = Getters::Devices,
+            "extrahop" => cli.getter = Getters::Extrahop,
+            _ => cli.getter = Getters::None,
+        }
+        cli
     }
-    cli_args
 }

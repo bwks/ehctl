@@ -10,7 +10,7 @@ mod client;
 use client::ExtraHopClient;
 
 mod cli;
-use cli::{cli, Getters};
+use cli::{Getters, CLI};
 
 use chrono::Local;
 use serde_json;
@@ -151,7 +151,7 @@ async fn get_running_config(client: &ExtraHopClient) -> Result<(), Box<dyn std::
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let options = cli();
+    let cli = CLI::new();
 
     let time_now = Local::now();
     let timestamp = time_now.format("%Y-%m-%d--%H-%M-%S");
@@ -172,11 +172,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             timestamp.to_string(),
         );
 
-        if options.backup {
+        if cli.backup {
             create_customization(&client).await?
         }
 
-        match options.getter {
+        match cli.getter {
             Getters::Appliances => {
                 // String::from("appliances") => {
                 let result = get_appliances(&client).await?;
@@ -204,7 +204,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    match options.getter {
+    match cli.getter {
         Getters::Customizations => {
             for (key, mut value) in customizations {
                 value.sort_by(|a, b| b.id.cmp(&a.id));
