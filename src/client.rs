@@ -1,17 +1,42 @@
+use reqwest;
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, AUTHORIZATION, CONTENT_TYPE};
 
 #[derive(Debug)]
 pub struct ExtraHopClient {
     pub hostname: String,
     pub user_id: String,
-    pub secret: String,
+    pub api_key: String,
     pub base_url: String,
-    pub reqwest_client: reqwest::Client,
     pub timestamp: String,
+    pub reqwest_client: reqwest::Client,
 }
 
-// TODO: Make this an associated `new` function for the ExtraHopClient struct.
-pub fn build_client(api_key: &String) -> reqwest::Client {
+impl ExtraHopClient {
+    pub fn new(
+        hostname: String,
+        user_id: String,
+        api_key: String,
+        base_url: String,
+        timestamp: String,
+    ) -> Self {
+        let client = if hostname.ends_with("cloud.extrahop.com") {
+            reqwest_client_oauth(&user_id, &api_key)
+        } else {
+            request_client_basic_auth(&api_key)
+        };
+
+        Self {
+            hostname,
+            user_id,
+            api_key,
+            base_url,
+            timestamp,
+            reqwest_client: client,
+        }
+    }
+}
+
+fn request_client_basic_auth(api_key: &String) -> reqwest::Client {
     let key = match HeaderValue::from_str(&format!("ExtraHop apikey={}", api_key)) {
         Ok(k) => k,
         Err(_) => panic!("API key error"),
@@ -34,4 +59,11 @@ pub fn build_client(api_key: &String) -> reqwest::Client {
     };
 
     client
+}
+
+/// client used for CCP which uses OAUTH
+/// TODO: Implement
+#[allow(unused_variables)]
+fn reqwest_client_oauth(user_id: &String, api_key: &String) -> reqwest::Client {
+    reqwest::Client::new()
 }

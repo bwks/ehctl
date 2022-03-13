@@ -18,7 +18,7 @@ pub struct ExtraHopCredentials {
 pub struct ExtraHopCredential {
     pub hostname: String,
     pub user_id: String,
-    pub secret: String,
+    pub api_key: String,
     pub allow_insecure_tls: bool,
 }
 

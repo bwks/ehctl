@@ -7,7 +7,7 @@ mod model;
 use model::{Appliance, Customization, Device, ExtraHop, RunningConfig};
 
 mod client;
-use client::{build_client, ExtraHopClient};
+use client::ExtraHopClient;
 
 use chrono::{DateTime, Local};
 use clap::{App, Arg};
@@ -190,25 +190,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let time_now: DateTime<Local> = Local::now();
     let timestamp = time_now.format("%Y-%m-%d--%H-%M-%S");
 
-    let credentials = load_config();
+    let configs = load_config();
 
     let mut results = vec![];
     let mut appliances: HashMap<String, Vec<Appliance>> = HashMap::new();
     let mut customizations: HashMap<String, Vec<Customization>> = HashMap::new();
     let mut devices: HashMap<String, Vec<Device>> = HashMap::new();
 
-    for c in credentials.eda.iter() {
-        let api_key = String::from(&c.secret);
-        let reqwest_client = build_client(&api_key);
-
-        let client = ExtraHopClient {
-            hostname: String::from(&c.hostname),
-            user_id: String::from(&c.user_id),
-            secret: String::from(&api_key),
-            base_url: format!("https://{}/api/v1", &c.hostname),
-            reqwest_client: reqwest_client,
-            timestamp: timestamp.to_string(),
-        };
+    for c in configs.eda.iter() {
+        let client = ExtraHopClient::new(
+            String::from(&c.hostname),
+            String::from(&c.user_id),
+            String::from(&c.api_key),
+            format!("https://{}/api/v1", &c.hostname),
+            timestamp.to_string(),
+        );
 
         if backup {
             create_customization(&client).await?
