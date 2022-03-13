@@ -10,7 +10,7 @@ mod client;
 use client::ExtraHopClient;
 
 use chrono::{DateTime, Local};
-use clap::{App, Arg};
+use clap::{Arg, Command};
 use serde_json;
 use std::collections::HashMap;
 use std::fs::File;
@@ -157,7 +157,7 @@ async fn get_running_config(client: &ExtraHopClient) -> Result<(), Box<dyn std::
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // TODO: Move the app section to `cli.rs`
     // basic app information
-    let app = App::new("ehopctl")
+    let app = Command::new("ehopctl")
         .version("1.0")
         .about("Extrahop CLI")
         .author("Brad Searle");
