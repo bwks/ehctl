@@ -68,7 +68,7 @@ allow_insecure_tls = false
 
 ### Environment Variables
 Credentials can be defined as environment variables.
-The varibales must be defined in the following format:
+The variables must be defined in the following format:
 * **user_id**: `<UPPERCASE_HOSTNAME>_USER_ID`
 * **api_key**: `<UPPERCASE_HOSTNAME>_API_KEY`
 
