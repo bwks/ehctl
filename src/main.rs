@@ -1,8 +1,3 @@
-#![allow(dead_code)]
-
-#[macro_use]
-mod makro;
-
 mod config;
 use config::ExtraHopConfig;
 
@@ -168,9 +163,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     for c in configs.eda.iter() {
         let client = ExtraHopClient::new(
-            s!(&c.hostname),
-            s!(&c.user_id),
-            s!(&c.api_key),
+            String::from(&c.hostname),
+            String::from(&c.user_id),
+            String::from(&c.api_key),
             format!("https://{}/api/v1", &c.hostname),
             timestamp.to_string(),
         );
@@ -181,15 +176,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             match cli.getter {
                 Getters::Appliances => {
                     let result = get_appliances(&client).await?;
-                    appliances.insert(s!(&client.hostname), result);
+                    appliances.insert(String::from(&client.hostname), result);
                 }
                 Getters::Customizations => {
                     let result = get_customizations(&client).await?;
-                    customizations.insert(s!(&client.hostname), result);
+                    customizations.insert(String::from(&client.hostname), result);
                 }
                 Getters::Devices => {
                     let result = get_devices(&client).await?;
-                    devices.insert(s!(&client.hostname), result);
+                    devices.insert(String::from(&client.hostname), result);
                 }
                 Getters::Extrahop => {
                     let result = get_extrahop(&client).await?;

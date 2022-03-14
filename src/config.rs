@@ -61,10 +61,10 @@ impl ExtraHopConfig {
 /// if the credentials are not defined.
 fn get_credentials(ehc: &mut Vec<ExtraHopCredential>) {
     for mut i in ehc.iter_mut() {
-        if i.user_id == s!("") {
+        if i.user_id == String::from("") {
             i.user_id = get_env_var(format!("{}_USER_ID", i.hostname));
         }
-        if i.api_key == s!("") {
+        if i.api_key == String::from("") {
             i.api_key = get_env_var(format!("{}_API_KEY", i.hostname));
         }
     }
@@ -76,7 +76,7 @@ fn get_env_var(s: String) -> String {
     let ts = to_env_var(s);
     let var = match env::var(&ts) {
         Ok(c) => c,
-        Err(_) => s!(""),
+        Err(_) => String::from(""),
     };
     var
 }
@@ -96,8 +96,8 @@ mod tests {
     #[test]
     fn test_to_env_var() {
         assert_eq!(
-            to_env_var(s!("THIS_is-A.TEST")),
-            s!("THIS_IS_A_TEST"),
+            to_env_var(String::from("THIS_is-A.TEST")),
+            String::from("THIS_IS_A_TEST"),
         );
     }
 }

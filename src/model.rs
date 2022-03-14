@@ -1,6 +1,7 @@
 use serde::{Deserialize, Deserializer};
 use tabled::Tabled;
 
+#[allow(dead_code)]
 #[derive(Tabled, Debug, Deserialize)]
 pub struct Appliance {
     #[serde(deserialize_with = "null_to_default")]
@@ -44,6 +45,7 @@ pub struct Appliance {
     pub uuid: String,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Tabled, Deserialize)]
 pub struct Customization {
     pub auto: bool,
@@ -56,6 +58,7 @@ pub struct Customization {
     pub recovered: bool,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 pub struct Device {
     #[serde(default)]
@@ -111,7 +114,7 @@ pub struct Device {
     pub ipaddr4: String,
     #[serde(deserialize_with = "null_to_default")]
     pub ipaddr6: String,
-    is_l3: bool,
+    pub is_l3: bool,
     #[serde(deserialize_with = "null_to_default")]
     pub last_seen_time: i64,
     #[serde(deserialize_with = "null_to_default")]
@@ -143,6 +146,7 @@ pub struct Device {
     pub vpc_id: String,
 }
 
+#[allow(dead_code)]
 #[derive(Tabled, Debug, Deserialize)]
 pub struct ExtraHop {
     #[serde(deserialize_with = "null_to_default")]
@@ -159,40 +163,11 @@ pub struct ExtraHop {
     pub version: String,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 pub struct RunningConfig {
     // config: serde_json::Value,
     pub json: serde_json::Value,
-}
-
-impl Appliance {
-    fn show(&self) {
-        println!("{:#?}", &self)
-    }
-}
-
-impl Customization {
-    fn show(&self) {
-        println!("{:#?}", &self)
-    }
-}
-
-impl Device {
-    fn show(&self) {
-        println!("{:#?}", &self)
-    }
-}
-
-impl ExtraHop {
-    fn show(&self) {
-        println!("{:#?}", &self);
-    }
-}
-
-impl RunningConfig {
-    fn show(&self) {
-        println!("{}", &self.json);
-    }
 }
 
 fn null_to_default<'de, D, T>(deserializer: D) -> Result<T, D::Error>
