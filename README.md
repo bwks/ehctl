@@ -13,7 +13,7 @@ TODO
 ## Usage
 ```
 ./ehctl --help
-ehopctl 0.1.2
+ehopctl 0.1.3
 Extrahop CLI
 
 USAGE:
@@ -59,8 +59,8 @@ allow_insecure_tls = false
 ### Environment Variables
 Credentials can be defined as environment variables.
 The varibales must be defined in the following format:
-* user_id: `<UPPERCASE_HOSTNAME>_USER_ID`
-* api_key: `<UPPERCASE_HOSTNAME>_API_KEY`
+* **user_id**: `<UPPERCASE_HOSTNAME>_USER_ID`
+* **api_key**: `<UPPERCASE_HOSTNAME>_API_KEY`
 
 > Note: Dashes (-) and/or dots (.) must be converted to underscores to be a valid environment variable.
 
