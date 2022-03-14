@@ -1,9 +1,19 @@
 # ehctl
-
 > **Command Line Interface for ExtraHop Appliances**
+
+## Important
+> This software is not supported by ExtraHop.
 
 ## License
 Dual-licensed under [Apache 2.0](LICENSE-APACHE) or [MIT](LICENSE-MIT).
+
+## Goals
+Perform common tasks across multiple ExraHop devices concurrently.
+* Health Check
+* Backup/Restore
+* Firmware Update
+* Packet Download
+* Report Generation
 
 ## Install
 ```
