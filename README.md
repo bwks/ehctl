@@ -8,7 +8,7 @@ Command Line Interface for ExtraHop Appliances
 Dual-licensed under [Apache 2.0](LICENSE-APACHE) or [MIT](LICENSE-MIT).
 
 ## Goals
-Perform common tasks across multiple ExraHop devices concurrently.
+Concurrently perform common tasks across multiple ExtraHop devices.
 * Health Check
 * Backup/Restore
 * Firmware Update
