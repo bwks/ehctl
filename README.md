@@ -75,6 +75,7 @@ The variables must be defined in the following format:
 > Note: Dashes (-) and/or dots (.) must be converted to underscores to be a valid environment variable.
 
 ```ini
+# eda01.lan
 export EDA01_LAN_USER_ID="setup"
 export EDA01_LAN_API_KEY="qwer..."
 ```
