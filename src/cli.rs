@@ -23,9 +23,8 @@ impl CLI {
     }
     pub fn new() -> Self {
         let app = Command::new("ehopctl")
-            .version("1.0")
-            .about("Extrahop CLI")
-            .author("Brad Searle");
+            .version("0.1.2")
+            .about("Extrahop CLI");
 
         // Define the name command line option
         let get_option = Arg::new("get-endpoint")
@@ -61,8 +60,6 @@ impl CLI {
             "extrahop" => cli.getter = Getters::Extrahop,
             _ => cli.getter = Getters::None,
         }
-        Self {
-            ..cli
-        }
+        Self { ..cli }
     }
 }

@@ -12,7 +12,17 @@ TODO
 
 ## Usage
 ```
-TODO
+ehopctl 0.1.2
+Extrahop CLI
+
+USAGE:
+    ehctl [OPTIONS]
+
+OPTIONS:
+        --backup                Backup ExtraHop customizations
+    -g, --get <get-endpoint>    ExtraHop API GET
+    -h, --help                  Print help information
+    -V, --version               Print version information
 ```
 
 ## Config

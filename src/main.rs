@@ -174,82 +174,84 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         if cli.backup {
             create_customization(&client).await?
-        }
-
-        match cli.getter {
-            Getters::Appliances => {
-                // String::from("appliances") => {
-                let result = get_appliances(&client).await?;
-                appliances.insert(String::from(&client.hostname), result);
-            }
-            Getters::Customizations => {
-                let result = get_customizations(&client).await?;
-                customizations.insert(String::from(&client.hostname), result);
-            }
-            Getters::Devices => {
-                let result = get_devices(&client).await?;
-                devices.insert(String::from(&client.hostname), result);
-            }
-            Getters::Extrahop => {
-                let result = get_extrahop(&client).await?;
-                results.push(result);
-            }
-            Getters::Config => {
-                _ = get_running_config(&client).await?;
-            }
-            _ => {
-                println!("unknown endpoint");
-                exit(1)
+        } else {
+            match cli.getter {
+                Getters::Appliances => {
+                    // String::from("appliances") => {
+                    let result = get_appliances(&client).await?;
+                    appliances.insert(String::from(&client.hostname), result);
+                }
+                Getters::Customizations => {
+                    let result = get_customizations(&client).await?;
+                    customizations.insert(String::from(&client.hostname), result);
+                }
+                Getters::Devices => {
+                    let result = get_devices(&client).await?;
+                    devices.insert(String::from(&client.hostname), result);
+                }
+                Getters::Extrahop => {
+                    let result = get_extrahop(&client).await?;
+                    results.push(result);
+                }
+                Getters::Config => {
+                    _ = get_running_config(&client).await?;
+                }
+                _ => {
+                    println!("unknown endpoint");
+                    exit(1)
+                }
             }
         }
     }
 
-    match cli.getter {
-        Getters::Customizations => {
-            for (key, mut value) in customizations {
-                value.sort_by(|a, b| b.id.cmp(&a.id));
+    if !cli.backup {
+        match cli.getter {
+            Getters::Customizations => {
+                for (key, mut value) in customizations {
+                    value.sort_by(|a, b| b.id.cmp(&a.id));
 
-                println!("{}:", key);
-                let table = Table::new(value);
-                println!("{}", table);
-            }
-        }
-        Getters::Extrahop => {
-            let table = Table::new(results).with(Disable::Column(1..=1));
-            println!("{}", table);
-        }
-        Getters::Appliances => {
-            for (key, value) in appliances {
-                println!("{}:", key);
-                for a in value.iter() {
-                    let table = Table::new(vec![a])
-                        .with(
-                            Modify::new(Row(1..))
-                                // .with(MinWidth::new(50))
-                                .with(MaxWidth::wrapping(50)),
-                        )
-                        .with(Rotate::Left);
+                    println!("{}:", key);
+                    let table = Table::new(value);
                     println!("{}", table);
                 }
             }
-        }
-        Getters::Devices => {
-            for (key, value) in devices {
-                println!("{}:", key);
-                for d in value.iter() {
-                    // let table = Table::new(vec![d])
-                    //     .with(
-                    //         Modify::new(Row(1..))
-                    //             // .with(MinWidth::new(50))
-                    //             .with(MaxWidth::wrapping(50)),
-                    //     )
-                    //     .with(Rotate::Left);
-                    // println!("{}", table);
-                    println!("{:#?}", d)
+            Getters::Extrahop => {
+                let table = Table::new(results).with(Disable::Column(1..=1));
+                println!("{}", table);
+            }
+            Getters::Appliances => {
+                for (key, value) in appliances {
+                    println!("{}:", key);
+                    for a in value.iter() {
+                        let table = Table::new(vec![a])
+                            .with(
+                                Modify::new(Row(1..))
+                                    // .with(MinWidth::new(50))
+                                    .with(MaxWidth::wrapping(50)),
+                            )
+                            .with(Rotate::Left);
+                        println!("{}", table);
+                    }
                 }
             }
+            Getters::Devices => {
+                for (key, value) in devices {
+                    println!("{}:", key);
+                    for d in value.iter() {
+                        // let table = Table::new(vec![d])
+                        //     .with(
+                        //         Modify::new(Row(1..))
+                        //             // .with(MinWidth::new(50))
+                        //             .with(MaxWidth::wrapping(50)),
+                        //     )
+                        //     .with(Rotate::Left);
+                        // println!("{}", table);
+                        println!("{:#?}", d)
+                    }
+                }
+            }
+            _ => {}
         }
-        _ => {}
     }
 
     Ok(())
