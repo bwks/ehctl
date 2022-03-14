@@ -1,5 +1,5 @@
 # ehctl
-> **Command Line Interface for ExtraHop Appliances**
+Command Line Interface for ExtraHop Appliances
 
 ## Important
 > This software is not supported by ExtraHop.
