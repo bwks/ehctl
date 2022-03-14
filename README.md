@@ -37,25 +37,34 @@ Configs are defined in the `TOML` format.
 ```toml
 [[eca]]
 hostname = "eca01.lan"
-user_id = "setup"
-api_key = "abcd..."
 allow_insecure_tls = false
+# Credentials can be defined in here or 
+# as an environment variable.
+user_id = "setup" 
+api_key = "abcd..."
 
 [[eda]]
 hostname = "eda01.lan"
-user_id = "setup"
-api_key = "1234..."
 allow_insecure_tls = false
 
 [[eda]]
 hostname = "eda02.lan"
-user_id = "setup"
-api_key = "poiu..."
 allow_insecure_tls = false
 
 [[exa]]
 hostname = "exa01.lan"
-user_id = "setup"
-api_key = "qwer..."
 allow_insecure_tls = false
+```
+
+### Environment Variables
+Credentials can be defined as environment variables.
+The varibales must be defined in the following format:
+* user_id: `<UPPERCASE_HOSTNAME>_USER_ID`
+* api_key: `<UPPERCASE_HOSTNAME>_API_KEY`
+
+> Note: Dashes (-) and/or dots (.) must be converted to underscores to be a valid environment variable.
+
+```ini
+export EDA01_LAN_USER_ID="setup"
+export EDA01_LAN_API_KEY="qwer..."
 ```

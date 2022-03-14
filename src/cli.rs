@@ -23,7 +23,7 @@ impl CLI {
     }
     pub fn new() -> Self {
         let app = Command::new("ehopctl")
-            .version("0.1.2")
+            .version("0.1.3")
             .about("Extrahop CLI");
 
         // Define the name command line option
