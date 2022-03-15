@@ -23,15 +23,15 @@ TODO
 ## Usage
 ```
 ./ehctl --help
-ehopctl 0.1.3
+ehopctl 0.1.4
 Extrahop CLI
 
 USAGE:
     ehctl [OPTIONS]
 
 OPTIONS:
-        --backup                Backup ExtraHop customizations
-    -g, --get <get-endpoint>    ExtraHop API GET
+        --backup                Backup customizations
+    -g, --get <get-endpoint>    Get [options...]
     -h, --help                  Print help information
     -V, --version               Print version information
 ```
@@ -45,9 +45,13 @@ A config file is required in the following location
 Configs are defined in the `TOML` format. 
 
 ```toml
+[[ccp]]
+hostname = "customer.api.cloud.extrahop.com"
+allow_insecure_tls = false
+
 [[eca]]
 hostname = "eca01.lan"
-allow_insecure_tls = false
+allow_insecure_tls = true
 # Credentials can be defined in here or 
 # as an environment variable.
 user_id = "setup" 
@@ -55,15 +59,15 @@ api_key = "abcd..."
 
 [[eda]]
 hostname = "eda01.lan"
-allow_insecure_tls = false
+allow_insecure_tls = true
 
 [[eda]]
 hostname = "eda02.lan"
-allow_insecure_tls = false
+allow_insecure_tls = true
 
 [[exa]]
 hostname = "exa01.lan"
-allow_insecure_tls = false
+allow_insecure_tls = true
 ```
 
 ### Environment Variables

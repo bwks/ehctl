@@ -5,7 +5,7 @@ mod model;
 use model::{Appliance, Customization, Device, ExtraHop, RunningConfig};
 
 mod client;
-use client::ExtraHopClient;
+use client::{get_oauth_token, ExtraHopClient};
 
 mod cli;
 use cli::{Getters, CLI};
@@ -162,12 +162,27 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut devices: HashMap<String, Vec<Device>> = HashMap::new();
 
     for c in configs.eda.iter() {
+        let _client = ExtraHopClient::new(
+            String::from(&c.hostname),
+            String::from(&c.user_id),
+            String::from(&c.api_key),
+            format!("https://{}/api/v1", &c.hostname),
+            timestamp.to_string(),
+            String::from(""),
+            c.allow_insecure_tls,
+        );
+    }
+    for c in configs.ccp.iter() {
+        let token = get_oauth_token(&c.hostname, &c.user_id, &c.api_key).await?;
+
         let client = ExtraHopClient::new(
             String::from(&c.hostname),
             String::from(&c.user_id),
             String::from(&c.api_key),
             format!("https://{}/api/v1", &c.hostname),
             timestamp.to_string(),
+            token.access_token,
+            c.allow_insecure_tls,
         );
 
         if cli.backup {

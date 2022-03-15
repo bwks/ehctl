@@ -23,7 +23,7 @@ impl CLI {
     }
     pub fn new() -> Self {
         let app = Command::new("ehopctl")
-            .version("0.1.3")
+            .version("0.1.4")
             .about("Extrahop CLI");
 
         // Define the name command line option
@@ -31,13 +31,13 @@ impl CLI {
             .long("get") // allow --get
             .short('g')
             .takes_value(true)
-            .help("ExtraHop API GET")
+            .help("Get [options...]")
             .required(false);
 
         let backup_option = Arg::new("backup")
             .long("backup") // allow --get
             .takes_value(false)
-            .help("Backup ExtraHop customizations")
+            .help("Backup customizations")
             .required(false);
 
         let app = app.arg(get_option).arg(backup_option);

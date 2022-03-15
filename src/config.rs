@@ -7,6 +7,8 @@ use toml;
 #[derive(Debug, Deserialize)]
 pub struct ExtraHopConfig {
     #[serde(default)]
+    pub ccp: Vec<ExtraHopCredential>,
+    #[serde(default)]
     pub eca: Vec<ExtraHopCredential>,
     #[serde(default)]
     pub eda: Vec<ExtraHopCredential>,
@@ -34,22 +36,23 @@ impl ExtraHopConfig {
             }
         };
 
-        let filename = format!("{}/.config/ehctl/config.toml", &home_dir);
+        let filename = format!("{home_dir}/.config/ehctl/config.toml");
 
         let contents = match fs::read_to_string(&filename) {
             Ok(c) => c,
             Err(_) => {
-                eprintln!("could not read file {}", &filename);
+                eprintln!("could not read file {filename}");
                 exit(1);
             }
         };
         let mut config: Self = match toml::from_str(&contents) {
             Ok(c) => c,
             Err(e) => {
-                eprintln!("unable to load data from {}, got error {}", &filename, e);
+                eprintln!("unable to load data from {filename}, got error {e}");
                 exit(1);
             }
         };
+        get_credentials(&mut config.ccp);
         get_credentials(&mut config.eda);
         get_credentials(&mut config.eca);
         get_credentials(&mut config.exa);
@@ -57,7 +60,7 @@ impl ExtraHopConfig {
     }
 }
 
-/// Loads the credentials from environment variables 
+/// Loads the credentials from environment variables
 /// if the credentials are not defined.
 fn get_credentials(ehc: &mut Vec<ExtraHopCredential>) {
     for mut i in ehc.iter_mut() {
@@ -70,7 +73,7 @@ fn get_credentials(ehc: &mut Vec<ExtraHopCredential>) {
     }
 }
 
-/// Returns an environment variable or an empty string if 
+/// Returns an environment variable or an empty string if
 /// the environment variable was not found.
 fn get_env_var(s: String) -> String {
     let ts = to_env_var(s);
