@@ -2,7 +2,7 @@ mod config;
 use config::ExtraHopConfig;
 
 mod model;
-use model::{Appliance, Customization, Device, ExtraHop, RunningConfig, Tag};
+use model::{Appliance, Customization, Device, ExtraHop, Network, RunningConfig, Tag, Vlan};
 
 mod client;
 use client::{get_oauth_token, ExtraHopAppliance, ExtraHopClient};
@@ -147,6 +147,19 @@ async fn get_running_config(client: &ExtraHopClient) -> Result<(), Box<dyn std::
     }
 }
 
+async fn get_networks(client: &ExtraHopClient) -> Result<Vec<Network>, Box<dyn std::error::Error>> {
+    let url = format!("{}/networks", client.base_url);
+    let response = client.reqwest_client.get(url).send().await?;
+    if response.status() == 200 {
+        let networks: Vec<Network> = serde_json::from_str(&response.text().await?)?;
+        Ok(networks)
+    } else {
+        println!("unable to get networks");
+        eprintln!("{:#?}", response.error_for_status());
+        exit(1)
+    }
+}
+
 async fn get_tags(client: &ExtraHopClient) -> Result<Vec<Tag>, Box<dyn std::error::Error>> {
     let url = format!("{}/tags", client.base_url);
     let response = client.reqwest_client.get(url).send().await?;
@@ -155,6 +168,19 @@ async fn get_tags(client: &ExtraHopClient) -> Result<Vec<Tag>, Box<dyn std::erro
         Ok(tags)
     } else {
         println!("unable to get tags");
+        eprintln!("{:#?}", response.error_for_status());
+        exit(1)
+    }
+}
+
+async fn get_vlans(client: &ExtraHopClient) -> Result<Vec<Vlan>, Box<dyn std::error::Error>> {
+    let url = format!("{}/vlans", client.base_url);
+    let response = client.reqwest_client.get(url).send().await?;
+    if response.status() == 200 {
+        let vlans: Vec<Vlan> = serde_json::from_str(&response.text().await?)?;
+        Ok(vlans)
+    } else {
+        println!("unable to get vlans");
         eprintln!("{:#?}", response.error_for_status());
         exit(1)
     }
@@ -176,7 +202,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::Appliances,
             Getter::Devices,
             Getter::Extrahop,
+            Getter::Networks,
             Getter::Tags,
+            Getter::Vlans,
         ],
     );
     getter_map.insert(
@@ -187,7 +215,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::Customizations,
             Getter::Devices,
             Getter::Extrahop,
+            Getter::Networks,
             Getter::Tags,
+            Getter::Vlans,
         ],
     );
     getter_map.insert(
@@ -198,7 +228,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::Customizations,
             Getter::Devices,
             Getter::Extrahop,
+            Getter::Networks,
             Getter::Tags,
+            Getter::Vlans,
         ],
     );
     getter_map.insert(
@@ -287,7 +319,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut appliances: HashMap<String, Vec<Appliance>> = HashMap::new();
     let mut customizations: HashMap<String, Vec<Customization>> = HashMap::new();
     let mut devices: HashMap<String, Vec<Device>> = HashMap::new();
+    let mut networks: HashMap<String, Vec<Network>> = HashMap::new();
     let mut tags: HashMap<String, Vec<Tag>> = HashMap::new();
+    let mut vlans: HashMap<String, Vec<Vlan>> = HashMap::new();
 
     for c in extrahop_appliaces.iter() {
         if cli.backup {
@@ -325,10 +359,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         results.push(result);
                     }
                 }
+                Getter::Networks => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                        let result = get_networks(&c).await?;
+                        networks.insert(String::from(&c.hostname), result);
+                    }
+                }
                 Getter::Tags => {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
                         let result = get_tags(&c).await?;
                         tags.insert(String::from(&c.hostname), result);
+                    }
+                }
+                Getter::Vlans => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                        let result = get_vlans(&c).await?;
+                        vlans.insert(String::from(&c.hostname), result);
                     }
                 }
                 _ => {
@@ -385,11 +431,28 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let table = Table::new(results).with(Disable::Column(1..=1));
                 println!("{table}");
             }
+            Getter::Networks => {
+                for (key, value) in networks {
+                    println!("{}:", key);
+                    let table = Table::new(value);
+                    println!("{table}");
+                }
+            }
             Getter::Tags => {
                 for (key, mut value) in tags {
                     value.sort_by(|a, b| b.name.cmp(&a.name));
 
                     println!("=> {}:", key);
+                    let table = Table::new(value);
+                    println!("{table}");
+                }
+            }
+            Getter::Vlans => {
+                for (key, mut value) in vlans {
+                    value.sort_by(|a, b| b.vlanid.cmp(&a.vlanid));
+                    value.reverse();
+
+                    println!("{}:", key);
                     let table = Table::new(value);
                     println!("{table}");
                 }

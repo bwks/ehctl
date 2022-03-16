@@ -7,7 +7,9 @@ pub enum Getter {
     Customizations,
     Devices,
     Extrahop,
+    Networks,
     Tags,
+    Vlans,
     None,
 }
 
@@ -60,7 +62,9 @@ impl CLI {
             "customizations" => cli.getter = Getter::Customizations,
             "devices" => cli.getter = Getter::Devices,
             "extrahop" => cli.getter = Getter::Extrahop,
+            "networks" => cli.getter = Getter::Networks,
             "tags" => cli.getter = Getter::Tags,
+            "vlans" => cli.getter = Getter::Vlans,
             _ => cli.getter = Getter::None,
         }
         Self { ..cli }

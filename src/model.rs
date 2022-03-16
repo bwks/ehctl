@@ -164,6 +164,23 @@ pub struct ExtraHop {
 }
 
 #[allow(dead_code)]
+#[derive(Tabled, Debug, Deserialize)]
+pub struct Network {
+    #[serde(deserialize_with = "null_to_default")]
+    pub appliance_uuid: String,
+    #[serde(deserialize_with = "null_to_default")]
+    pub id: i64,
+    #[serde(deserialize_with = "null_to_default")]
+    pub idle: bool,
+    #[serde(deserialize_with = "null_to_default")]
+    pub mod_time: i64,
+    #[serde(deserialize_with = "null_to_default")]
+    pub name: String,
+    #[serde(deserialize_with = "null_to_default")]
+    pub node_id: i64,
+}
+
+#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 pub struct RunningConfig {
     // config: serde_json::Value,
@@ -179,6 +196,25 @@ pub struct Tag {
     pub mod_time: i64,
     #[serde(deserialize_with = "null_to_default")]
     pub name: String,
+}
+
+#[allow(dead_code)]
+#[derive(Tabled, Debug, Deserialize)]
+pub struct Vlan {
+    #[serde(deserialize_with = "null_to_default")]
+    pub description: String,
+    #[serde(deserialize_with = "null_to_default")]
+    pub id: i64,
+    #[serde(deserialize_with = "null_to_default")]
+    pub mod_time: i64,
+    #[serde(deserialize_with = "null_to_default")]
+    pub name: String,
+    #[serde(deserialize_with = "null_to_default")]
+    pub network_id: i64,
+    #[serde(deserialize_with = "null_to_default")]
+    pub node_id: i64,
+    #[serde(deserialize_with = "null_to_default")]
+    pub vlanid: i64,
 }
 
 fn null_to_default<'de, D, T>(deserializer: D) -> Result<T, D::Error>
