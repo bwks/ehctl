@@ -7,6 +7,16 @@ use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, AUTHORIZATION, CONTENT_TYP
 use serde::Deserialize;
 
 #[allow(dead_code)]
+#[derive(Debug, Eq, PartialEq, Hash)]
+pub enum ExtraHopAppliance {
+    CCP,
+    ECA,
+    EDA,
+    ETA,
+    EXA,
+}
+
+#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 pub struct ExtraHopToken {
     pub access_token: String,
@@ -16,14 +26,15 @@ pub struct ExtraHopToken {
 
 #[derive(Debug)]
 pub struct ExtraHopClient {
-    pub hostname: String,
-    pub user_id: String,
-    pub api_key: String,
-    pub base_url: String,
-    pub api_token: String,
-    pub timestamp: String,
     pub allow_insecure_tls: bool,
+    pub api_token: String,
+    pub api_key: String,
+    pub appliance_type: ExtraHopAppliance,
+    pub base_url: String,
+    pub hostname: String,
     pub reqwest_client: reqwest::Client,
+    pub timestamp: String,
+    pub user_id: String,
 }
 
 impl ExtraHopClient {
@@ -35,6 +46,7 @@ impl ExtraHopClient {
         timestamp: String,
         api_token: String,
         allow_insecure_tls: bool,
+        appliance_type: ExtraHopAppliance,
     ) -> Self {
         let client = build_reqwest_client(&api_key, &api_token, &allow_insecure_tls);
 
@@ -46,6 +58,7 @@ impl ExtraHopClient {
             base_url,
             timestamp,
             allow_insecure_tls,
+            appliance_type,
             reqwest_client: client,
         }
     }
@@ -57,10 +70,10 @@ fn build_reqwest_client(
     allow_insecure_tls: &bool,
 ) -> reqwest::Client {
     let auth_value = if api_token == &String::from("") {
-        // eca, eda, exa, eta
+        // no token then must be an eca, eda, exa, eta
         format!("ExtraHop apikey={api_key}")
     } else {
-        // ccp
+        // has token is ccp
         format!("Bearer {api_token}")
     };
 

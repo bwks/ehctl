@@ -1,24 +1,26 @@
 use clap::{Arg, Command};
 
-pub enum Getters {
+#[derive(Eq, PartialEq)]
+pub enum Getter {
     Appliances,
     Config,
     Customizations,
     Devices,
     Extrahop,
+    Tags,
     None,
 }
 
 pub struct CLI {
     pub backup: bool,
-    pub getter: Getters,
+    pub getter: Getter,
 }
 
 impl CLI {
     fn default() -> Self {
         Self {
             backup: false,
-            getter: Getters::None,
+            getter: Getter::None,
         }
     }
     pub fn new() -> Self {
@@ -53,12 +55,13 @@ impl CLI {
         cli.backup = backup;
 
         match getter {
-            "appliances" => cli.getter = Getters::Appliances,
-            "config" => cli.getter = Getters::Config,
-            "customizations" => cli.getter = Getters::Customizations,
-            "devices" => cli.getter = Getters::Devices,
-            "extrahop" => cli.getter = Getters::Extrahop,
-            _ => cli.getter = Getters::None,
+            "appliances" => cli.getter = Getter::Appliances,
+            "config" => cli.getter = Getter::Config,
+            "customizations" => cli.getter = Getter::Customizations,
+            "devices" => cli.getter = Getter::Devices,
+            "extrahop" => cli.getter = Getter::Extrahop,
+            "tags" => cli.getter = Getter::Tags,
+            _ => cli.getter = Getter::None,
         }
         Self { ..cli }
     }

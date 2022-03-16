@@ -2,13 +2,13 @@ mod config;
 use config::ExtraHopConfig;
 
 mod model;
-use model::{Appliance, Customization, Device, ExtraHop, RunningConfig};
+use model::{Appliance, Customization, Device, ExtraHop, RunningConfig, Tag};
 
 mod client;
-use client::{get_oauth_token, ExtraHopClient};
+use client::{get_oauth_token, ExtraHopAppliance, ExtraHopClient};
 
 mod cli;
-use cli::{Getters, CLI};
+use cli::{Getter, CLI};
 
 use chrono::Local;
 use serde_json;
@@ -147,6 +147,19 @@ async fn get_running_config(client: &ExtraHopClient) -> Result<(), Box<dyn std::
     }
 }
 
+async fn get_tags(client: &ExtraHopClient) -> Result<Vec<Tag>, Box<dyn std::error::Error>> {
+    let url = format!("{}/tags", client.base_url);
+    let response = client.reqwest_client.get(url).send().await?;
+    if response.status() == 200 {
+        let tags: Vec<Tag> = serde_json::from_str(&response.text().await?)?;
+        Ok(tags)
+    } else {
+        println!("unable to get tags");
+        eprintln!("{:#?}", response.error_for_status());
+        exit(1)
+    }
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = CLI::new();
@@ -156,23 +169,50 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let configs = ExtraHopConfig::new();
 
-    let mut results = vec![];
-    let mut appliances: HashMap<String, Vec<Appliance>> = HashMap::new();
-    let mut customizations: HashMap<String, Vec<Customization>> = HashMap::new();
-    let mut devices: HashMap<String, Vec<Device>> = HashMap::new();
+    let mut getter_map: HashMap<ExtraHopAppliance, Vec<Getter>> = HashMap::new();
+    getter_map.insert(
+        ExtraHopAppliance::CCP,
+        vec![
+            Getter::Appliances,
+            Getter::Devices,
+            Getter::Extrahop,
+            Getter::Tags,
+        ],
+    );
+    getter_map.insert(
+        ExtraHopAppliance::ECA,
+        vec![
+            Getter::Appliances,
+            Getter::Config,
+            Getter::Customizations,
+            Getter::Devices,
+            Getter::Extrahop,
+            Getter::Tags,
+        ],
+    );
+    getter_map.insert(
+        ExtraHopAppliance::EDA,
+        vec![
+            Getter::Appliances,
+            Getter::Config,
+            Getter::Customizations,
+            Getter::Devices,
+            Getter::Extrahop,
+            Getter::Tags,
+        ],
+    );
+    getter_map.insert(
+        ExtraHopAppliance::ETA,
+        vec![Getter::Appliances, Getter::Config, Getter::Extrahop],
+    );
+    getter_map.insert(
+        ExtraHopAppliance::EXA,
+        vec![Getter::Appliances, Getter::Config, Getter::Extrahop],
+    );
 
-    for c in configs.eda.iter() {
-        let _client = ExtraHopClient::new(
-            String::from(&c.hostname),
-            String::from(&c.user_id),
-            String::from(&c.api_key),
-            format!("https://{}/api/v1", &c.hostname),
-            timestamp.to_string(),
-            String::from(""),
-            c.allow_insecure_tls,
-        );
-    }
-    for c in configs.ccp.iter() {
+    let mut extrahop_appliaces: Vec<ExtraHopClient> = Vec::new();
+
+    for c in configs.ccp {
         let token = get_oauth_token(&c.hostname, &c.user_id, &c.api_key).await?;
 
         let client = ExtraHopClient::new(
@@ -183,34 +223,117 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             timestamp.to_string(),
             token.access_token,
             c.allow_insecure_tls,
+            ExtraHopAppliance::CCP,
         );
+        extrahop_appliaces.push(client);
+    }
 
+    for c in configs.eca {
+        let client = ExtraHopClient::new(
+            String::from(&c.hostname),
+            String::from(&c.user_id),
+            String::from(&c.api_key),
+            format!("https://{}/api/v1", &c.hostname),
+            timestamp.to_string(),
+            String::from(""),
+            c.allow_insecure_tls,
+            ExtraHopAppliance::ECA,
+        );
+        extrahop_appliaces.push(client);
+    }
+
+    for c in configs.eda {
+        let client = ExtraHopClient::new(
+            String::from(&c.hostname),
+            String::from(&c.user_id),
+            String::from(&c.api_key),
+            format!("https://{}/api/v1", &c.hostname),
+            timestamp.to_string(),
+            String::from(""),
+            c.allow_insecure_tls,
+            ExtraHopAppliance::EDA,
+        );
+        extrahop_appliaces.push(client);
+    }
+
+    for c in configs.exa {
+        let client = ExtraHopClient::new(
+            String::from(&c.hostname),
+            String::from(&c.user_id),
+            String::from(&c.api_key),
+            format!("https://{}/api/v1", &c.hostname),
+            timestamp.to_string(),
+            String::from(""),
+            c.allow_insecure_tls,
+            ExtraHopAppliance::EXA,
+        );
+        extrahop_appliaces.push(client);
+    }
+
+    // for c in configs.eta {
+    //     let client = ExtraHopClient::new(
+    //         String::from(&c.hostname),
+    //         String::from(&c.user_id),
+    //         String::from(&c.api_key),
+    //         format!("https://{}/api/v1", &c.hostname),
+    //         timestamp.to_string(),
+    //         String::from(""),
+    //         c.allow_insecure_tls,
+    //     );
+    //     etas.push(client);
+    // }
+
+    let mut results = vec![];
+    let mut appliances: HashMap<String, Vec<Appliance>> = HashMap::new();
+    let mut customizations: HashMap<String, Vec<Customization>> = HashMap::new();
+    let mut devices: HashMap<String, Vec<Device>> = HashMap::new();
+    let mut tags: HashMap<String, Vec<Tag>> = HashMap::new();
+
+    for c in extrahop_appliaces.iter() {
         if cli.backup {
-            create_customization(&client).await?
+            if getter_map[&c.appliance_type].contains(&cli.getter) {
+                create_customization(&c).await?
+            }
         } else {
             match cli.getter {
-                Getters::Appliances => {
-                    let result = get_appliances(&client).await?;
-                    appliances.insert(String::from(&client.hostname), result);
+                Getter::Appliances => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                        let result = get_appliances(&c).await?;
+                        appliances.insert(String::from(&c.hostname), result);
+                    }
                 }
-                Getters::Customizations => {
-                    let result = get_customizations(&client).await?;
-                    customizations.insert(String::from(&client.hostname), result);
+                Getter::Config => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                        _ = get_running_config(&c).await?;
+                    }
                 }
-                Getters::Devices => {
-                    let result = get_devices(&client).await?;
-                    devices.insert(String::from(&client.hostname), result);
+                Getter::Customizations => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                        let result = get_customizations(&c).await?;
+                        customizations.insert(String::from(&c.hostname), result);
+                    }
                 }
-                Getters::Extrahop => {
-                    let result = get_extrahop(&client).await?;
-                    results.push(result);
+                Getter::Devices => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                        let result = get_devices(&c).await?;
+                        devices.insert(String::from(&c.hostname), result);
+                    }
                 }
-                Getters::Config => {
-                    _ = get_running_config(&client).await?;
+                Getter::Extrahop => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                        let result = get_extrahop(&c).await?;
+                        results.push(result);
+                    }
+                }
+                Getter::Tags => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                        let result = get_tags(&c).await?;
+                        tags.insert(String::from(&c.hostname), result);
+                    }
                 }
                 _ => {
                     println!("unknown endpoint");
-                    exit(1)
+                    // exit(1)
                 }
             }
         }
@@ -218,22 +341,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if !cli.backup {
         match cli.getter {
-            Getters::Customizations => {
-                for (key, mut value) in customizations {
-                    value.sort_by(|a, b| b.id.cmp(&a.id));
-
-                    println!("{}:", key);
-                    let table = Table::new(value);
-                    println!("{}", table);
-                }
-            }
-            Getters::Extrahop => {
-                let table = Table::new(results).with(Disable::Column(1..=1));
-                println!("{}", table);
-            }
-            Getters::Appliances => {
+            Getter::Appliances => {
                 for (key, value) in appliances {
-                    println!("{}:", key);
+                    println!("{key}:");
                     for a in value.iter() {
                         let table = Table::new(vec![a])
                             .with(
@@ -242,11 +352,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     .with(MaxWidth::wrapping(50)),
                             )
                             .with(Rotate::Left);
-                        println!("{}", table);
+                        println!("{table}");
                     }
                 }
             }
-            Getters::Devices => {
+            Getter::Customizations => {
+                for (key, mut value) in customizations {
+                    value.sort_by(|a, b| b.id.cmp(&a.id));
+
+                    println!("{}:", key);
+                    let table = Table::new(value);
+                    println!("{table}");
+                }
+            }
+            Getter::Devices => {
                 for (key, value) in devices {
                     println!("{}:", key);
                     for d in value.iter() {
@@ -260,6 +379,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         // println!("{}", table);
                         println!("{:#?}", d)
                     }
+                }
+            }
+            Getter::Extrahop => {
+                let table = Table::new(results).with(Disable::Column(1..=1));
+                println!("{table}");
+            }
+            Getter::Tags => {
+                for (key, mut value) in tags {
+                    value.sort_by(|a, b| b.name.cmp(&a.name));
+
+                    println!("=> {}:", key);
+                    let table = Table::new(value);
+                    println!("{table}");
                 }
             }
             _ => {}
