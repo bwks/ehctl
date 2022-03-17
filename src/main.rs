@@ -2,7 +2,9 @@ mod config;
 use config::ExtraHopConfig;
 
 mod model;
-use model::{Appliance, Customization, Device, ExtraHop, Network, RunningConfig, Tag, Vlan};
+use model::{
+    Appliance, Customization, Device, ExtraHop, License, Network, RunningConfig, Tag, Vlan,
+};
 
 mod client;
 use client::{get_oauth_token, ExtraHopAppliance, ExtraHopClient};
@@ -147,6 +149,19 @@ async fn get_running_config(client: &ExtraHopClient) -> Result<(), Box<dyn std::
     }
 }
 
+async fn get_license(client: &ExtraHopClient) -> Result<Vec<License>, Box<dyn std::error::Error>> {
+    let url = format!("{}/license", client.base_url);
+    let response = client.reqwest_client.get(url).send().await?;
+    if response.status() == 200 {
+        let licenses: License = serde_json::from_str(&response.text().await?)?;
+        Ok(vec![licenses])
+    } else {
+        println!("unable to get networks");
+        eprintln!("{:#?}", response.error_for_status());
+        exit(1)
+    }
+}
+
 async fn get_networks(client: &ExtraHopClient) -> Result<Vec<Network>, Box<dyn std::error::Error>> {
     let url = format!("{}/networks", client.base_url);
     let response = client.reqwest_client.get(url).send().await?;
@@ -215,6 +230,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::Customizations,
             Getter::Devices,
             Getter::Extrahop,
+            Getter::Licenses,
             Getter::Networks,
             Getter::Tags,
             Getter::Vlans,
@@ -228,6 +244,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::Customizations,
             Getter::Devices,
             Getter::Extrahop,
+            Getter::Licenses,
             Getter::Networks,
             Getter::Tags,
             Getter::Vlans,
@@ -235,11 +252,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
     getter_map.insert(
         ExtraHopAppliance::ETA,
-        vec![Getter::Appliances, Getter::Config, Getter::Extrahop],
+        vec![
+            Getter::Appliances,
+            Getter::Config,
+            Getter::Extrahop,
+            Getter::Licenses,
+        ],
     );
     getter_map.insert(
         ExtraHopAppliance::EXA,
-        vec![Getter::Appliances, Getter::Config, Getter::Extrahop],
+        vec![
+            Getter::Appliances,
+            Getter::Config,
+            Getter::Extrahop,
+            Getter::Licenses,
+        ],
     );
 
     let mut extrahop_appliaces: Vec<ExtraHopClient> = Vec::new();
@@ -315,10 +342,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     //     etas.push(client);
     // }
 
-    let mut results = vec![];
+    let mut extrahops = vec![];
     let mut appliances: HashMap<String, Vec<Appliance>> = HashMap::new();
     let mut customizations: HashMap<String, Vec<Customization>> = HashMap::new();
     let mut devices: HashMap<String, Vec<Device>> = HashMap::new();
+    let mut licenses: HashMap<String, Vec<License>> = HashMap::new();
     let mut networks: HashMap<String, Vec<Network>> = HashMap::new();
     let mut tags: HashMap<String, Vec<Tag>> = HashMap::new();
     let mut vlans: HashMap<String, Vec<Vlan>> = HashMap::new();
@@ -356,7 +384,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 Getter::Extrahop => {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
                         let result = get_extrahop(&c).await?;
-                        results.push(result);
+                        extrahops.push(result);
+                    }
+                }
+                Getter::Licenses => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                        let result = get_license(&c).await?;
+                        licenses.insert(String::from(&c.hostname), result);
                     }
                 }
                 Getter::Networks => {
@@ -423,13 +457,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         //     )
                         //     .with(Rotate::Left);
                         // println!("{}", table);
-                        println!("{:#?}", d)
+                        println!("{}", d)
                     }
                 }
             }
             Getter::Extrahop => {
-                let table = Table::new(results).with(Disable::Column(1..=1));
+                let table = Table::new(extrahops).with(Disable::Column(1..=1));
                 println!("{table}");
+            }
+            Getter::Licenses => {
+                for (key, value) in licenses {
+                    println!("{}:", key);
+                    let table = Table::new(value);
+                    println!("{table}");
+                }
             }
             Getter::Networks => {
                 for (key, value) in networks {
