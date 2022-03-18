@@ -13,6 +13,7 @@ mod cli;
 use cli::{Getter, CLI};
 
 use chrono::Local;
+use reqwest::StatusCode;
 use serde_json;
 use std::collections::HashMap;
 use std::fs::File;
@@ -25,7 +26,7 @@ async fn get_appliances(
 ) -> Result<Vec<Appliance>, Box<dyn std::error::Error>> {
     let url = format!("{}/appliances", client.base_url);
     let response = client.reqwest_client.get(url).send().await?;
-    if response.status() == 200 {
+    if response.status() == StatusCode::OK {
         let appliances: Vec<Appliance> = serde_json::from_str(&response.text().await?)?;
         Ok(appliances)
     } else {
@@ -38,7 +39,7 @@ async fn get_appliances(
 async fn get_bundles(client: &ExtraHopClient) -> Result<Vec<Bundles>, Box<dyn std::error::Error>> {
     let url = format!("{}/bundles", client.base_url);
     let response = client.reqwest_client.get(url).send().await?;
-    if response.status() == 200 {
+    if response.status() == StatusCode::OK {
         let bundles: Vec<Bundles> = serde_json::from_str(&response.text().await?)?;
         Ok(bundles)
     } else {
@@ -52,7 +53,7 @@ async fn get_devices(client: &ExtraHopClient) -> Result<Vec<Device>, Box<dyn std
     let url = format!("{}/devices", client.base_url);
     let response = client.reqwest_client.get(url).send().await?;
 
-    if response.status() == 200 {
+    if response.status() == StatusCode::OK {
         let devices: Vec<Device> = serde_json::from_str(&response.text().await?)?;
         Ok(devices)
     } else {
@@ -69,7 +70,7 @@ async fn get_customizations(
     let url = format!("{}/customizations", client.base_url);
     let response = client.reqwest_client.get(url).send().await?;
 
-    if response.status() == 200 {
+    if response.status() == StatusCode::OK {
         let customizations: Vec<Customization> = serde_json::from_str(&response.text().await?)?;
         Ok(customizations)
     } else {
@@ -86,7 +87,7 @@ async fn save_customization(
     let name = format!("{}-{}", client.hostname, client.timestamp);
     let url = format!("{}/customizations/{}/download", client.base_url, id);
     let response = client.reqwest_client.post(url).send().await?;
-    if response.status() == 200 {
+    if response.status() == StatusCode::OK {
         println!("=> downloading customization: {}", name);
         let bytes = response.bytes().await?;
         let filename = format!("{}-{}.zip", client.hostname, client.timestamp);
@@ -108,7 +109,7 @@ async fn create_customization(client: &ExtraHopClient) -> Result<(), Box<dyn std
     println!("=> adding customization: {}", name);
     let url = format!("{}/customizations", client.base_url);
     let response = client.reqwest_client.post(url).json(&body).send().await?;
-    if response.status() == 201 {
+    if response.status() == StatusCode::CREATED {
         println!("=> new customization added: {}", name);
         let customizations = get_customizations(&client).await?;
         for c in customizations.iter() {
@@ -128,7 +129,7 @@ async fn get_extrahop(client: &ExtraHopClient) -> Result<ExtraHop, Box<dyn std::
     let url = format!("{}/extrahop", client.base_url);
     let response = client.reqwest_client.get(url).send().await?;
 
-    if response.status() == 200 {
+    if response.status() == StatusCode::OK {
         let extrahop: ExtraHop = serde_json::from_str(&response.text().await?)?;
         // extrahop.show();
         Ok(extrahop)
@@ -143,7 +144,7 @@ async fn get_running_config(client: &ExtraHopClient) -> Result<(), Box<dyn std::
     let url = format!("{}/runningconfig", client.base_url);
     let response = client.reqwest_client.get(url).send().await?;
 
-    if response.status() == 200 {
+    if response.status() == StatusCode::OK {
         let json_data: serde_json::Value = serde_json::from_str(&response.text().await?)?;
 
         let config = RunningConfig { json: json_data };
@@ -165,7 +166,7 @@ async fn get_running_config(client: &ExtraHopClient) -> Result<(), Box<dyn std::
 async fn get_license(client: &ExtraHopClient) -> Result<Vec<License>, Box<dyn std::error::Error>> {
     let url = format!("{}/license", client.base_url);
     let response = client.reqwest_client.get(url).send().await?;
-    if response.status() == 200 {
+    if response.status() == StatusCode::OK {
         let licenses: License = serde_json::from_str(&response.text().await?)?;
         Ok(vec![licenses])
     } else {
@@ -178,7 +179,7 @@ async fn get_license(client: &ExtraHopClient) -> Result<Vec<License>, Box<dyn st
 async fn get_networks(client: &ExtraHopClient) -> Result<Vec<Network>, Box<dyn std::error::Error>> {
     let url = format!("{}/networks", client.base_url);
     let response = client.reqwest_client.get(url).send().await?;
-    if response.status() == 200 {
+    if response.status() == StatusCode::OK {
         let networks: Vec<Network> = serde_json::from_str(&response.text().await?)?;
         Ok(networks)
     } else {
@@ -191,7 +192,7 @@ async fn get_networks(client: &ExtraHopClient) -> Result<Vec<Network>, Box<dyn s
 async fn get_tags(client: &ExtraHopClient) -> Result<Vec<Tag>, Box<dyn std::error::Error>> {
     let url = format!("{}/tags", client.base_url);
     let response = client.reqwest_client.get(url).send().await?;
-    if response.status() == 200 {
+    if response.status() == StatusCode::OK {
         let tags: Vec<Tag> = serde_json::from_str(&response.text().await?)?;
         Ok(tags)
     } else {
@@ -204,7 +205,7 @@ async fn get_tags(client: &ExtraHopClient) -> Result<Vec<Tag>, Box<dyn std::erro
 async fn get_vlans(client: &ExtraHopClient) -> Result<Vec<Vlan>, Box<dyn std::error::Error>> {
     let url = format!("{}/vlans", client.base_url);
     let response = client.reqwest_client.get(url).send().await?;
-    if response.status() == 200 {
+    if response.status() == StatusCode::OK {
         let vlans: Vec<Vlan> = serde_json::from_str(&response.text().await?)?;
         Ok(vlans)
     } else {

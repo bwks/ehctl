@@ -3,6 +3,7 @@ use std::process::exit;
 
 use base64::encode;
 use reqwest;
+use reqwest::StatusCode;
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, AUTHORIZATION, CONTENT_TYPE};
 use serde::Deserialize;
 
@@ -147,7 +148,7 @@ pub async fn get_oauth_token(
         }
     };
 
-    if response.status() == 200 {
+    if response.status() == StatusCode::OK {
         let token: ExtraHopToken = serde_json::from_str(&response.text().await?)?;
         Ok(token)
     } else {
