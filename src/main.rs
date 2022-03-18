@@ -3,7 +3,7 @@ use config::ExtraHopConfig;
 
 mod model;
 use model::{
-    Appliance, Customization, Device, ExtraHop, License, Network, RunningConfig, Tag, Vlan,
+    Appliance, Bundles, Customization, Device, ExtraHop, License, Network, RunningConfig, Tag, Vlan,
 };
 
 mod client;
@@ -30,6 +30,19 @@ async fn get_appliances(
         Ok(appliances)
     } else {
         println!("unable to get appliances");
+        eprintln!("{:#?}", response.error_for_status());
+        exit(1)
+    }
+}
+
+async fn get_bundles(client: &ExtraHopClient) -> Result<Vec<Bundles>, Box<dyn std::error::Error>> {
+    let url = format!("{}/bundles", client.base_url);
+    let response = client.reqwest_client.get(url).send().await?;
+    if response.status() == 200 {
+        let bundles: Vec<Bundles> = serde_json::from_str(&response.text().await?)?;
+        Ok(bundles)
+    } else {
+        println!("unable to get bundles");
         eprintln!("{:#?}", response.error_for_status());
         exit(1)
     }
@@ -215,6 +228,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         ExtraHopAppliance::CCP,
         vec![
             Getter::Appliances,
+            Getter::Bundles,
             Getter::Devices,
             Getter::Extrahop,
             Getter::Networks,
@@ -226,6 +240,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         ExtraHopAppliance::ECA,
         vec![
             Getter::Appliances,
+            Getter::Bundles,
             Getter::Config,
             Getter::Customizations,
             Getter::Devices,
@@ -240,6 +255,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         ExtraHopAppliance::EDA,
         vec![
             Getter::Appliances,
+            Getter::Bundles,
             Getter::Config,
             Getter::Customizations,
             Getter::Devices,
@@ -344,6 +360,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut extrahops = vec![];
     let mut appliances: HashMap<String, Vec<Appliance>> = HashMap::new();
+    let mut bundles: HashMap<String, Vec<Bundles>> = HashMap::new();
     let mut customizations: HashMap<String, Vec<Customization>> = HashMap::new();
     let mut devices: HashMap<String, Vec<Device>> = HashMap::new();
     let mut licenses: HashMap<String, Vec<License>> = HashMap::new();
@@ -362,6 +379,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
                         let result = get_appliances(&c).await?;
                         appliances.insert(String::from(&c.hostname), result);
+                    }
+                }
+                Getter::Bundles => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                        let result = get_bundles(&c).await?;
+                        bundles.insert(String::from(&c.hostname), result);
                     }
                 }
                 Getter::Config => {
@@ -436,9 +459,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
             }
+            Getter::Bundles => {
+                for (key, mut value) in bundles {
+                    value.sort_by(|a, b| a.name.cmp(&b.name));
+
+                    println!("=> {}:", key);
+                    let table = Table::new(value).with(
+                        Modify::new(Row(1..))
+                            // .with(MinWidth::new(50))
+                            .with(MaxWidth::wrapping(50)),
+                    );
+                    println!("{table}");
+                }
+            }
             Getter::Customizations => {
                 for (key, mut value) in customizations {
-                    value.sort_by(|a, b| b.id.cmp(&a.id));
+                    value.sort_by(|a, b| a.id.cmp(&b.id));
 
                     println!("{}:", key);
                     let table = Table::new(value);
@@ -449,15 +485,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 for (key, value) in devices {
                     println!("{}:", key);
                     for d in value.iter() {
-                        // let table = Table::new(vec![d])
-                        //     .with(
-                        //         Modify::new(Row(1..))
-                        //             // .with(MinWidth::new(50))
-                        //             .with(MaxWidth::wrapping(50)),
-                        //     )
-                        //     .with(Rotate::Left);
-                        // println!("{}", table);
-                        println!("{}", d)
+                        //     println!("{}", d)
+                        // }
+                        let table = Table::new(vec![d])
+                            .with(
+                                Modify::new(Row(1..))
+                                    // Not released yet, will be in future version.
+                                    // .with(MinWidth::new(50))
+                                    .with(MaxWidth::wrapping(50)),
+                            )
+                            .with(Rotate::Left);
+                        println!("{}", table);
                     }
                 }
             }

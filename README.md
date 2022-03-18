@@ -23,7 +23,7 @@ TODO
 ## Usage
 ```
 ./ehctl --help
-ehopctl 0.1.4
+ehopctl 0.1.5
 Extrahop CLI
 
 USAGE:

@@ -49,6 +49,22 @@ pub struct Appliance {
 
 #[allow(dead_code)]
 #[derive(Debug, Tabled, Deserialize)]
+pub struct Bundles {
+    pub built_in: bool,
+    #[serde(deserialize_with = "null_to_default")]
+    pub created_time: i64,
+    #[serde(deserialize_with = "null_to_default")]
+    pub description: String,
+    #[serde(deserialize_with = "null_to_default")]
+    pub id: i64,
+    #[serde(deserialize_with = "null_to_default")]
+    pub mod_time: i64,
+    #[serde(deserialize_with = "null_to_default")]
+    pub name: String,
+}
+
+#[allow(dead_code)]
+#[derive(Debug, Tabled, Deserialize)]
 pub struct Customization {
     pub auto: bool,
     #[serde(deserialize_with = "null_to_default")]
@@ -61,10 +77,10 @@ pub struct Customization {
 }
 
 #[allow(dead_code)]
-#[derive(Debug, Deserialize)]
+#[derive(Tabled, Debug, Deserialize)]
 pub struct Device {
     #[serde(default)]
-    pub activity: Vec<String>,
+    // pub activity: Vec<String>,
     #[serde(deserialize_with = "null_to_default")]
     pub analysis: String,
     #[serde(deserialize_with = "null_to_default")]
@@ -266,7 +282,6 @@ impl fmt::Display for Device {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let output = format!(
             "
-activity: {}
 analysis: {}
 analysis_level: {}
 auto_role: {}
@@ -309,7 +324,7 @@ user_mod_time: {}
 vendor: {}
 vlanid: {}
 vpc_id: {}",
-            self.activity.join(" | "),
+            // self.activity.join(" | "),
             self.analysis,
             self.analysis_level,
             self.auto_role,

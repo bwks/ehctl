@@ -3,6 +3,7 @@ use clap::{Arg, Command};
 #[derive(Eq, PartialEq)]
 pub enum Getter {
     Appliances,
+    Bundles,
     Config,
     Customizations,
     Devices,
@@ -28,7 +29,7 @@ impl CLI {
     }
     pub fn new() -> Self {
         let app = Command::new("ehopctl")
-            .version("0.1.4")
+            .version("0.1.5")
             .about("Extrahop CLI");
 
         // Define the name command line option
@@ -59,6 +60,7 @@ impl CLI {
 
         match getter {
             "appliances" => cli.getter = Getter::Appliances,
+            "bundles" => cli.getter = Getter::Bundles,
             "config" => cli.getter = Getter::Config,
             "customizations" => cli.getter = Getter::Customizations,
             "devices" => cli.getter = Getter::Devices,
