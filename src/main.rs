@@ -1,19 +1,23 @@
 mod config;
 use config::ExtraHopConfig;
 
-mod model;
-use model::{
-    Appliance, Customization, Device, ExtraHop, License, Network, RunningConfig, Tag, Vlan,
-};
-
 mod client;
 use client::{get_oauth_token, ExtraHopAppliance, ExtraHopClient};
 
 mod cli;
 use cli::{Getter, CLI};
 
-mod models;
-use models::bundle::Bundles;
+mod model;
+use model::appliance::Appliance;
+use model::bundle::Bundles;
+use model::customization::Customization;
+use model::device::Device;
+use model::extrahop::ExtraHop;
+use model::license::License;
+use model::network::Network;
+use model::running_config::RunningConfig;
+use model::tag::Tag;
+use model::vlan::Vlan;
 
 use chrono::Local;
 use reqwest::StatusCode;

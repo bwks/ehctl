@@ -3,8 +3,8 @@ use std::process::exit;
 
 use base64::encode;
 use reqwest;
-use reqwest::StatusCode;
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, AUTHORIZATION, CONTENT_TYPE};
+use reqwest::StatusCode;
 use serde::Deserialize;
 
 #[allow(dead_code)]
@@ -52,14 +52,14 @@ impl ExtraHopClient {
         let client = build_reqwest_client(&api_key, &api_token, &allow_insecure_tls);
 
         Self {
-            hostname,
-            user_id,
-            api_key,
-            api_token,
-            base_url,
-            timestamp,
-            allow_insecure_tls,
-            appliance_type,
+            hostname: hostname,
+            user_id: user_id,
+            api_key: api_key,
+            api_token: api_token,
+            base_url: base_url,
+            timestamp: timestamp,
+            allow_insecure_tls: allow_insecure_tls,
+            appliance_type: appliance_type,
             reqwest_client: client,
         }
     }
