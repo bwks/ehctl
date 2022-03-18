@@ -3,7 +3,7 @@ use config::ExtraHopConfig;
 
 mod model;
 use model::{
-    Appliance, Bundles, Customization, Device, ExtraHop, License, Network, RunningConfig, Tag, Vlan,
+    Appliance, Customization, Device, ExtraHop, License, Network, RunningConfig, Tag, Vlan,
 };
 
 mod client;
@@ -11,6 +11,9 @@ use client::{get_oauth_token, ExtraHopAppliance, ExtraHopClient};
 
 mod cli;
 use cli::{Getter, CLI};
+
+mod models;
+use models::bundle::Bundles;
 
 use chrono::Local;
 use reqwest::StatusCode;

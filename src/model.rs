@@ -47,21 +47,6 @@ pub struct Appliance {
     pub uuid: String,
 }
 
-#[allow(dead_code)]
-#[derive(Debug, Tabled, Deserialize)]
-pub struct Bundles {
-    pub built_in: bool,
-    #[serde(deserialize_with = "null_to_default")]
-    pub created_time: i64,
-    #[serde(deserialize_with = "null_to_default")]
-    pub description: String,
-    #[serde(deserialize_with = "null_to_default")]
-    pub id: i64,
-    #[serde(deserialize_with = "null_to_default")]
-    pub mod_time: i64,
-    #[serde(deserialize_with = "null_to_default")]
-    pub name: String,
-}
 
 #[allow(dead_code)]
 #[derive(Debug, Tabled, Deserialize)]
