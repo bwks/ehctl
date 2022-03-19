@@ -28,85 +28,47 @@ use std::io::Write;
 use std::process::exit;
 use tabled::{Disable, MaxWidth, Modify, Rotate, Row, Table};
 
+async fn reqwest_get(
+    client: &ExtraHopClient,
+    endpoint: &str,
+) -> Result<reqwest::Response, Box<dyn std::error::Error>> {
+    let url = format!("{}/{}", client.base_url, endpoint);
+    let response = client.reqwest_client.get(url).send().await?;
+    if response.status() == StatusCode::OK {
+        Ok(response)
+    } else {
+        println!("unable to get {endpoint}");
+        eprintln!("{:#?}", response.error_for_status());
+        exit(1)
+    }
+}
+
 async fn get_appliances(
     client: &ExtraHopClient,
 ) -> Result<Vec<Appliance>, Box<dyn std::error::Error>> {
-    let url = format!("{}/appliances", client.base_url);
-    let response = client.reqwest_client.get(url).send().await?;
-    if response.status() == StatusCode::OK {
-        let appliances: Vec<Appliance> = serde_json::from_str(&response.text().await?)?;
-        Ok(appliances)
-    } else {
-        println!("unable to get appliances");
-        eprintln!("{:#?}", response.error_for_status());
-        exit(1)
-    }
+    let response = reqwest_get(&client, "appliances").await?;
+    let appliances: Vec<Appliance> = serde_json::from_str(&response.text().await?)?;
+    Ok(appliances)
 }
 
 async fn get_bundles(client: &ExtraHopClient) -> Result<Vec<Bundles>, Box<dyn std::error::Error>> {
-    let url = format!("{}/bundles", client.base_url);
-    let response = client.reqwest_client.get(url).send().await?;
-    if response.status() == StatusCode::OK {
-        let bundles: Vec<Bundles> = serde_json::from_str(&response.text().await?)?;
-        Ok(bundles)
-    } else {
-        println!("unable to get bundles");
-        eprintln!("{:#?}", response.error_for_status());
-        exit(1)
-    }
+    let response = reqwest_get(&client, "bundles").await?;
+    let bundles: Vec<Bundles> = serde_json::from_str(&response.text().await?)?;
+    Ok(bundles)
 }
 
 async fn get_devices(client: &ExtraHopClient) -> Result<Vec<Device>, Box<dyn std::error::Error>> {
-    let url = format!("{}/devices", client.base_url);
-    let response = client.reqwest_client.get(url).send().await?;
-
-    if response.status() == StatusCode::OK {
-        let devices: Vec<Device> = serde_json::from_str(&response.text().await?)?;
-        Ok(devices)
-    } else {
-        println!("unable to get devices");
-        eprintln!("{:#?}", response.error_for_status());
-        exit(1)
-    }
+    let response = reqwest_get(&client, "devices").await?;
+    let devices: Vec<Device> = serde_json::from_str(&response.text().await?)?;
+    Ok(devices)
 }
 
 async fn get_customizations(
     client: &ExtraHopClient,
 ) -> Result<Vec<Customization>, Box<dyn std::error::Error>> {
-    let name = format!("{}-{}", client.hostname, client.timestamp);
-    let url = format!("{}/customizations", client.base_url);
-    let response = client.reqwest_client.get(url).send().await?;
-
-    if response.status() == StatusCode::OK {
-        let customizations: Vec<Customization> = serde_json::from_str(&response.text().await?)?;
-        Ok(customizations)
-    } else {
-        println!("unable to get customization: {}", name);
-        eprintln!("{:#?}", response.error_for_status());
-        exit(1)
-    }
-}
-
-async fn save_customization(
-    client: &ExtraHopClient,
-    id: i64,
-) -> Result<(), Box<dyn std::error::Error>> {
-    let name = format!("{}-{}", client.hostname, client.timestamp);
-    let url = format!("{}/customizations/{}/download", client.base_url, id);
-    let response = client.reqwest_client.post(url).send().await?;
-    if response.status() == StatusCode::OK {
-        println!("=> downloading customization: {}", name);
-        let bytes = response.bytes().await?;
-        let filename = format!("{}-{}.zip", client.hostname, client.timestamp);
-        let mut wf = File::create(&filename)?;
-        wf.write(&bytes)
-            .expect("=> error writing customization to file");
-        Ok(())
-    } else {
-        println!("=> unable to get customization: {}", name);
-        eprintln!("{:#?}", response.error_for_status());
-        exit(1)
-    }
+    let response = reqwest_get(&client, "customizations").await?;
+    let customizations: Vec<Customization> = serde_json::from_str(&response.text().await?)?;
+    Ok(customizations)
 }
 
 async fn create_customization(client: &ExtraHopClient) -> Result<(), Box<dyn std::error::Error>> {
@@ -132,25 +94,36 @@ async fn create_customization(client: &ExtraHopClient) -> Result<(), Box<dyn std
     Ok(())
 }
 
-async fn get_extrahop(client: &ExtraHopClient) -> Result<ExtraHop, Box<dyn std::error::Error>> {
-    let url = format!("{}/extrahop", client.base_url);
-    let response = client.reqwest_client.get(url).send().await?;
-
+async fn save_customization(
+    client: &ExtraHopClient,
+    id: i64,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let name = format!("{}-{}", client.hostname, client.timestamp);
+    let url = format!("{}/customizations/{}/download", client.base_url, id);
+    let response = client.reqwest_client.post(url).send().await?;
     if response.status() == StatusCode::OK {
-        let extrahop: ExtraHop = serde_json::from_str(&response.text().await?)?;
-        // extrahop.show();
-        Ok(extrahop)
+        println!("=> downloading customization: {}", name);
+        let bytes = response.bytes().await?;
+        let filename = format!("{}-{}.zip", client.hostname, client.timestamp);
+        let mut wf = File::create(&filename)?;
+        wf.write(&bytes)
+            .expect("=> error writing customization to file");
+        Ok(())
     } else {
-        println!("unable to get extrahop");
+        println!("=> unable to save customization: {}", name);
         eprintln!("{:#?}", response.error_for_status());
         exit(1)
     }
 }
 
-async fn get_running_config(client: &ExtraHopClient) -> Result<(), Box<dyn std::error::Error>> {
-    let url = format!("{}/runningconfig", client.base_url);
-    let response = client.reqwest_client.get(url).send().await?;
+async fn get_extrahop(client: &ExtraHopClient) -> Result<ExtraHop, Box<dyn std::error::Error>> {
+    let response = reqwest_get(&client, "extrahop").await?;
+    let extrahop: ExtraHop = serde_json::from_str(&response.text().await?)?;
+    Ok(extrahop)
+}
 
+async fn get_running_config(client: &ExtraHopClient) -> Result<(), Box<dyn std::error::Error>> {
+    let response = reqwest_get(&client, "runningconfig").await?;
     if response.status() == StatusCode::OK {
         let json_data: serde_json::Value = serde_json::from_str(&response.text().await?)?;
 
@@ -171,55 +144,27 @@ async fn get_running_config(client: &ExtraHopClient) -> Result<(), Box<dyn std::
 }
 
 async fn get_license(client: &ExtraHopClient) -> Result<Vec<License>, Box<dyn std::error::Error>> {
-    let url = format!("{}/license", client.base_url);
-    let response = client.reqwest_client.get(url).send().await?;
-    if response.status() == StatusCode::OK {
-        let licenses: License = serde_json::from_str(&response.text().await?)?;
-        Ok(vec![licenses])
-    } else {
-        println!("unable to get networks");
-        eprintln!("{:#?}", response.error_for_status());
-        exit(1)
-    }
+    let response = reqwest_get(&client, "license").await?;
+    let licenses: License = serde_json::from_str(&response.text().await?)?;
+    Ok(vec![licenses])
 }
 
 async fn get_networks(client: &ExtraHopClient) -> Result<Vec<Network>, Box<dyn std::error::Error>> {
-    let url = format!("{}/networks", client.base_url);
-    let response = client.reqwest_client.get(url).send().await?;
-    if response.status() == StatusCode::OK {
-        let networks: Vec<Network> = serde_json::from_str(&response.text().await?)?;
-        Ok(networks)
-    } else {
-        println!("unable to get networks");
-        eprintln!("{:#?}", response.error_for_status());
-        exit(1)
-    }
+    let response = reqwest_get(&client, "networks").await?;
+    let networks: Vec<Network> = serde_json::from_str(&response.text().await?)?;
+    Ok(networks)
 }
 
 async fn get_tags(client: &ExtraHopClient) -> Result<Vec<Tag>, Box<dyn std::error::Error>> {
-    let url = format!("{}/tags", client.base_url);
-    let response = client.reqwest_client.get(url).send().await?;
-    if response.status() == StatusCode::OK {
-        let tags: Vec<Tag> = serde_json::from_str(&response.text().await?)?;
-        Ok(tags)
-    } else {
-        println!("unable to get tags");
-        eprintln!("{:#?}", response.error_for_status());
-        exit(1)
-    }
+    let response = reqwest_get(&client, "tags").await?;
+    let tags: Vec<Tag> = serde_json::from_str(&response.text().await?)?;
+    Ok(tags)
 }
 
 async fn get_vlans(client: &ExtraHopClient) -> Result<Vec<Vlan>, Box<dyn std::error::Error>> {
-    let url = format!("{}/vlans", client.base_url);
-    let response = client.reqwest_client.get(url).send().await?;
-    if response.status() == StatusCode::OK {
-        let vlans: Vec<Vlan> = serde_json::from_str(&response.text().await?)?;
-        Ok(vlans)
-    } else {
-        println!("unable to get vlans");
-        eprintln!("{:#?}", response.error_for_status());
-        exit(1)
-    }
+    let response = reqwest_get(&client, "vlans").await?;
+    let vlans: Vec<Vlan> = serde_json::from_str(&response.text().await?)?;
+    Ok(vlans)
 }
 
 #[tokio::main]
