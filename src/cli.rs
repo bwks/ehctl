@@ -58,19 +58,19 @@ impl CLI {
 
         cli.backup = backup;
 
-        match getter {
-            "appliances" => cli.getter = Getter::Appliances,
-            "bundles" => cli.getter = Getter::Bundles,
-            "config" => cli.getter = Getter::Config,
-            "customizations" => cli.getter = Getter::Customizations,
-            "devices" => cli.getter = Getter::Devices,
-            "extrahop" => cli.getter = Getter::Extrahop,
-            "licenses" => cli.getter = Getter::Licenses,
-            "networks" => cli.getter = Getter::Networks,
-            "tags" => cli.getter = Getter::Tags,
-            "vlans" => cli.getter = Getter::Vlans,
-            _ => cli.getter = Getter::None,
-        }
-        Self { ..cli }
+        cli.getter = match getter {
+            "appliances" => Getter::Appliances,
+            "bundles" => Getter::Bundles,
+            "config" => Getter::Config,
+            "customizations" => Getter::Customizations,
+            "devices" => Getter::Devices,
+            "extrahop" => Getter::Extrahop,
+            "licenses" => Getter::Licenses,
+            "networks" => Getter::Networks,
+            "tags" => Getter::Tags,
+            "vlans" => Getter::Vlans,
+            _ => Getter::None,
+        };
+        cli
     }
 }
