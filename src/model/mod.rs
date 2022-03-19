@@ -10,6 +10,7 @@ pub mod network;
 pub mod node;
 pub mod running_config;
 pub mod tag;
+pub mod threat_collection;
 pub mod vlan;
 
 pub fn null_to_default<'de, D, T>(deserializer: D) -> Result<T, D::Error>

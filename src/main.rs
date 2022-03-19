@@ -18,6 +18,7 @@ use model::network::Network;
 use model::node::Node;
 use model::running_config::RunningConfig;
 use model::tag::Tag;
+use model::threat_collection::ThreatCollection;
 use model::vlan::Vlan;
 
 use chrono::Local;
@@ -168,6 +169,14 @@ async fn get_tags(client: &ExtraHopClient) -> Result<Vec<Tag>, Box<dyn std::erro
     Ok(tags)
 }
 
+async fn get_threat_collections(
+    client: &ExtraHopClient,
+) -> Result<Vec<ThreatCollection>, Box<dyn std::error::Error>> {
+    let response = reqwest_get(&client, "threatcollections").await?;
+    let threat_collections: Vec<ThreatCollection> = serde_json::from_str(&response.text().await?)?;
+    Ok(threat_collections)
+}
+
 async fn get_vlans(client: &ExtraHopClient) -> Result<Vec<Vlan>, Box<dyn std::error::Error>> {
     let response = reqwest_get(&client, "vlans").await?;
     let vlans: Vec<Vlan> = serde_json::from_str(&response.text().await?)?;
@@ -193,6 +202,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::Extrahop,
             Getter::Networks,
             Getter::Tags,
+            Getter::ThreatCollections,
             Getter::Vlans,
         ],
     );
@@ -209,6 +219,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::Networks,
             Getter::Nodes,
             Getter::Tags,
+            Getter::ThreatCollections,
             Getter::Vlans,
         ],
     );
@@ -224,6 +235,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::Licenses,
             Getter::Networks,
             Getter::Tags,
+            Getter::ThreatCollections,
             Getter::Vlans,
         ],
     );
@@ -328,6 +340,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut networks: HashMap<String, Vec<Network>> = HashMap::new();
     let mut nodes: HashMap<String, Vec<Node>> = HashMap::new();
     let mut tags: HashMap<String, Vec<Tag>> = HashMap::new();
+    let mut threat_collections: HashMap<String, Vec<ThreatCollection>> = HashMap::new();
     let mut vlans: HashMap<String, Vec<Vlan>> = HashMap::new();
 
     for c in extrahop_appliaces.iter() {
@@ -394,6 +407,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
                         let result = get_tags(&c).await?;
                         tags.insert(String::from(&c.hostname), result);
+                    }
+                }
+                Getter::ThreatCollections => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                        let result = get_threat_collections(&c).await?;
+                        threat_collections.insert(String::from(&c.hostname), result);
                     }
                 }
                 Getter::Vlans => {
@@ -468,7 +487,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
             Getter::Extrahop => {
-                let table = Table::new(extrahops).with(Disable::Column(1..=1)).with(Rotate::Left);
+                let table = Table::new(extrahops)
+                    .with(Disable::Column(1..=1))
+                    .with(Rotate::Left);
                 println!("{table}");
             }
             Getter::Licenses => {
@@ -501,10 +522,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     println!("{table}");
                 }
             }
+            Getter::ThreatCollections => {
+                for (key, mut value) in threat_collections {
+                    value.sort_by(|a, b| b.name.cmp(&a.name));
+
+                    println!("=> {}:", key);
+                    let table = Table::new(value);
+                    println!("{table}");
+                }
+            }
             Getter::Vlans => {
                 for (key, mut value) in vlans {
-                    value.sort_by(|a, b| b.vlanid.cmp(&a.vlanid));
-                    value.reverse();
+                    value.sort_by(|a, b| a.vlanid.cmp(&b.vlanid));
 
                     println!("{}:", key);
                     let table = Table::new(value);

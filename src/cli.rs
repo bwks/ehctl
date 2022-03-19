@@ -12,6 +12,7 @@ pub enum Getter {
     Nodes,
     Networks,
     Tags,
+    ThreatCollections,
     Vlans,
     None,
 }
@@ -70,6 +71,7 @@ impl CLI {
             "networks" => Getter::Networks,
             "nodes" => Getter::Nodes,
             "tags" => Getter::Tags,
+            "threatcollections" => Getter::ThreatCollections,
             "vlans" => Getter::Vlans,
             _ => Getter::None,
         };
