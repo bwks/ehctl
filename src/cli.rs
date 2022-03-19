@@ -46,11 +46,10 @@ impl CLI {
                     ),
             )
             .subcommand(
-                Command::new("get").about("get <endpoint>")
-                    .arg(
-                        Arg::new("endpoint")
-                            .help("the uri endpoint to get")
-                            .required(true),
+                Command::new("get").about("get <endpoint>").arg(
+                    Arg::new("endpoint")
+                        .help("the uri endpoint to get")
+                        .required(true),
                 ),
             )
             .get_matches();
