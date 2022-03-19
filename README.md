@@ -23,17 +23,20 @@ TODO
 ## Usage
 ```
 ./ehctl --help
-ehopctl 0.1.5
+ehctl 0.1.6
 Extrahop CLI
 
 USAGE:
-    ehctl [OPTIONS]
+    ehctl [SUBCOMMAND]
 
 OPTIONS:
-        --backup                Backup customizations
-    -g, --get <get-endpoint>    Get [options...]
-    -h, --help                  Print help information
-    -V, --version               Print version information
+    -h, --help       Print help information
+    -V, --version    Print version information
+
+SUBCOMMANDS:
+    backup    backup device customizations (currently `all` devices are backed up)
+    get       get <endpoint>
+    help      Print this message or the help of the given subcommand(s)
 ```
 
 ## Config

@@ -20,6 +20,7 @@ pub enum Getter {
 
 pub struct CLI {
     pub backup: bool,
+    pub backup_device: String,
     pub getter: Getter,
 }
 
@@ -27,56 +28,71 @@ impl CLI {
     fn default() -> Self {
         Self {
             backup: false,
+            backup_device: String::from(""),
             getter: Getter::None,
         }
     }
     pub fn new() -> Self {
-        let app = Command::new("ehopctl")
-            .version("0.1.5")
-            .about("Extrahop CLI");
-
-        // Define the name command line option
-        let get_option = Arg::new("get-endpoint")
-            .long("get") // allow --get
-            .short('g')
-            .takes_value(true)
-            .help("Get [options...]")
-            .required(false);
-
-        let backup_option = Arg::new("backup")
-            .long("backup") // allow --get
-            .takes_value(false)
-            .help("Backup customizations")
-            .required(false);
-
-        let app = app.arg(get_option).arg(backup_option);
-
-        let options = app.get_matches();
-
-        let getter = options.value_of("get-endpoint").unwrap_or("none");
-
-        let backup = options.is_present("backup");
+        let matches = Command::new("ehctl")
+            .version("0.1.6")
+            .about("Extrahop CLI")
+            .subcommand(
+                Command::new("backup")
+                    .about("backup device customizations (currently `all` devices are backed up)")
+                    .arg(
+                        Arg::new("device")
+                            .help("`all` or `device name` to backup")
+                            .required(true),
+                    ),
+            )
+            .subcommand(
+                Command::new("get").about("get <endpoint>").arg(
+                    Arg::new("endpoint")
+                        .help("the uri endpoint to get")
+                        .required(true),
+                ),
+            )
+            .get_matches();
 
         let mut cli = CLI::default();
 
-        cli.backup = backup;
-
-        cli.getter = match getter {
-            "appliances" => Getter::Appliances,
-            "bundles" => Getter::Bundles,
-            "config" => Getter::Config,
-            "customizations" => Getter::Customizations,
-            "devices" => Getter::Devices,
-            "extrahop" => Getter::Extrahop,
-            "licenses" => Getter::Licenses,
-            "networks" => Getter::Networks,
-            "networklocalities" => Getter::NetworkLocalities,
-            "nodes" => Getter::Nodes,
-            "tags" => Getter::Tags,
-            "threatcollections" => Getter::ThreatCollections,
-            "vlans" => Getter::Vlans,
-            _ => Getter::None,
-        };
+        // backup
+        if let Some(backup_matches) = matches.subcommand_matches("backup") {
+            if let Some(device) = backup_matches.value_of("device") {
+                // println!("backup device: {device}");
+                if device == "all" {
+                    cli.backup = true;
+                    cli.backup_device = String::from(device)
+                } else {
+                    println!("=> unknown device `{device}`");
+                    cli.backup = false
+                }
+            };
+        }
+        // get
+        else if let Some(get_matches) = matches.subcommand_matches("get") {
+            if let Some(getter) = get_matches.value_of("endpoint") {
+                cli.getter = match getter {
+                    "appliances" => Getter::Appliances,
+                    "bundles" => Getter::Bundles,
+                    "config" => Getter::Config,
+                    "customizations" => Getter::Customizations,
+                    "devices" => Getter::Devices,
+                    "extrahop" => Getter::Extrahop,
+                    "licenses" => Getter::Licenses,
+                    "networks" => Getter::Networks,
+                    "networklocalities" => Getter::NetworkLocalities,
+                    "nodes" => Getter::Nodes,
+                    "tags" => Getter::Tags,
+                    "threatcollections" => Getter::ThreatCollections,
+                    "vlans" => Getter::Vlans,
+                    _ => {
+                        println!("=> unknown endpoint `{}`", getter);
+                        Getter::None
+                    }
+                };
+            }
+        }
         cli
     }
 }

@@ -15,5 +15,5 @@ pub struct NetworkLocality {
     #[serde(deserialize_with = "null_to_default")]
     pub mod_time: i64,
     #[serde(deserialize_with = "null_to_default")]
-    pub network: String
+    pub network: String,
 }
