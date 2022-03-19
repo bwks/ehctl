@@ -3,6 +3,7 @@ use serde::{Deserialize, Deserializer};
 pub mod appliance;
 pub mod bundle;
 pub mod customization;
+pub mod custom_device;
 pub mod device;
 pub mod extrahop;
 pub mod license;

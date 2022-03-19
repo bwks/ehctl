@@ -11,6 +11,7 @@ mod model;
 use model::appliance::Appliance;
 use model::bundle::Bundles;
 use model::customization::Customization;
+use model::custom_device::CustomDevice;
 use model::device::Device;
 use model::extrahop::ExtraHop;
 use model::license::License;
@@ -121,6 +122,12 @@ async fn save_customization(
     }
 }
 
+async fn get_custom_devices(client: &ExtraHopClient) -> Result<Vec<CustomDevice>, Box<dyn std::error::Error>> {
+    let response = reqwest_get(&client, "customdevices").await?;
+    let custom_devices: Vec<CustomDevice> = serde_json::from_str(&response.text().await?)?;
+    Ok(custom_devices)
+}
+
 async fn get_extrahop(client: &ExtraHopClient) -> Result<ExtraHop, Box<dyn std::error::Error>> {
     let response = reqwest_get(&client, "extrahop").await?;
     let extrahop: ExtraHop = serde_json::from_str(&response.text().await?)?;
@@ -229,6 +236,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::Bundles,
             Getter::Config,
             Getter::Customizations,
+            // TODO: This endpoint does not work on ECA
+            // API doc says its supported
+            // I suspect its required to select the sensor
+            // Getter::CustomDevices,
             Getter::Devices,
             Getter::Extrahop,
             Getter::Licenses,
@@ -247,6 +258,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::Bundles,
             Getter::Config,
             Getter::Customizations,
+            Getter::CustomDevices,
             Getter::Devices,
             Getter::Extrahop,
             Getter::Licenses,
@@ -353,6 +365,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut appliances: HashMap<String, Vec<Appliance>> = HashMap::new();
     let mut bundles: HashMap<String, Vec<Bundles>> = HashMap::new();
     let mut customizations: HashMap<String, Vec<Customization>> = HashMap::new();
+    let mut custom_devices: HashMap<String, Vec<CustomDevice>> = HashMap::new();
     let mut devices: HashMap<String, Vec<Device>> = HashMap::new();
     let mut licenses: HashMap<String, Vec<License>> = HashMap::new();
     let mut networks: HashMap<String, Vec<Network>> = HashMap::new();
@@ -391,6 +404,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
                         let result = get_customizations(&c).await?;
                         customizations.insert(String::from(&c.hostname), result);
+                    }
+                }
+                Getter::CustomDevices => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                        let result = get_custom_devices(&c).await?;
+                        custom_devices.insert(String::from(&c.hostname), result);
                     }
                 }
                 Getter::Devices => {
@@ -488,6 +507,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::Customizations => {
                 for (key, mut value) in customizations {
                     value.sort_by(|a, b| a.id.cmp(&b.id));
+
+                    println!("{}:", key);
+                    let table = Table::new(value);
+                    println!("{table}");
+                }
+            }
+            Getter::CustomDevices => {
+                for (key, mut value) in custom_devices {
+                    value.sort_by(|a, b| a.name.cmp(&b.name));
 
                     println!("{}:", key);
                     let table = Table::new(value);
