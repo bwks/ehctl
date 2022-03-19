@@ -37,9 +37,14 @@ OPTIONS:
 ```
 
 ## Config
-A config file is required in the following location 
-* Linux/Mac - `$HOME/.config/ehctl/config.toml`
-* Windows - `$HOME\.config\ehctl\config.toml`
+You can set the location of the config file with the `EHCTL_CONFIG` environment variable.
+```shell
+export EHCTL_CONFIG="${HOME}/.ehctl/config.toml"
+```
+
+If the `EHCTL_CONFIG` environment variable is not found the config file must be located in: 
+* Linux/Mac - `$HOME/.ehctl/config.toml`
+* Windows - `$HOME\.ehctl\config.toml`
 
 ### Config File
 Configs are defined in the `TOML` format. 

@@ -28,27 +28,37 @@ pub struct ExtraHopCredential {
 
 impl ExtraHopConfig {
     pub fn new() -> Self {
-        let home_dir = match env::var("HOME") {
-            Ok(c) => c,
+        let config_file = match env::var("EHCTL_CONFIG") {
+            Ok(cf) => {
+                cf
+            },
             Err(_) => {
-                println!("could not access $HOME environment variable");
-                exit(1);
+                let home_dir = match env::var("HOME") {
+                    Ok(hd) => hd,
+                    Err(_) => {
+                        println!("=> could not access `EHCTL_CONFIG` environment variable");
+                        println!("=> could not access `HOME` environment variable");
+                        exit(1);
+                    }
+                };
+                format!("{home_dir}/.ehctl/config.toml")
             }
         };
 
-        let filename = format!("{home_dir}/.config/ehctl/config.toml");
-
-        let contents = match fs::read_to_string(&filename) {
-            Ok(c) => c,
+        let contents = match fs::read_to_string(&config_file) {
+            Ok(c) => {
+                println!("=> using config file `{config_file}`");
+                c
+            },
             Err(_) => {
-                eprintln!("could not read file {filename}");
+                eprintln!("=> could not read config file `{config_file}`");
                 exit(1);
             }
         };
         let mut config: Self = match toml::from_str(&contents) {
             Ok(c) => c,
             Err(e) => {
-                eprintln!("unable to load data from {filename}, got error {e}");
+                eprintln!("=> unable to load data from confg file `{config_file}`, got error `{e}`");
                 exit(1);
             }
         };
