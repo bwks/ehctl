@@ -1,7 +1,8 @@
 use chrono::prelude::DateTime;
 use chrono::Local;
-use std::time::{UNIX_EPOCH, Duration};
+use std::time::{Duration, UNIX_EPOCH};
 
+#[allow(dead_code)]
 pub fn extrahop_to_human_time(time_milliseconds: u64) -> String {
     let time_seconds = UNIX_EPOCH + Duration::from_secs(time_milliseconds / 1000);
     let datetime = DateTime::<Local>::from(time_seconds);

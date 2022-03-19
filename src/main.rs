@@ -160,7 +160,9 @@ async fn get_networks(client: &ExtraHopClient) -> Result<Vec<Network>, Box<dyn s
     Ok(networks)
 }
 
-async fn get_network_localities(client: &ExtraHopClient) -> Result<Vec<NetworkLocality>, Box<dyn std::error::Error>> {
+async fn get_network_localities(
+    client: &ExtraHopClient,
+) -> Result<Vec<NetworkLocality>, Box<dyn std::error::Error>> {
     let response = reqwest_get(&client, "networklocalities").await?;
     let network_localities: Vec<NetworkLocality> = serde_json::from_str(&response.text().await?)?;
     Ok(network_localities)
@@ -195,6 +197,10 @@ async fn get_vlans(client: &ExtraHopClient) -> Result<Vec<Vlan>, Box<dyn std::er
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = CLI::new();
+
+    if !cli.backup && cli.getter == Getter::None {
+        exit(1)
+    }
 
     let time_now = Local::now();
     let timestamp = time_now.format("%Y-%m-%d--%H-%M-%S");
@@ -358,8 +364,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     for c in extrahop_appliaces.iter() {
         if cli.backup {
-            if getter_map[&c.appliance_type].contains(&cli.getter) {
-                create_customization(&c).await?
+            match c.appliance_type {
+                ExtraHopAppliance::ECA | ExtraHopAppliance::EDA => create_customization(&c).await?,
+                _ => {}
             }
         } else {
             match cli.getter {
@@ -440,9 +447,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         vlans.insert(String::from(&c.hostname), result);
                     }
                 }
-                _ => {
+                Getter::None => {
                     println!("unknown endpoint");
-                    // exit(1)
+                    exit(1)
                 }
             }
         }
