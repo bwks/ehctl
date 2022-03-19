@@ -7,6 +7,7 @@ pub mod device;
 pub mod extrahop;
 pub mod license;
 pub mod network;
+pub mod network_locality;
 pub mod node;
 pub mod running_config;
 pub mod tag;

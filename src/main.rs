@@ -15,11 +15,14 @@ use model::device::Device;
 use model::extrahop::ExtraHop;
 use model::license::License;
 use model::network::Network;
+use model::network_locality::NetworkLocality;
 use model::node::Node;
 use model::running_config::RunningConfig;
 use model::tag::Tag;
 use model::threat_collection::ThreatCollection;
 use model::vlan::Vlan;
+
+mod util;
 
 use chrono::Local;
 use reqwest::StatusCode;
@@ -157,6 +160,12 @@ async fn get_networks(client: &ExtraHopClient) -> Result<Vec<Network>, Box<dyn s
     Ok(networks)
 }
 
+async fn get_network_localities(client: &ExtraHopClient) -> Result<Vec<NetworkLocality>, Box<dyn std::error::Error>> {
+    let response = reqwest_get(&client, "networklocalities").await?;
+    let network_localities: Vec<NetworkLocality> = serde_json::from_str(&response.text().await?)?;
+    Ok(network_localities)
+}
+
 async fn get_nodes(client: &ExtraHopClient) -> Result<Vec<Node>, Box<dyn std::error::Error>> {
     let response = reqwest_get(&client, "nodes").await?;
     let nodes: Vec<Node> = serde_json::from_str(&response.text().await?)?;
@@ -201,6 +210,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::Devices,
             Getter::Extrahop,
             Getter::Networks,
+            Getter::NetworkLocalities,
             Getter::Tags,
             Getter::ThreatCollections,
             Getter::Vlans,
@@ -217,6 +227,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::Extrahop,
             Getter::Licenses,
             Getter::Networks,
+            Getter::NetworkLocalities,
             Getter::Nodes,
             Getter::Tags,
             Getter::ThreatCollections,
@@ -234,6 +245,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::Extrahop,
             Getter::Licenses,
             Getter::Networks,
+            Getter::NetworkLocalities,
             Getter::Tags,
             Getter::ThreatCollections,
             Getter::Vlans,
@@ -338,6 +350,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut devices: HashMap<String, Vec<Device>> = HashMap::new();
     let mut licenses: HashMap<String, Vec<License>> = HashMap::new();
     let mut networks: HashMap<String, Vec<Network>> = HashMap::new();
+    let mut network_localities: HashMap<String, Vec<NetworkLocality>> = HashMap::new();
     let mut nodes: HashMap<String, Vec<Node>> = HashMap::new();
     let mut tags: HashMap<String, Vec<Tag>> = HashMap::new();
     let mut threat_collections: HashMap<String, Vec<ThreatCollection>> = HashMap::new();
@@ -395,6 +408,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
                         let result = get_networks(&c).await?;
                         networks.insert(String::from(&c.hostname), result);
+                    }
+                }
+                Getter::NetworkLocalities => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                        let result = get_network_localities(&c).await?;
+                        network_localities.insert(String::from(&c.hostname), result);
                     }
                 }
                 Getter::Nodes => {
@@ -501,6 +520,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             Getter::Networks => {
                 for (key, value) in networks {
+                    println!("{}:", key);
+                    let table = Table::new(value);
+                    println!("{table}");
+                }
+            }
+            Getter::NetworkLocalities => {
+                for (key, value) in network_localities {
                     println!("{}:", key);
                     let table = Table::new(value);
                     println!("{table}");
