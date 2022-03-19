@@ -15,6 +15,7 @@ use model::device::Device;
 use model::extrahop::ExtraHop;
 use model::license::License;
 use model::network::Network;
+use model::node::Node;
 use model::running_config::RunningConfig;
 use model::tag::Tag;
 use model::vlan::Vlan;
@@ -155,6 +156,12 @@ async fn get_networks(client: &ExtraHopClient) -> Result<Vec<Network>, Box<dyn s
     Ok(networks)
 }
 
+async fn get_nodes(client: &ExtraHopClient) -> Result<Vec<Node>, Box<dyn std::error::Error>> {
+    let response = reqwest_get(&client, "nodes").await?;
+    let nodes: Vec<Node> = serde_json::from_str(&response.text().await?)?;
+    Ok(nodes)
+}
+
 async fn get_tags(client: &ExtraHopClient) -> Result<Vec<Tag>, Box<dyn std::error::Error>> {
     let response = reqwest_get(&client, "tags").await?;
     let tags: Vec<Tag> = serde_json::from_str(&response.text().await?)?;
@@ -200,6 +207,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::Extrahop,
             Getter::Licenses,
             Getter::Networks,
+            Getter::Nodes,
             Getter::Tags,
             Getter::Vlans,
         ],
@@ -318,6 +326,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut devices: HashMap<String, Vec<Device>> = HashMap::new();
     let mut licenses: HashMap<String, Vec<License>> = HashMap::new();
     let mut networks: HashMap<String, Vec<Network>> = HashMap::new();
+    let mut nodes: HashMap<String, Vec<Node>> = HashMap::new();
     let mut tags: HashMap<String, Vec<Tag>> = HashMap::new();
     let mut vlans: HashMap<String, Vec<Vlan>> = HashMap::new();
 
@@ -373,6 +382,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
                         let result = get_networks(&c).await?;
                         networks.insert(String::from(&c.hostname), result);
+                    }
+                }
+                Getter::Nodes => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                        let result = get_nodes(&c).await?;
+                        nodes.insert(String::from(&c.hostname), result);
                     }
                 }
                 Getter::Tags => {
@@ -453,7 +468,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
             Getter::Extrahop => {
-                let table = Table::new(extrahops).with(Disable::Column(1..=1));
+                let table = Table::new(extrahops).with(Disable::Column(1..=1)).with(Rotate::Left);
                 println!("{table}");
             }
             Getter::Licenses => {
@@ -467,6 +482,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 for (key, value) in networks {
                     println!("{}:", key);
                     let table = Table::new(value);
+                    println!("{table}");
+                }
+            }
+            Getter::Nodes => {
+                for (key, value) in nodes {
+                    println!("{}:", key);
+                    let table = Table::new(value).with(Rotate::Left);
                     println!("{table}");
                 }
             }
