@@ -1,14 +1,13 @@
 use serde::Deserialize;
 use std::fmt;
-use tabled::Tabled;
 
 use crate::model::null_to_default;
 
 #[allow(dead_code)]
-#[derive(Tabled, Debug, Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct Device {
     #[serde(default)]
-    // pub activity: Vec<String>,
+    pub activity: Vec<String>,
     #[serde(deserialize_with = "null_to_default")]
     pub analysis: String,
     #[serde(deserialize_with = "null_to_default")]
@@ -94,51 +93,60 @@ pub struct Device {
 
 impl fmt::Display for Device {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut activities = vec![];
+        for a in self.activity.iter() {
+            let tmp = format!(
+                "
+  {a}"
+            );
+            activities.push(tmp);
+        }
+
         let output = format!(
-            "
-analysis: {}
-analysis_level: {}
-auto_role: {}
-cdp_name: {}
-cloud_account: {}
-cloud_instance_id: {}
+            "--
+activities:          {}
+analysis:            {}
+analysis_level:      {}
+auto_role:           {}
+cdp_name:            {}
+cloud_account:       {}
+cloud_instance_id:   {}
 cloud_instance_name: {}
 cloud_instance_type: {}
-critical: {}
-custom_criticality: {}
-custom_make: {}
-custom_model: {}
-custom_name: {}
-custom_type: {}
-default_name: {}
-description: {}
-device_class: {}
-dhcp_name: {}
-discover_time: {}
-discovery_id: {}
-display_name: {}
-dns_name: {}
-extrahop_id: {}
-id: {}
-ipaddr4: {}
-ipaddr6: {}
-is_l3: {}
-last_seen_time: {}
-macaddr: {}
-mod_time: {}
-model: {}
-model_override: {}
-netbios_name: {}
-node_id: {}
-on_watchlist: {}
-parent_id: {}
-role: {}
-subnet_id: {}
-user_mod_time: {}
-vendor: {}
-vlanid: {}
-vpc_id: {}",
-            // self.activity.join(" | "),
+critical:            {}
+custom_criticality:  {}
+custom_make:         {}
+custom_model:        {}
+custom_name:         {}
+custom_type:         {}
+default_name:        {}
+description:         {}
+device_class:        {}
+dhcp_name:           {}
+discover_time:       {}
+discovery_id:        {}
+display_name:        {}
+dns_name:            {}
+extrahop_id:         {}
+id:                  {}
+ipaddr4:             {}
+ipaddr6:             {}
+is_l3:               {}
+last_seen_time:      {}
+macaddr:             {}
+mod_time:            {}
+model:               {}
+model_override:      {}
+netbios_name:        {}
+node_id:             {}
+on_watchlist:        {}
+parent_id:           {}
+role:                {}
+subnet_id:           {}
+user_mod_time:       {}
+vendor:              {}
+vlanid:              {}
+vpc_id:              {}",
             self.analysis,
             self.analysis_level,
             self.auto_role,
@@ -180,7 +188,8 @@ vpc_id: {}",
             self.user_mod_time,
             self.vendor,
             self.vlanid,
-            self.vpc_id
+            self.vpc_id,
+            activities.join("\n"),
         );
         write!(f, "{}", output)
     }
