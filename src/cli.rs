@@ -4,7 +4,6 @@ use clap::{Arg, Command};
 pub enum Getter {
     Appliances,
     Bundles,
-    Config,
     Customizations,
     CustomDevices,
     Devices,
@@ -13,6 +12,7 @@ pub enum Getter {
     Nodes,
     Networks,
     NetworkLocalities,
+    RunningConfig,
     Tags,
     ThreatCollections,
     Vlans,
@@ -76,7 +76,6 @@ impl CLI {
                 cli.getter = match getter {
                     "appliances" => Getter::Appliances,
                     "bundles" => Getter::Bundles,
-                    "config" => Getter::Config,
                     "customizations" => Getter::Customizations,
                     "customdevices" => Getter::CustomDevices,
                     "devices" => Getter::Devices,
@@ -85,6 +84,7 @@ impl CLI {
                     "networks" => Getter::Networks,
                     "networklocalities" => Getter::NetworkLocalities,
                     "nodes" => Getter::Nodes,
+                    "runningconfig" => Getter::RunningConfig,
                     "tags" => Getter::Tags,
                     "threatcollections" => Getter::ThreatCollections,
                     "vlans" => Getter::Vlans,

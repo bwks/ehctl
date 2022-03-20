@@ -236,7 +236,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         vec![
             Getter::Appliances,
             Getter::Bundles,
-            Getter::Config,
             Getter::Customizations,
             // TODO: This endpoint does not work on ECA
             // API doc says its supported
@@ -248,6 +247,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::Networks,
             Getter::NetworkLocalities,
             Getter::Nodes,
+            Getter::RunningConfig,
             Getter::Tags,
             Getter::ThreatCollections,
             Getter::Vlans,
@@ -258,7 +258,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         vec![
             Getter::Appliances,
             Getter::Bundles,
-            Getter::Config,
             Getter::Customizations,
             Getter::CustomDevices,
             Getter::Devices,
@@ -266,6 +265,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::Licenses,
             Getter::Networks,
             Getter::NetworkLocalities,
+            Getter::RunningConfig,
             Getter::Tags,
             Getter::ThreatCollections,
             Getter::Vlans,
@@ -275,18 +275,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         ExtraHopAppliance::ETA,
         vec![
             Getter::Appliances,
-            Getter::Config,
             Getter::Extrahop,
             Getter::Licenses,
+            Getter::RunningConfig,
         ],
     );
     getter_map.insert(
         ExtraHopAppliance::EXA,
         vec![
             Getter::Appliances,
-            Getter::Config,
             Getter::Extrahop,
             Getter::Licenses,
+            Getter::RunningConfig,
         ],
     );
 
@@ -397,11 +397,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         bundles.insert(String::from(&c.hostname), result);
                     }
                 }
-                Getter::Config => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter) {
-                        _ = get_running_config(&c).await?;
-                    }
-                }
                 Getter::Customizations => {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
                         let result = get_customizations(&c).await?;
@@ -448,6 +443,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
                         let result = get_nodes(&c).await?;
                         nodes.insert(String::from(&c.hostname), result);
+                    }
+                }
+                Getter::RunningConfig => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                        _ = get_running_config(&c).await?;
                     }
                 }
                 Getter::Tags => {
