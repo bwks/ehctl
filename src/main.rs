@@ -32,7 +32,7 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::Write;
 use std::process::exit;
-use tabled::{Disable, MaxWidth, Modify, Rotate, Row, Table};
+use tabled::{Alignment, Disable, Full, MaxWidth, Modify, Rotate, Row, Table};
 
 async fn reqwest_get(
     client: &ExtraHopClient,
@@ -516,32 +516,29 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
             Getter::CustomDevices => {
-                for (key, value) in custom_devices {
-                    // value.sort_by(|a, b| a.name.cmp(&b.name));
+                for (key, mut value) in custom_devices {
+                    value.sort_by(|a, b| a.name.cmp(&b.name));
 
-                    // println!("{}:", key);
-                    // let table = Table::new(value);
-                    // println!("{table}");
                     println!("{}:", key);
-                    for v in value {
-                        println!("{v}")
-                    }
+                    let table = Table::new(value).with(Modify::new(Full).with(Alignment::left()));
+                    println!("{table}");
                 }
             }
             Getter::Devices => {
                 for (key, value) in devices {
                     println!("{}:", key);
                     for d in value.iter() {
-                        println!("{}", d)
-                        // let table = Table::new(vec![d])
-                        //     .with(
-                        //         Modify::new(Row(1..))
-                        //             // Not released yet, will be in future version.
-                        //             // .with(MinWidth::new(50))
-                        //             .with(MaxWidth::wrapping(50)),
-                        //     )
-                        //     .with(Rotate::Left);
-                        // println!("{}", table);
+                        // println!("{}", d)
+                        let table = Table::new(vec![d])
+                            .with(
+                                Modify::new(Full)
+                                    // Not released yet, will be in future version.
+                                    // .with(MinWidth::new(50))
+                                    .with(MaxWidth::wrapping(50))
+                                    .with(Alignment::left()),
+                            )
+                            .with(Rotate::Left);
+                        println!("{}", table);
                     }
                 }
             }

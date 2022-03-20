@@ -1,5 +1,3 @@
-use std::fmt;
-
 use serde::Deserialize;
 use tabled::Tabled;
 
@@ -49,21 +47,23 @@ pub struct CustomDeviceCriteria {
     pub vlan_min: i64,
 }
 
-impl fmt::Display for CustomDevice {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+impl Tabled for CustomDevice {
+    const LENGTH: usize = 50;
+
+    fn fields(&self) -> Vec<String> {
         let mut criterias = vec![];
         for c in self.criteria.iter() {
             let tmp = format!(
-                "
-  dst_port_max:     {}
-  dst_port_min:     {}
-  ipaddr:           {}
-  ipaddr_direction: {}
-  ipaddr_peer:      {}
-  src_port_max:     {}
-  src_port_min:     {}
-  vlan_max:         {}
-  vlan_min:         {}",
+                "dst_port_max:     {}
+dst_port_min:     {}
+ipaddr:           {}
+ipaddr_direction: {}
+ipaddr_peer:      {}
+src_port_max:     {}
+src_port_min:     {}
+vlan_max:         {}
+vlan_min:         {}
+",
                 c.dst_port_max,
                 c.dst_port_min,
                 c.ipaddr,
@@ -76,53 +76,28 @@ impl fmt::Display for CustomDevice {
             );
             criterias.push(tmp);
         }
-        let output = format!(
-            "--
-author:      {}
-description: {}
-disabled:    {}
-extrahop_id: {}
-id:          {}
-mod_time:    {}
-name:        {}
-criteria:    {}",
-            self.author,
-            self.description,
-            self.disabled,
-            self.extrahop_id,
-            self.id,
-            self.mod_time,
-            self.name,
-            criterias.join("\n"),
-        );
-        write!(f, "{}", output)
+        vec![
+            format!("{}", self.description),
+            format!("{}", self.disabled),
+            format!("{}", self.extrahop_id),
+            format!("{}", self.id),
+            format!("{}", self.mod_time),
+            format!("{}", self.name),
+            format!("{}", self.author),
+            format!("{}", criterias.join("\n")),
+        ]
     }
-}
 
-impl fmt::Display for CustomDeviceCriteria {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let output = format!(
-            "
-dst_port_max:     {}
-dst_port_min:     {}
-ipaddr:           {}
-ipaddr_direction: {}
-ipaddr_peer:      {}
-src_port_max:     {}
-src_port_min:     {}
-vlan_max:         {}
-vlan_min:         {}
-",
-            self.dst_port_max,
-            self.dst_port_min,
-            self.ipaddr,
-            self.ipaddr_direction,
-            self.ipaddr_peer,
-            self.src_port_max,
-            self.src_port_min,
-            self.vlan_max,
-            self.vlan_min,
-        );
-        write!(f, "{}", output)
+    fn headers() -> Vec<String> {
+        vec![
+            String::from("description"),
+            String::from("disabled"),
+            String::from("extrahop_id"),
+            String::from("id"),
+            String::from("mod_time"),
+            String::from("name"),
+            String::from("author"),
+            String::from("criteria"),
+        ]
     }
 }
