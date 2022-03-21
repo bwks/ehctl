@@ -19,6 +19,7 @@ use model::license::License;
 use model::network::Network;
 use model::network_locality::NetworkLocality;
 use model::node::Node;
+use model::packet_capture::PacketCapture;
 use model::running_config::RunningConfig;
 use model::tag::Tag;
 use model::threat_collection::ThreatCollection;
@@ -192,6 +193,14 @@ async fn get_nodes(client: &ExtraHopClient) -> Result<Vec<Node>, Box<dyn std::er
     Ok(nodes)
 }
 
+async fn get_packet_captures(
+    client: &ExtraHopClient,
+) -> Result<Vec<PacketCapture>, Box<dyn std::error::Error>> {
+    let response = reqwest_get(&client, "packetcaptures").await?;
+    let packet_captures: Vec<PacketCapture> = serde_json::from_str(&response.text().await?)?;
+    Ok(packet_captures)
+}
+
 async fn get_tags(client: &ExtraHopClient) -> Result<Vec<Tag>, Box<dyn std::error::Error>> {
     let response = reqwest_get(&client, "tags").await?;
     let tags: Vec<Tag> = serde_json::from_str(&response.text().await?)?;
@@ -277,6 +286,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::Licenses,
             Getter::Networks,
             Getter::NetworkLocalities,
+            Getter::PacketCaptures,
             Getter::RunningConfig,
             Getter::Tags,
             Getter::ThreatCollections,
@@ -386,6 +396,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut networks: HashMap<String, Vec<Network>> = HashMap::new();
     let mut network_localities: HashMap<String, Vec<NetworkLocality>> = HashMap::new();
     let mut nodes: HashMap<String, Vec<Node>> = HashMap::new();
+    let mut packet_captures: HashMap<String, Vec<PacketCapture>> = HashMap::new();
     let mut tags: HashMap<String, Vec<Tag>> = HashMap::new();
     let mut threat_collections: HashMap<String, Vec<ThreatCollection>> = HashMap::new();
     let mut vlans: HashMap<String, Vec<Vlan>> = HashMap::new();
@@ -462,6 +473,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
                         let result = get_nodes(&c).await?;
                         nodes.insert(String::from(&c.hostname), result);
+                    }
+                }
+                Getter::PacketCaptures => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                        let result = get_packet_captures(&c).await?;
+                        packet_captures.insert(String::from(&c.hostname), result);
                     }
                 }
                 Getter::RunningConfig => {

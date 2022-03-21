@@ -11,6 +11,7 @@ pub mod license;
 pub mod network;
 pub mod network_locality;
 pub mod node;
+pub mod packet_capture;
 pub mod running_config;
 pub mod tag;
 pub mod threat_collection;
