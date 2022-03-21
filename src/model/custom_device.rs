@@ -63,7 +63,7 @@ src_port_max:     {}
 src_port_min:     {}
 vlan_max:         {}
 vlan_min:         {}
-",
+--",
                 c.dst_port_max,
                 c.dst_port_min,
                 c.ipaddr,
@@ -77,26 +77,26 @@ vlan_min:         {}
             criterias.push(tmp);
         }
         vec![
+            format!("{}", self.author),
             format!("{}", self.description),
             format!("{}", self.disabled),
             format!("{}", self.extrahop_id),
             format!("{}", self.id),
             format!("{}", self.mod_time),
             format!("{}", self.name),
-            format!("{}", self.author),
-            format!("{}", criterias.join("\n")),
+            criterias.join("\n"),
         ]
     }
 
     fn headers() -> Vec<String> {
         vec![
+            String::from("author"),
             String::from("description"),
             String::from("disabled"),
             String::from("extrahop_id"),
             String::from("id"),
             String::from("mod_time"),
             String::from("name"),
-            String::from("author"),
             String::from("criteria"),
         ]
     }

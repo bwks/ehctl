@@ -12,6 +12,7 @@ use model::appliance::Appliance;
 use model::bundle::Bundles;
 use model::custom_device::CustomDevice;
 use model::customization::Customization;
+use model::dashboard::Dashboard;
 use model::device::Device;
 use model::extrahop::ExtraHop;
 use model::license::License;
@@ -61,6 +62,14 @@ async fn get_bundles(client: &ExtraHopClient) -> Result<Vec<Bundles>, Box<dyn st
     let response = reqwest_get(&client, "bundles").await?;
     let bundles: Vec<Bundles> = serde_json::from_str(&response.text().await?)?;
     Ok(bundles)
+}
+
+async fn get_dashboards(
+    client: &ExtraHopClient,
+) -> Result<Vec<Dashboard>, Box<dyn std::error::Error>> {
+    let response = reqwest_get(&client, "dashboards").await?;
+    let dashboards: Vec<Dashboard> = serde_json::from_str(&response.text().await?)?;
+    Ok(dashboards)
 }
 
 async fn get_devices(client: &ExtraHopClient) -> Result<Vec<Device>, Box<dyn std::error::Error>> {
@@ -222,6 +231,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         vec![
             Getter::Appliances,
             Getter::Bundles,
+            Getter::Dashboards,
             Getter::Devices,
             Getter::Extrahop,
             Getter::Networks,
@@ -241,6 +251,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             // API doc says its supported
             // I suspect its required to select the sensor
             // Getter::CustomDevices,
+            Getter::Dashboards,
             Getter::Devices,
             Getter::Extrahop,
             Getter::Licenses,
@@ -260,6 +271,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::Bundles,
             Getter::Customizations,
             Getter::CustomDevices,
+            Getter::Dashboards,
             Getter::Devices,
             Getter::Extrahop,
             Getter::Licenses,
@@ -368,6 +380,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut bundles: HashMap<String, Vec<Bundles>> = HashMap::new();
     let mut customizations: HashMap<String, Vec<Customization>> = HashMap::new();
     let mut custom_devices: HashMap<String, Vec<CustomDevice>> = HashMap::new();
+    let mut dashboards: HashMap<String, Vec<Dashboard>> = HashMap::new();
     let mut devices: HashMap<String, Vec<Device>> = HashMap::new();
     let mut licenses: HashMap<String, Vec<License>> = HashMap::new();
     let mut networks: HashMap<String, Vec<Network>> = HashMap::new();
@@ -407,6 +420,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
                         let result = get_custom_devices(&c).await?;
                         custom_devices.insert(String::from(&c.hostname), result);
+                    }
+                }
+                Getter::Dashboards => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                        let result = get_dashboards(&c).await?;
+                        dashboards.insert(String::from(&c.hostname), result);
                     }
                 }
                 Getter::Devices => {
@@ -524,11 +543,29 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     println!("{table}");
                 }
             }
-            Getter::Devices => {
-                for (key, value) in devices {
+            Getter::Dashboards => {
+                for (key, value) in dashboards {
                     println!("{}:", key);
                     for d in value.iter() {
-                        // println!("{}", d)
+                        let table = Table::new(vec![d])
+                            .with(
+                                Modify::new(Full)
+                                    // Not released yet, will be in future version.
+                                    // .with(MinWidth::new(50))
+                                    .with(MaxWidth::wrapping(50))
+                                    .with(Alignment::left()),
+                            )
+                            .with(Rotate::Left);
+                        println!("{}", table);
+                    }
+                }
+            }
+            Getter::Devices => {
+                for (key, mut value) in devices {
+                    value.reverse();
+
+                    println!("{}:", key);
+                    for d in value.iter() {
                         let table = Table::new(vec![d])
                             .with(
                                 Modify::new(Full)
