@@ -21,6 +21,7 @@ use model::network_locality::NetworkLocality;
 use model::node::Node;
 use model::packet_capture::PacketCapture;
 use model::running_config::RunningConfig;
+use model::software::Software;
 use model::tag::Tag;
 use model::threat_collection::ThreatCollection;
 use model::vlan::Vlan;
@@ -201,6 +202,14 @@ async fn get_packet_captures(
     Ok(packet_captures)
 }
 
+async fn get_software(
+    client: &ExtraHopClient,
+) -> Result<Vec<Software>, Box<dyn std::error::Error>> {
+    let response = reqwest_get(&client, "software").await?;
+    let software: Vec<Software> = serde_json::from_str(&response.text().await?)?;
+    Ok(software)
+}
+
 async fn get_tags(client: &ExtraHopClient) -> Result<Vec<Tag>, Box<dyn std::error::Error>> {
     let response = reqwest_get(&client, "tags").await?;
     let tags: Vec<Tag> = serde_json::from_str(&response.text().await?)?;
@@ -246,6 +255,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::Networks,
             Getter::NetworkLocalities,
             Getter::Tags,
+            Getter::Software,
             Getter::ThreatCollections,
             Getter::Vlans,
         ],
@@ -268,6 +278,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::NetworkLocalities,
             Getter::Nodes,
             Getter::RunningConfig,
+            Getter::Software,
             Getter::Tags,
             Getter::ThreatCollections,
             Getter::Vlans,
@@ -288,6 +299,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::NetworkLocalities,
             Getter::PacketCaptures,
             Getter::RunningConfig,
+            Getter::Software,
             Getter::Tags,
             Getter::ThreatCollections,
             Getter::Vlans,
@@ -397,6 +409,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut network_localities: HashMap<String, Vec<NetworkLocality>> = HashMap::new();
     let mut nodes: HashMap<String, Vec<Node>> = HashMap::new();
     let mut packet_captures: HashMap<String, Vec<PacketCapture>> = HashMap::new();
+    let mut software: HashMap<String, Vec<Software>> = HashMap::new();
     let mut tags: HashMap<String, Vec<Tag>> = HashMap::new();
     let mut threat_collections: HashMap<String, Vec<ThreatCollection>> = HashMap::new();
     let mut vlans: HashMap<String, Vec<Vlan>> = HashMap::new();
@@ -484,6 +497,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 Getter::RunningConfig => {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
                         _ = get_running_config(&c).await?;
+                    }
+                }
+                Getter::Software => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                        let result = get_software(&c).await?;
+                        software.insert(String::from(&c.hostname), result);
                     }
                 }
                 Getter::Tags => {
@@ -627,6 +646,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 for (key, value) in nodes {
                     println!("{}:", key);
                     let table = Table::new(value).with(Rotate::Left);
+                    println!("{table}");
+                }
+            }
+            Getter::Software => {
+                for (key, mut value) in software {
+                    value.sort_by(|a, b| a.name.cmp(&b.name));
+
+                    println!("=> {}:", key);
+                    let table = Table::new(value);
                     println!("{table}");
                 }
             }

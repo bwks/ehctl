@@ -13,6 +13,7 @@ pub mod network_locality;
 pub mod node;
 pub mod packet_capture;
 pub mod running_config;
+pub mod software;
 pub mod tag;
 pub mod threat_collection;
 pub mod vlan;
