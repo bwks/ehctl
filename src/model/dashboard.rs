@@ -32,15 +32,15 @@ impl Tabled for Dashboard {
 
     fn fields(&self) -> Vec<String> {
         vec![
-            format!("{}", self.author),
-            format!("{}", self.comment),
+            self.author.to_string(),
+            self.comment.to_string(),
             format!("{}", self.id),
             format!("{}", self.mod_time),
-            format!("{}", self.name),
-            format!("{}", self.owner),
+            self.name.to_string(),
+            self.owner.to_string(),
             self.rights.join(", "),
-            format!("{}", self.short_code),
-            format!("{}", self._type),
+            self.short_code.to_string(),
+            self._type.to_string(),
         ]
     }
 

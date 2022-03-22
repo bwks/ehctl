@@ -2,7 +2,6 @@ use serde::Deserialize;
 use std::env;
 use std::fs;
 use std::process::exit;
-use toml;
 
 #[derive(Debug, Deserialize)]
 pub struct ExtraHopConfig {
@@ -66,7 +65,7 @@ impl ExtraHopConfig {
         get_credentials(&mut config.eda);
         get_credentials(&mut config.eca);
         get_credentials(&mut config.exa);
-        return config;
+        config
     }
 }
 
@@ -74,10 +73,10 @@ impl ExtraHopConfig {
 /// if the credentials are not defined.
 fn get_credentials(ehc: &mut Vec<ExtraHopCredential>) {
     for mut i in ehc.iter_mut() {
-        if i.user_id == String::from("") {
+        if i.user_id.is_empty() {
             i.user_id = get_env_var(format!("{}_USER_ID", i.hostname));
         }
-        if i.api_key == String::from("") {
+        if i.api_key.is_empty() {
             i.api_key = get_env_var(format!("{}_API_KEY", i.hostname));
         }
     }
@@ -87,19 +86,17 @@ fn get_credentials(ehc: &mut Vec<ExtraHopCredential>) {
 /// the environment variable was not found.
 fn get_env_var(s: String) -> String {
     let ts = to_env_var(s);
-    let var = match env::var(&ts) {
+    match env::var(&ts) {
         Ok(c) => c,
         Err(_) => String::from(""),
-    };
-    var
+    }
 }
 
 /// Convert a string to an environment variable compatible string.
 /// Replaces dashes (-) and dots (.) with underscores (_)
 /// and transforms to UPPERCASE.
 fn to_env_var(s: String) -> String {
-    let var = s.replace("-", "_").replace(".", "_").to_uppercase();
-    var
+    s.replace('-', "_").replace('.', "_").to_uppercase()
 }
 
 #[cfg(test)]

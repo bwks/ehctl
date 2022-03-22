@@ -2,11 +2,11 @@ use std::collections::HashMap;
 use std::process::exit;
 
 use base64::encode;
-use reqwest;
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, AUTHORIZATION, CONTENT_TYPE};
 use reqwest::StatusCode;
 use serde::Deserialize;
 
+#[allow(clippy::upper_case_acronyms)]
 #[allow(dead_code)]
 #[derive(Debug, Eq, PartialEq, Hash)]
 pub enum ExtraHopAppliance {
@@ -38,6 +38,7 @@ pub struct ExtraHopClient {
     pub user_id: String,
 }
 
+#[allow(clippy::too_many_arguments)]
 impl ExtraHopClient {
     pub fn new(
         hostname: String,
@@ -52,25 +53,25 @@ impl ExtraHopClient {
         let client = build_reqwest_client(&api_key, &api_token, &allow_insecure_tls);
 
         Self {
-            hostname: hostname,
-            user_id: user_id,
-            api_key: api_key,
-            api_token: api_token,
-            base_url: base_url,
-            timestamp: timestamp,
-            allow_insecure_tls: allow_insecure_tls,
-            appliance_type: appliance_type,
+            hostname,
+            user_id,
+            api_key,
+            api_token, 
+            base_url,
+            timestamp,
+            allow_insecure_tls,
+            appliance_type, 
             reqwest_client: client,
         }
     }
 }
 
 fn build_reqwest_client(
-    api_key: &String,
-    api_token: &String,
+    api_key: &str,
+    api_token: &str,
     allow_insecure_tls: &bool,
 ) -> reqwest::Client {
-    let auth_value = if api_token == &String::from("") {
+    let auth_value = if api_token.is_empty() {
         // no token then must be an eca, eda, exa, eta
         format!("ExtraHop apikey={api_key}")
     } else {
@@ -103,9 +104,9 @@ fn build_reqwest_client(
 }
 
 pub async fn get_oauth_token(
-    hostname: &String,
-    user_id: &String,
-    api_key: &String,
+    hostname: &str,
+    user_id: &str,
+    api_key: &str,
 ) -> Result<ExtraHopToken, Box<dyn std::error::Error>> {
     let auth_url = format!("https://{hostname}/oauth2/token");
 

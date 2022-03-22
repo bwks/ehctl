@@ -16,6 +16,7 @@ pub mod running_config;
 pub mod software;
 pub mod tag;
 pub mod threat_collection;
+pub mod trigger;
 pub mod vlan;
 
 pub fn null_to_default<'de, D, T>(deserializer: D) -> Result<T, D::Error>

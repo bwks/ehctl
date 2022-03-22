@@ -24,13 +24,13 @@ use model::running_config::RunningConfig;
 use model::software::Software;
 use model::tag::Tag;
 use model::threat_collection::ThreatCollection;
+use model::trigger::Trigger;
 use model::vlan::Vlan;
 
 mod util;
 
 use chrono::Local;
 use reqwest::StatusCode;
-use serde_json;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::Write;
@@ -55,13 +55,13 @@ async fn reqwest_get(
 async fn get_appliances(
     client: &ExtraHopClient,
 ) -> Result<Vec<Appliance>, Box<dyn std::error::Error>> {
-    let response = reqwest_get(&client, "appliances").await?;
+    let response = reqwest_get(client, "appliances").await?;
     let appliances: Vec<Appliance> = serde_json::from_str(&response.text().await?)?;
     Ok(appliances)
 }
 
 async fn get_bundles(client: &ExtraHopClient) -> Result<Vec<Bundles>, Box<dyn std::error::Error>> {
-    let response = reqwest_get(&client, "bundles").await?;
+    let response = reqwest_get(client, "bundles").await?;
     let bundles: Vec<Bundles> = serde_json::from_str(&response.text().await?)?;
     Ok(bundles)
 }
@@ -69,13 +69,13 @@ async fn get_bundles(client: &ExtraHopClient) -> Result<Vec<Bundles>, Box<dyn st
 async fn get_dashboards(
     client: &ExtraHopClient,
 ) -> Result<Vec<Dashboard>, Box<dyn std::error::Error>> {
-    let response = reqwest_get(&client, "dashboards").await?;
+    let response = reqwest_get(client, "dashboards").await?;
     let dashboards: Vec<Dashboard> = serde_json::from_str(&response.text().await?)?;
     Ok(dashboards)
 }
 
 async fn get_devices(client: &ExtraHopClient) -> Result<Vec<Device>, Box<dyn std::error::Error>> {
-    let response = reqwest_get(&client, "devices").await?;
+    let response = reqwest_get(client, "devices").await?;
     let devices: Vec<Device> = serde_json::from_str(&response.text().await?)?;
     Ok(devices)
 }
@@ -83,21 +83,21 @@ async fn get_devices(client: &ExtraHopClient) -> Result<Vec<Device>, Box<dyn std
 async fn get_customizations(
     client: &ExtraHopClient,
 ) -> Result<Vec<Customization>, Box<dyn std::error::Error>> {
-    let response = reqwest_get(&client, "customizations").await?;
+    let response = reqwest_get(client, "customizations").await?;
     let customizations: Vec<Customization> = serde_json::from_str(&response.text().await?)?;
     Ok(customizations)
 }
 
 async fn create_customization(client: &ExtraHopClient) -> Result<(), Box<dyn std::error::Error>> {
     let name = format!("{}-{}", client.hostname, client.timestamp);
-    let body = serde_json::json!({ "name": format!("{}", name) });
+    let body = serde_json::json!({ "name": name.to_string() });
 
     println!("=> adding customization: {}", name);
     let url = format!("{}/customizations", client.base_url);
     let response = client.reqwest_client.post(url).json(&body).send().await?;
     if response.status() == StatusCode::CREATED {
         println!("=> new customization added: {}", name);
-        let customizations = get_customizations(&client).await?;
+        let customizations = get_customizations(client).await?;
         for c in customizations.iter() {
             if c.name.starts_with(&name) {
                 save_customization(client, c.id).await?;
@@ -123,7 +123,7 @@ async fn save_customization(
         let bytes = response.bytes().await?;
         let filename = format!("{}-{}.zip", client.hostname, client.timestamp);
         let mut wf = File::create(&filename)?;
-        wf.write(&bytes)
+        wf.write_all(&bytes)
             .expect("=> error writing customization to file");
         Ok(())
     } else {
@@ -136,19 +136,19 @@ async fn save_customization(
 async fn get_custom_devices(
     client: &ExtraHopClient,
 ) -> Result<Vec<CustomDevice>, Box<dyn std::error::Error>> {
-    let response = reqwest_get(&client, "customdevices").await?;
+    let response = reqwest_get(client, "customdevices").await?;
     let custom_devices: Vec<CustomDevice> = serde_json::from_str(&response.text().await?)?;
     Ok(custom_devices)
 }
 
 async fn get_extrahop(client: &ExtraHopClient) -> Result<ExtraHop, Box<dyn std::error::Error>> {
-    let response = reqwest_get(&client, "extrahop").await?;
+    let response = reqwest_get(client, "extrahop").await?;
     let extrahop: ExtraHop = serde_json::from_str(&response.text().await?)?;
     Ok(extrahop)
 }
 
 async fn get_running_config(client: &ExtraHopClient) -> Result<(), Box<dyn std::error::Error>> {
-    let response = reqwest_get(&client, "runningconfig").await?;
+    let response = reqwest_get(client, "runningconfig").await?;
     if response.status() == StatusCode::OK {
         let json_data: serde_json::Value = serde_json::from_str(&response.text().await?)?;
 
@@ -169,13 +169,13 @@ async fn get_running_config(client: &ExtraHopClient) -> Result<(), Box<dyn std::
 }
 
 async fn get_license(client: &ExtraHopClient) -> Result<Vec<License>, Box<dyn std::error::Error>> {
-    let response = reqwest_get(&client, "license").await?;
+    let response = reqwest_get(client, "license").await?;
     let licenses: License = serde_json::from_str(&response.text().await?)?;
     Ok(vec![licenses])
 }
 
 async fn get_networks(client: &ExtraHopClient) -> Result<Vec<Network>, Box<dyn std::error::Error>> {
-    let response = reqwest_get(&client, "networks").await?;
+    let response = reqwest_get(client, "networks").await?;
     let networks: Vec<Network> = serde_json::from_str(&response.text().await?)?;
     Ok(networks)
 }
@@ -183,13 +183,13 @@ async fn get_networks(client: &ExtraHopClient) -> Result<Vec<Network>, Box<dyn s
 async fn get_network_localities(
     client: &ExtraHopClient,
 ) -> Result<Vec<NetworkLocality>, Box<dyn std::error::Error>> {
-    let response = reqwest_get(&client, "networklocalities").await?;
+    let response = reqwest_get(client, "networklocalities").await?;
     let network_localities: Vec<NetworkLocality> = serde_json::from_str(&response.text().await?)?;
     Ok(network_localities)
 }
 
 async fn get_nodes(client: &ExtraHopClient) -> Result<Vec<Node>, Box<dyn std::error::Error>> {
-    let response = reqwest_get(&client, "nodes").await?;
+    let response = reqwest_get(client, "nodes").await?;
     let nodes: Vec<Node> = serde_json::from_str(&response.text().await?)?;
     Ok(nodes)
 }
@@ -197,7 +197,7 @@ async fn get_nodes(client: &ExtraHopClient) -> Result<Vec<Node>, Box<dyn std::er
 async fn get_packet_captures(
     client: &ExtraHopClient,
 ) -> Result<Vec<PacketCapture>, Box<dyn std::error::Error>> {
-    let response = reqwest_get(&client, "packetcaptures").await?;
+    let response = reqwest_get(client, "packetcaptures").await?;
     let packet_captures: Vec<PacketCapture> = serde_json::from_str(&response.text().await?)?;
     Ok(packet_captures)
 }
@@ -205,13 +205,13 @@ async fn get_packet_captures(
 async fn get_software(
     client: &ExtraHopClient,
 ) -> Result<Vec<Software>, Box<dyn std::error::Error>> {
-    let response = reqwest_get(&client, "software").await?;
+    let response = reqwest_get(client, "software").await?;
     let software: Vec<Software> = serde_json::from_str(&response.text().await?)?;
     Ok(software)
 }
 
 async fn get_tags(client: &ExtraHopClient) -> Result<Vec<Tag>, Box<dyn std::error::Error>> {
-    let response = reqwest_get(&client, "tags").await?;
+    let response = reqwest_get(client, "tags").await?;
     let tags: Vec<Tag> = serde_json::from_str(&response.text().await?)?;
     Ok(tags)
 }
@@ -219,13 +219,19 @@ async fn get_tags(client: &ExtraHopClient) -> Result<Vec<Tag>, Box<dyn std::erro
 async fn get_threat_collections(
     client: &ExtraHopClient,
 ) -> Result<Vec<ThreatCollection>, Box<dyn std::error::Error>> {
-    let response = reqwest_get(&client, "threatcollections").await?;
+    let response = reqwest_get(client, "threatcollections").await?;
     let threat_collections: Vec<ThreatCollection> = serde_json::from_str(&response.text().await?)?;
     Ok(threat_collections)
 }
 
+async fn get_triggers(client: &ExtraHopClient) -> Result<Vec<Trigger>, Box<dyn std::error::Error>> {
+    let response = reqwest_get(client, "triggers").await?;
+    let triggers: Vec<Trigger> = serde_json::from_str(&response.text().await?)?;
+    Ok(triggers)
+}
+
 async fn get_vlans(client: &ExtraHopClient) -> Result<Vec<Vlan>, Box<dyn std::error::Error>> {
-    let response = reqwest_get(&client, "vlans").await?;
+    let response = reqwest_get(client, "vlans").await?;
     let vlans: Vec<Vlan> = serde_json::from_str(&response.text().await?)?;
     Ok(vlans)
 }
@@ -255,6 +261,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::Networks,
             Getter::NetworkLocalities,
             Getter::Tags,
+            Getter::Triggers,
             Getter::Software,
             Getter::ThreatCollections,
             Getter::Vlans,
@@ -281,6 +288,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::Software,
             Getter::Tags,
             Getter::ThreatCollections,
+            // Getter::Triggers,
             Getter::Vlans,
         ],
     );
@@ -302,6 +310,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::Software,
             Getter::Tags,
             Getter::ThreatCollections,
+            // Getter::Triggers,
             Getter::Vlans,
         ],
     );
@@ -412,114 +421,121 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut software: HashMap<String, Vec<Software>> = HashMap::new();
     let mut tags: HashMap<String, Vec<Tag>> = HashMap::new();
     let mut threat_collections: HashMap<String, Vec<ThreatCollection>> = HashMap::new();
+    let mut triggers: HashMap<String, Vec<Trigger>> = HashMap::new();
     let mut vlans: HashMap<String, Vec<Vlan>> = HashMap::new();
 
     for c in extrahop_appliaces.iter() {
         if cli.backup {
             match c.appliance_type {
-                ExtraHopAppliance::ECA | ExtraHopAppliance::EDA => create_customization(&c).await?,
+                ExtraHopAppliance::ECA | ExtraHopAppliance::EDA => create_customization(c).await?,
                 _ => {}
             }
         } else {
             match cli.getter {
                 Getter::Appliances => {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
-                        let result = get_appliances(&c).await?;
+                        let result = get_appliances(c).await?;
                         appliances.insert(String::from(&c.hostname), result);
                     }
                 }
                 Getter::Bundles => {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
-                        let result = get_bundles(&c).await?;
+                        let result = get_bundles(c).await?;
                         bundles.insert(String::from(&c.hostname), result);
                     }
                 }
                 Getter::Customizations => {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
-                        let result = get_customizations(&c).await?;
+                        let result = get_customizations(c).await?;
                         customizations.insert(String::from(&c.hostname), result);
                     }
                 }
                 Getter::CustomDevices => {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
-                        let result = get_custom_devices(&c).await?;
+                        let result = get_custom_devices(c).await?;
                         custom_devices.insert(String::from(&c.hostname), result);
                     }
                 }
                 Getter::Dashboards => {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
-                        let result = get_dashboards(&c).await?;
+                        let result = get_dashboards(c).await?;
                         dashboards.insert(String::from(&c.hostname), result);
                     }
                 }
                 Getter::Devices => {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
-                        let result = get_devices(&c).await?;
+                        let result = get_devices(c).await?;
                         devices.insert(String::from(&c.hostname), result);
                     }
                 }
                 Getter::Extrahop => {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
-                        let result = get_extrahop(&c).await?;
+                        let result = get_extrahop(c).await?;
                         extrahops.push(result);
                     }
                 }
                 Getter::Licenses => {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
-                        let result = get_license(&c).await?;
+                        let result = get_license(c).await?;
                         licenses.insert(String::from(&c.hostname), result);
                     }
                 }
                 Getter::Networks => {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
-                        let result = get_networks(&c).await?;
+                        let result = get_networks(c).await?;
                         networks.insert(String::from(&c.hostname), result);
                     }
                 }
                 Getter::NetworkLocalities => {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
-                        let result = get_network_localities(&c).await?;
+                        let result = get_network_localities(c).await?;
                         network_localities.insert(String::from(&c.hostname), result);
                     }
                 }
                 Getter::Nodes => {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
-                        let result = get_nodes(&c).await?;
+                        let result = get_nodes(c).await?;
                         nodes.insert(String::from(&c.hostname), result);
                     }
                 }
                 Getter::PacketCaptures => {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
-                        let result = get_packet_captures(&c).await?;
+                        let result = get_packet_captures(c).await?;
                         packet_captures.insert(String::from(&c.hostname), result);
                     }
                 }
                 Getter::RunningConfig => {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
-                        _ = get_running_config(&c).await?;
+                        _ = get_running_config(c).await?;
                     }
                 }
                 Getter::Software => {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
-                        let result = get_software(&c).await?;
+                        let result = get_software(c).await?;
                         software.insert(String::from(&c.hostname), result);
                     }
                 }
                 Getter::Tags => {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
-                        let result = get_tags(&c).await?;
+                        let result = get_tags(c).await?;
                         tags.insert(String::from(&c.hostname), result);
                     }
                 }
                 Getter::ThreatCollections => {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
-                        let result = get_threat_collections(&c).await?;
+                        let result = get_threat_collections(c).await?;
                         threat_collections.insert(String::from(&c.hostname), result);
+                    }
+                }
+                Getter::Triggers => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                        let result = get_triggers(c).await?;
+                        triggers.insert(String::from(&c.hostname), result);
                     }
                 }
                 Getter::Vlans => {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
-                        let result = get_vlans(&c).await?;
+                        let result = get_vlans(c).await?;
                         vlans.insert(String::from(&c.hostname), result);
                     }
                 }
@@ -597,9 +613,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
             Getter::Devices => {
-                for (key, mut value) in devices {
-                    value.reverse();
-
+                for (key, value) in devices {
                     println!("{}:", key);
                     for d in value.iter() {
                         let table = Table::new(vec![d])
@@ -674,6 +688,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     println!("=> {}:", key);
                     let table = Table::new(value);
                     println!("{table}");
+                }
+            }
+            Getter::Triggers => {
+                for (key, value) in triggers {
+                    println!("{}:", key);
+                    for d in value.iter() {
+                        let table = Table::new(vec![d])
+                            .with(
+                                Modify::new(Full)
+                                    // Not released yet, will be in future version.
+                                    // .with(MinWidth::new(50))
+                                    .with(MaxWidth::wrapping(50))
+                                    .with(Alignment::left()),
+                            )
+                            .with(Rotate::Left);
+                        println!("{}", table);
+                    }
                 }
             }
             Getter::Vlans => {

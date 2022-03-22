@@ -77,13 +77,13 @@ vlan_min:         {}
             criterias.push(tmp);
         }
         vec![
-            format!("{}", self.author),
-            format!("{}", self.description),
+            self.author.to_string(),
+            self.description.to_string(),
             format!("{}", self.disabled),
-            format!("{}", self.extrahop_id),
+            self.extrahop_id.to_string(),
             format!("{}", self.id),
             format!("{}", self.mod_time),
-            format!("{}", self.name),
+            self.name.to_string(),
             criterias.join("\n"),
         ]
     }

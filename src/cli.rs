@@ -18,10 +18,12 @@ pub enum Getter {
     Software,
     Tags,
     ThreatCollections,
+    Triggers,
     Vlans,
     None,
 }
 
+#[allow(clippy::upper_case_acronyms)]
 pub struct CLI {
     pub backup: bool,
     pub backup_device: String,
@@ -93,6 +95,7 @@ impl CLI {
                     "software" => Getter::Software,
                     "tags" => Getter::Tags,
                     "threatcollections" => Getter::ThreatCollections,
+                    "triggers" => Getter::Triggers,
                     "vlans" => Getter::Vlans,
                     _ => {
                         println!("=> unknown endpoint `{}`", getter);
