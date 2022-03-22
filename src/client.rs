@@ -56,11 +56,11 @@ impl ExtraHopClient {
             hostname,
             user_id,
             api_key,
-            api_token, 
+            api_token,
             base_url,
             timestamp,
             allow_insecure_tls,
-            appliance_type, 
+            appliance_type,
             reqwest_client: client,
         }
     }

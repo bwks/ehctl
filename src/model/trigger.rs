@@ -50,7 +50,6 @@ pub struct TriggerHints {
     pub flow_server_port_max: i64,
 }
 
-
 // TODO: This needs works to get working
 impl Tabled for Trigger {
     const LENGTH: usize = 50;
