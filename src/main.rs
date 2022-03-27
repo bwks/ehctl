@@ -5,9 +5,10 @@ mod client;
 use client::{get_oauth_token, ExtraHopAppliance, ExtraHopClient};
 
 mod cli;
-use cli::{Getter, CLI};
+use cli::{Cli, Getter};
 
 mod model;
+use model::api_key::ApiKey;
 use model::appliance::Appliance;
 use model::bundle::Bundles;
 use model::custom_device::CustomDevice;
@@ -50,6 +51,12 @@ async fn reqwest_get(
         eprintln!("{:#?}", response.error_for_status());
         exit(1)
     }
+}
+
+async fn get_api_keys(client: &ExtraHopClient) -> Result<Vec<ApiKey>, Box<dyn std::error::Error>> {
+    let response = reqwest_get(client, "apikeys").await?;
+    let api_keys: Vec<ApiKey> = serde_json::from_str(&response.text().await?)?;
+    Ok(api_keys)
 }
 
 async fn get_appliances(
@@ -238,7 +245,7 @@ async fn get_vlans(client: &ExtraHopClient) -> Result<Vec<Vlan>, Box<dyn std::er
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let cli = CLI::new();
+    let cli = Cli::new();
 
     if !cli.backup && cli.getter == Getter::None {
         exit(1)
@@ -270,6 +277,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     getter_map.insert(
         ExtraHopAppliance::ECA,
         vec![
+            Getter::ApiKeys,
             Getter::Appliances,
             Getter::Bundles,
             Getter::Customizations,
@@ -295,6 +303,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     getter_map.insert(
         ExtraHopAppliance::EDA,
         vec![
+            Getter::ApiKeys,
             Getter::Appliances,
             Getter::Bundles,
             Getter::Customizations,
@@ -317,6 +326,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     getter_map.insert(
         ExtraHopAppliance::ETA,
         vec![
+            Getter::ApiKeys,
             Getter::Appliances,
             Getter::Extrahop,
             Getter::Licenses,
@@ -326,6 +336,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     getter_map.insert(
         ExtraHopAppliance::EXA,
         vec![
+            Getter::ApiKeys,
             Getter::Appliances,
             Getter::Extrahop,
             Getter::Licenses,
@@ -406,13 +417,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     //     etas.push(client);
     // }
 
-    let mut extrahops = vec![];
+    let mut api_keys: HashMap<String, Vec<ApiKey>> = HashMap::new();
     let mut appliances: HashMap<String, Vec<Appliance>> = HashMap::new();
     let mut bundles: HashMap<String, Vec<Bundles>> = HashMap::new();
     let mut customizations: HashMap<String, Vec<Customization>> = HashMap::new();
     let mut custom_devices: HashMap<String, Vec<CustomDevice>> = HashMap::new();
     let mut dashboards: HashMap<String, Vec<Dashboard>> = HashMap::new();
     let mut devices: HashMap<String, Vec<Device>> = HashMap::new();
+    let mut extrahops = vec![];
     let mut licenses: HashMap<String, Vec<License>> = HashMap::new();
     let mut networks: HashMap<String, Vec<Network>> = HashMap::new();
     let mut network_localities: HashMap<String, Vec<NetworkLocality>> = HashMap::new();
@@ -432,6 +444,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         } else {
             match cli.getter {
+                Getter::ApiKeys => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                        let result = get_api_keys(c).await?;
+                        api_keys.insert(String::from(&c.hostname), result);
+                    }
+                }
                 Getter::Appliances => {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
                         let result = get_appliances(c).await?;
@@ -549,6 +567,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if !cli.backup {
         match cli.getter {
+            Getter::ApiKeys => {
+                for (key, value) in api_keys {
+                    println!("{key}:");
+                    for a in value.iter() {
+                        let table = Table::new(vec![a])
+                            .with(
+                                Modify::new(Row(1..))
+                                    // .with(MinWidth::new(50))
+                                    .with(MaxWidth::wrapping(50)),
+                            )
+                            .with(Rotate::Left);
+                        println!("{table}");
+                    }
+                }
+            }
             Getter::Appliances => {
                 for (key, value) in appliances {
                     println!("{key}:");

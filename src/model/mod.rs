@@ -1,5 +1,6 @@
 use serde::{Deserialize, Deserializer};
 
+pub mod api_key;
 pub mod appliance;
 pub mod bundle;
 pub mod custom_device;

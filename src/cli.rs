@@ -3,6 +3,7 @@ use clap::{Arg, Command};
 #[derive(Eq, PartialEq)]
 pub enum Getter {
     Appliances,
+    ApiKeys,
     Bundles,
     Customizations,
     CustomDevices,
@@ -23,14 +24,13 @@ pub enum Getter {
     None,
 }
 
-#[allow(clippy::upper_case_acronyms)]
-pub struct CLI {
+pub struct Cli {
     pub backup: bool,
     pub backup_device: String,
     pub getter: Getter,
 }
 
-impl CLI {
+impl Cli {
     fn default() -> Self {
         Self {
             backup: false,
@@ -60,7 +60,7 @@ impl CLI {
             )
             .get_matches();
 
-        let mut cli = CLI::default();
+        let mut cli = Cli::default();
 
         // backup
         if let Some(backup_matches) = matches.subcommand_matches("backup") {
@@ -79,6 +79,7 @@ impl CLI {
         else if let Some(get_matches) = matches.subcommand_matches("get") {
             if let Some(getter) = get_matches.value_of("endpoint") {
                 cli.getter = match getter {
+                    "apikeys" => Getter::ApiKeys,
                     "appliances" => Getter::Appliances,
                     "bundles" => Getter::Bundles,
                     "customizations" => Getter::Customizations,
