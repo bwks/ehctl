@@ -347,19 +347,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut extrahop_appliaces: Vec<ExtraHopClient> = Vec::new();
 
     for c in configs.ccp {
-        let token = get_oauth_token(&c.hostname, &c.user_id, &c.api_key).await?;
+        if !c.hostname.is_empty() {
+            let token = get_oauth_token(&c.hostname, &c.user_id, &c.api_key).await?;
 
-        let client = ExtraHopClient::new(
-            String::from(&c.hostname),
-            String::from(&c.user_id),
-            String::from(&c.api_key),
-            format!("https://{}/api/v1", &c.hostname),
-            timestamp.to_string(),
-            token.access_token,
-            c.allow_insecure_tls,
-            ExtraHopAppliance::CCP,
-        );
-        extrahop_appliaces.push(client);
+            let client = ExtraHopClient::new(
+                String::from(&c.hostname),
+                String::from(&c.user_id),
+                String::from(&c.api_key),
+                format!("https://{}/api/v1", &c.hostname),
+                timestamp.to_string(),
+                token.access_token,
+                c.allow_insecure_tls,
+                ExtraHopAppliance::CCP,
+            );
+            extrahop_appliaces.push(client);
+        };
     }
 
     for c in configs.eca {
@@ -404,18 +406,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         extrahop_appliaces.push(client);
     }
 
-    // for c in configs.eta {
-    //     let client = ExtraHopClient::new(
-    //         String::from(&c.hostname),
-    //         String::from(&c.user_id),
-    //         String::from(&c.api_key),
-    //         format!("https://{}/api/v1", &c.hostname),
-    //         timestamp.to_string(),
-    //         String::from(""),
-    //         c.allow_insecure_tls,
-    //     );
-    //     etas.push(client);
-    // }
+    for c in configs.eta {
+        let client = ExtraHopClient::new(
+            String::from(&c.hostname),
+            String::from(&c.user_id),
+            String::from(&c.api_key),
+            format!("https://{}/api/v1", &c.hostname),
+            timestamp.to_string(),
+            String::from(""),
+            c.allow_insecure_tls,
+            ExtraHopAppliance::ETA,
+        );
+        extrahop_appliaces.push(client);
+    }
 
     let mut api_keys: HashMap<String, Vec<ApiKey>> = HashMap::new();
     let mut appliances: HashMap<String, Vec<Appliance>> = HashMap::new();

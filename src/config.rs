@@ -13,11 +13,15 @@ pub struct ExtraHopConfig {
     pub eda: Vec<ExtraHopCredential>,
     #[serde(default)]
     pub exa: Vec<ExtraHopCredential>,
+    #[serde(default)]
+    pub eta: Vec<ExtraHopCredential>,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct ExtraHopCredential {
+    #[serde(default)]
     pub hostname: String,
+    #[serde(default)]
     pub allow_insecure_tls: bool,
     #[serde(default)]
     pub user_id: String,
@@ -26,6 +30,16 @@ pub struct ExtraHopCredential {
 }
 
 impl ExtraHopConfig {
+    #[allow(dead_code)]
+    pub fn default() -> Self {
+        Self {
+            ccp: vec![],
+            eca: vec![],
+            eda: vec![],
+            exa: vec![],
+            eta: vec![],
+        }
+    }
     pub fn new() -> Self {
         let config_file = match env::var("EHCTL_CONFIG") {
             Ok(cf) => cf,
@@ -52,6 +66,7 @@ impl ExtraHopConfig {
                 exit(1);
             }
         };
+
         let mut config: Self = match toml::from_str(&contents) {
             Ok(c) => c,
             Err(e) => {
@@ -65,6 +80,7 @@ impl ExtraHopConfig {
         get_credentials(&mut config.eda);
         get_credentials(&mut config.eca);
         get_credentials(&mut config.exa);
+        get_credentials(&mut config.eta);
         config
     }
 }
