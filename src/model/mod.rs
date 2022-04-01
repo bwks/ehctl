@@ -7,6 +7,7 @@ pub mod custom_device;
 pub mod customization;
 pub mod dashboard;
 pub mod device;
+pub mod device_group;
 pub mod extrahop;
 pub mod license;
 pub mod network;

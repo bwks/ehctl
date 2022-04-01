@@ -15,6 +15,7 @@ use model::custom_device::CustomDevice;
 use model::customization::Customization;
 use model::dashboard::Dashboard;
 use model::device::Device;
+use model::device_group::DeviceGroup;
 use model::extrahop::ExtraHop;
 use model::license::License;
 use model::network::Network;
@@ -85,6 +86,14 @@ async fn get_devices(client: &ExtraHopClient) -> Result<Vec<Device>, Box<dyn std
     let response = reqwest_get(client, "devices").await?;
     let devices: Vec<Device> = serde_json::from_str(&response.text().await?)?;
     Ok(devices)
+}
+
+async fn get_device_groups(
+    client: &ExtraHopClient,
+) -> Result<Vec<DeviceGroup>, Box<dyn std::error::Error>> {
+    let response = reqwest_get(client, "devicegroups").await?;
+    let device_groups: Vec<DeviceGroup> = serde_json::from_str(&response.text().await?)?;
+    Ok(device_groups)
 }
 
 async fn get_customizations(
@@ -264,6 +273,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::Bundles,
             Getter::Dashboards,
             Getter::Devices,
+            Getter::DeviceGroups,
             Getter::Extrahop,
             Getter::Networks,
             Getter::NetworkLocalities,
@@ -287,6 +297,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             // Getter::CustomDevices,
             Getter::Dashboards,
             Getter::Devices,
+            Getter::DeviceGroups,
             Getter::Extrahop,
             Getter::Licenses,
             Getter::Networks,
@@ -310,6 +321,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::CustomDevices,
             Getter::Dashboards,
             Getter::Devices,
+            Getter::DeviceGroups,
             Getter::Extrahop,
             Getter::Licenses,
             Getter::Networks,
@@ -427,6 +439,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut custom_devices: HashMap<String, Vec<CustomDevice>> = HashMap::new();
     let mut dashboards: HashMap<String, Vec<Dashboard>> = HashMap::new();
     let mut devices: HashMap<String, Vec<Device>> = HashMap::new();
+    let mut device_groups: HashMap<String, Vec<DeviceGroup>> = HashMap::new();
     let mut extrahops = vec![];
     let mut licenses: HashMap<String, Vec<License>> = HashMap::new();
     let mut networks: HashMap<String, Vec<Network>> = HashMap::new();
@@ -487,6 +500,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
                         let result = get_devices(c).await?;
                         devices.insert(String::from(&c.hostname), result);
+                    }
+                }
+                Getter::DeviceGroups => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                        let result = get_device_groups(c).await?;
+                        device_groups.insert(String::from(&c.hostname), result);
                     }
                 }
                 Getter::Extrahop => {
@@ -665,10 +684,25 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
             }
+            Getter::DeviceGroups => {
+                for (key, value) in device_groups {
+                    println!("{}:", key);
+                    for d in value.iter() {
+                        let table = Table::new(vec![d])
+                            .with(
+                                Modify::new(Full)
+                                    // Not released yet, will be in future version.
+                                    // .with(MinWidth::new(50))
+                                    .with(MaxWidth::wrapping(50))
+                                    .with(Alignment::left()),
+                            )
+                            .with(Rotate::Left);
+                        println!("{}", table);
+                    }
+                }
+            }
             Getter::Extrahop => {
-                let table = Table::new(extrahops)
-                    .with(Disable::Column(1..=1))
-                    .with(Rotate::Left);
+                let table = Table::new(extrahops).with(Disable::Column(1..=1));
                 println!("{table}");
             }
             Getter::Licenses => {
