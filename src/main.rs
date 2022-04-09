@@ -9,6 +9,7 @@ use cli::{Cli, Getter};
 
 mod model;
 use model::activity_map::ActivityMap;
+use model::alert::Alert;
 use model::api_key::ApiKey;
 use model::appliance::Appliance;
 use model::bundle::Bundles;
@@ -67,6 +68,12 @@ async fn get_activity_maps(
     let response = reqwest_get(client, "activitymaps").await?;
     let activity_maps: Vec<ActivityMap> = serde_json::from_str(&response.text().await?)?;
     Ok(activity_maps)
+}
+
+async fn get_alerts(client: &ExtraHopClient) -> Result<Vec<Alert>, Box<dyn std::error::Error>> {
+    let response = reqwest_get(client, "alerts").await?;
+    let alerts: Vec<Alert> = serde_json::from_str(&response.text().await?)?;
+    Ok(alerts)
 }
 
 async fn get_appliances(
@@ -279,6 +286,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         ExtraHopAppliance::CCP,
         vec![
             Getter::ActivityMaps,
+            Getter::Alerts,
             Getter::Appliances,
             Getter::Bundles,
             Getter::Dashboards,
@@ -298,6 +306,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         ExtraHopAppliance::ECA,
         vec![
             Getter::ActivityMaps,
+            Getter::Alerts,
             Getter::ApiKeys,
             Getter::Appliances,
             Getter::Bundles,
@@ -326,6 +335,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         ExtraHopAppliance::EDA,
         vec![
             Getter::ActivityMaps,
+            Getter::Alerts,
             Getter::ApiKeys,
             Getter::Appliances,
             Getter::Bundles,
@@ -445,6 +455,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let mut activity_maps: HashMap<String, Vec<ActivityMap>> = HashMap::new();
+    let mut alerts: HashMap<String, Vec<Alert>> = HashMap::new();
     let mut api_keys: HashMap<String, Vec<ApiKey>> = HashMap::new();
     let mut appliances: HashMap<String, Vec<Appliance>> = HashMap::new();
     let mut bundles: HashMap<String, Vec<Bundles>> = HashMap::new();
@@ -477,6 +488,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
                         let result = get_activity_maps(c).await?;
                         activity_maps.insert(c.hostname.to_string(), result);
+                    }
+                }
+                Getter::Alerts => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                        let result = get_alerts(c).await?;
+                        alerts.insert(c.hostname.to_string(), result);
                     }
                 }
                 Getter::ApiKeys => {
@@ -610,6 +627,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         match cli.getter {
             Getter::ActivityMaps => {
                 println!("{:#?}", activity_maps);
+            }
+            Getter::Alerts => {
+                println!("{:#?}", alerts);
             }
             Getter::ApiKeys => {
                 for (key, value) in api_keys {

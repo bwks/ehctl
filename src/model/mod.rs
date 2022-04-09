@@ -1,6 +1,7 @@
 use serde::{Deserialize, Deserializer};
 
 pub mod activity_map;
+pub mod alert;
 pub mod api_key;
 pub mod appliance;
 pub mod bundle;
