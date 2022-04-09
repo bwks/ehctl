@@ -34,8 +34,8 @@ impl Tabled for Dashboard {
         vec![
             self.author.to_string(),
             self.comment.to_string(),
-            format!("{}", self.id),
-            format!("{}", self.mod_time),
+            self.id.to_string(),
+            self.mod_time.to_string(),
             self.name.to_string(),
             self.owner.to_string(),
             self.rights.join(", "),
@@ -46,15 +46,15 @@ impl Tabled for Dashboard {
 
     fn headers() -> Vec<String> {
         vec![
-            String::from("author"),
-            String::from("comment"),
-            String::from("id"),
-            String::from("mod_time"),
-            String::from("name"),
-            String::from("owner"),
-            String::from("rights"),
-            String::from("short_code"),
-            String::from("type"),
+            "author".to_string(),
+            "comment".to_string(),
+            "id".to_string(),
+            "mod_time".to_string(),
+            "name".to_string(),
+            "owner".to_string(),
+            "rights".to_string(),
+            "short_code".to_string(),
+            "type".to_string(),
         ]
     }
 }

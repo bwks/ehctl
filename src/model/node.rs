@@ -7,31 +7,31 @@ use crate::model::null_to_default;
 #[derive(Tabled, Debug, Deserialize)]
 pub struct Node {
     #[serde(deserialize_with = "null_to_default")]
-    add_time: i64,
+    pub add_time: i64,
     #[serde(deserialize_with = "null_to_default")]
-    display_name: String,
-    enabled: bool,
+    pub display_name: String,
+    pub enabled: bool,
     #[serde(deserialize_with = "null_to_default")]
-    firmware_version: String,
+    pub firmware_version: String,
     #[serde(deserialize_with = "null_to_default")]
-    hostname: String,
+    pub hostname: String,
     #[serde(deserialize_with = "null_to_default")]
-    id: i64,
+    pub id: i64,
     #[serde(deserialize_with = "null_to_default")]
-    license_status: String,
+    pub license_status: String,
     #[serde(deserialize_with = "null_to_default")]
-    nickname: String,
+    pub nickname: String,
     ntp_sync: bool,
     #[serde(deserialize_with = "null_to_default")]
-    product_key: String,
+    pub product_key: String,
     #[serde(deserialize_with = "null_to_default")]
-    status_code: String,
+    pub status_code: String,
     #[serde(deserialize_with = "null_to_default")]
-    status_message: String,
+    pub status_message: String,
     #[serde(deserialize_with = "null_to_default")]
-    time_added: i64,
+    pub time_added: i64,
     #[serde(deserialize_with = "null_to_default")]
-    time_offset: i64,
+    pub time_offset: i64,
     #[serde(deserialize_with = "null_to_default")]
-    uuid: String,
+    pub uuid: String,
 }

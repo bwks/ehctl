@@ -79,10 +79,10 @@ vlan_min:         {}
         vec![
             self.author.to_string(),
             self.description.to_string(),
-            format!("{}", self.disabled),
+            self.disabled.to_string(),
             self.extrahop_id.to_string(),
-            format!("{}", self.id),
-            format!("{}", self.mod_time),
+            self.id.to_string(),
+            self.mod_time.to_string(),
             self.name.to_string(),
             criterias.join("\n"),
         ]
@@ -90,14 +90,14 @@ vlan_min:         {}
 
     fn headers() -> Vec<String> {
         vec![
-            String::from("author"),
-            String::from("description"),
-            String::from("disabled"),
-            String::from("extrahop_id"),
-            String::from("id"),
-            String::from("mod_time"),
-            String::from("name"),
-            String::from("criteria"),
+            "author".to_string(),
+            "description".to_string(),
+            "disabled".to_string(),
+            "extrahop_id".to_string(),
+            "id".to_string(),
+            "mod_time".to_string(),
+            "name".to_string(),
+            "criteria".to_string(),
         ]
     }
 }

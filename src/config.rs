@@ -104,7 +104,7 @@ fn get_env_var(s: String) -> String {
     let ts = to_env_var(s);
     match env::var(&ts) {
         Ok(c) => c,
-        Err(_) => String::from(""),
+        Err(_) => "".to_string(),
     }
 }
 
@@ -122,8 +122,8 @@ mod tests {
     #[test]
     fn test_to_env_var() {
         assert_eq!(
-            to_env_var(String::from("THIS_is-A.TEST")),
-            String::from("THIS_IS_A_TEST"),
+            to_env_var("THIS_is-A.TEST".to_string()),
+            "THIS_IS_A_TEST".to_string(),
         );
     }
 }

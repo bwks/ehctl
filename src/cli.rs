@@ -2,6 +2,7 @@ use clap::{Arg, Command};
 
 #[derive(Eq, PartialEq)]
 pub enum Getter {
+    ActivityMaps,
     Appliances,
     ApiKeys,
     Bundles,
@@ -35,7 +36,7 @@ impl Cli {
     fn default() -> Self {
         Self {
             backup: false,
-            backup_device: String::from(""),
+            backup_device: "".to_string(),
             getter: Getter::None,
         }
     }
@@ -69,7 +70,7 @@ impl Cli {
                 // println!("backup device: {device}");
                 if device == "all" {
                     cli.backup = true;
-                    cli.backup_device = String::from(device)
+                    cli.backup_device = device.to_string()
                 } else {
                     println!("=> unknown device `{device}`");
                     cli.backup = false
@@ -80,6 +81,7 @@ impl Cli {
         else if let Some(get_matches) = matches.subcommand_matches("get") {
             if let Some(getter) = get_matches.value_of("endpoint") {
                 cli.getter = match getter {
+                    "activitymaps" => Getter::ActivityMaps,
                     "apikeys" => Getter::ApiKeys,
                     "appliances" => Getter::Appliances,
                     "bundles" => Getter::Bundles,

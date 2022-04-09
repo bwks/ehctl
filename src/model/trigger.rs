@@ -74,30 +74,30 @@ impl Tabled for Trigger {
         vec![
             // format!("{}", self.apply_all),
             self.author.to_string(),
-            format!("{}", self.debug),
+            self.debug.to_string(),
             self.description.to_string(),
-            format!("{}", self.disabled),
+            self.disabled.to_string(),
             self.events.join(", "),
-            format!("{}", self.id),
-            format!("{}", self.mod_time),
+            self.id.to_string(),
+            self.mod_time.to_string(),
             self.name.to_string(),
-            // format!("{}", self.script),
+            // self.script.to_string(),
             // hints_str,
         ]
     }
     fn headers() -> Vec<String> {
         vec![
             // String::from("apply_all"),
-            String::from("author"),
-            String::from("debug"),
-            String::from("description"),
-            String::from("disabled"),
-            String::from("events"),
-            String::from("id"),
-            String::from("mod_time"),
-            String::from("name"),
-            // String::from("script"),
-            // String::from("hints"),
+            "author".to_string(),
+            "debug".to_string(),
+            "description".to_string(),
+            "disabled".to_string(),
+            "events".to_string(),
+            "id".to_string(),
+            "mod_time".to_string(),
+            "name".to_string(),
+            // "script".to_string(),
+            // "hints".to_string(),
         ]
     }
 }

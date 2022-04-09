@@ -8,6 +8,7 @@ mod cli;
 use cli::{Cli, Getter};
 
 mod model;
+use model::activity_map::ActivityMap;
 use model::api_key::ApiKey;
 use model::appliance::Appliance;
 use model::bundle::Bundles;
@@ -58,6 +59,14 @@ async fn get_api_keys(client: &ExtraHopClient) -> Result<Vec<ApiKey>, Box<dyn st
     let response = reqwest_get(client, "apikeys").await?;
     let api_keys: Vec<ApiKey> = serde_json::from_str(&response.text().await?)?;
     Ok(api_keys)
+}
+
+async fn get_activity_maps(
+    client: &ExtraHopClient,
+) -> Result<Vec<ActivityMap>, Box<dyn std::error::Error>> {
+    let response = reqwest_get(client, "activitymaps").await?;
+    let activity_maps: Vec<ActivityMap> = serde_json::from_str(&response.text().await?)?;
+    Ok(activity_maps)
 }
 
 async fn get_appliances(
@@ -269,6 +278,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     getter_map.insert(
         ExtraHopAppliance::CCP,
         vec![
+            Getter::ActivityMaps,
             Getter::Appliances,
             Getter::Bundles,
             Getter::Dashboards,
@@ -287,6 +297,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     getter_map.insert(
         ExtraHopAppliance::ECA,
         vec![
+            Getter::ActivityMaps,
             Getter::ApiKeys,
             Getter::Appliances,
             Getter::Bundles,
@@ -314,6 +325,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     getter_map.insert(
         ExtraHopAppliance::EDA,
         vec![
+            Getter::ActivityMaps,
             Getter::ApiKeys,
             Getter::Appliances,
             Getter::Bundles,
@@ -363,9 +375,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let token = get_oauth_token(&c.hostname, &c.user_id, &c.api_key).await?;
 
             let client = ExtraHopClient::new(
-                String::from(&c.hostname),
-                String::from(&c.user_id),
-                String::from(&c.api_key),
+                c.hostname.to_string(),
+                c.user_id,
+                c.api_key,
                 format!("https://{}/api/v1", &c.hostname),
                 timestamp.to_string(),
                 token.access_token,
@@ -378,12 +390,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     for c in configs.eca {
         let client = ExtraHopClient::new(
-            String::from(&c.hostname),
-            String::from(&c.user_id),
-            String::from(&c.api_key),
+            c.hostname.to_string(),
+            c.user_id,
+            c.api_key,
             format!("https://{}/api/v1", &c.hostname),
             timestamp.to_string(),
-            String::from(""),
+            "".to_string(),
             c.allow_insecure_tls,
             ExtraHopAppliance::ECA,
         );
@@ -392,12 +404,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     for c in configs.eda {
         let client = ExtraHopClient::new(
-            String::from(&c.hostname),
-            String::from(&c.user_id),
-            String::from(&c.api_key),
+            c.hostname.to_string(),
+            c.user_id,
+            c.api_key,
             format!("https://{}/api/v1", &c.hostname),
             timestamp.to_string(),
-            String::from(""),
+            "".to_string(),
             c.allow_insecure_tls,
             ExtraHopAppliance::EDA,
         );
@@ -406,12 +418,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     for c in configs.exa {
         let client = ExtraHopClient::new(
-            String::from(&c.hostname),
-            String::from(&c.user_id),
-            String::from(&c.api_key),
+            c.hostname.to_string(),
+            c.user_id,
+            c.api_key,
             format!("https://{}/api/v1", &c.hostname),
             timestamp.to_string(),
-            String::from(""),
+            "".to_string(),
             c.allow_insecure_tls,
             ExtraHopAppliance::EXA,
         );
@@ -420,18 +432,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     for c in configs.eta {
         let client = ExtraHopClient::new(
-            String::from(&c.hostname),
-            String::from(&c.user_id),
-            String::from(&c.api_key),
+            c.hostname.to_string(),
+            c.user_id,
+            c.api_key,
             format!("https://{}/api/v1", &c.hostname),
             timestamp.to_string(),
-            String::from(""),
+            "".to_string(),
             c.allow_insecure_tls,
             ExtraHopAppliance::ETA,
         );
         extrahop_appliaces.push(client);
     }
 
+    let mut activity_maps: HashMap<String, Vec<ActivityMap>> = HashMap::new();
     let mut api_keys: HashMap<String, Vec<ApiKey>> = HashMap::new();
     let mut appliances: HashMap<String, Vec<Appliance>> = HashMap::new();
     let mut bundles: HashMap<String, Vec<Bundles>> = HashMap::new();
@@ -460,52 +473,58 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         } else {
             match cli.getter {
+                Getter::ActivityMaps => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                        let result = get_activity_maps(c).await?;
+                        activity_maps.insert(c.hostname.to_string(), result);
+                    }
+                }
                 Getter::ApiKeys => {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
                         let result = get_api_keys(c).await?;
-                        api_keys.insert(String::from(&c.hostname), result);
+                        api_keys.insert(c.hostname.to_string(), result);
                     }
                 }
                 Getter::Appliances => {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
                         let result = get_appliances(c).await?;
-                        appliances.insert(String::from(&c.hostname), result);
+                        appliances.insert(c.hostname.to_string(), result);
                     }
                 }
                 Getter::Bundles => {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
                         let result = get_bundles(c).await?;
-                        bundles.insert(String::from(&c.hostname), result);
+                        bundles.insert(c.hostname.to_string(), result);
                     }
                 }
                 Getter::Customizations => {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
                         let result = get_customizations(c).await?;
-                        customizations.insert(String::from(&c.hostname), result);
+                        customizations.insert(c.hostname.to_string(), result);
                     }
                 }
                 Getter::CustomDevices => {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
                         let result = get_custom_devices(c).await?;
-                        custom_devices.insert(String::from(&c.hostname), result);
+                        custom_devices.insert(c.hostname.to_string(), result);
                     }
                 }
                 Getter::Dashboards => {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
                         let result = get_dashboards(c).await?;
-                        dashboards.insert(String::from(&c.hostname), result);
+                        dashboards.insert(c.hostname.to_string(), result);
                     }
                 }
                 Getter::Devices => {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
                         let result = get_devices(c).await?;
-                        devices.insert(String::from(&c.hostname), result);
+                        devices.insert(c.hostname.to_string(), result);
                     }
                 }
                 Getter::DeviceGroups => {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
                         let result = get_device_groups(c).await?;
-                        device_groups.insert(String::from(&c.hostname), result);
+                        device_groups.insert(c.hostname.to_string(), result);
                     }
                 }
                 Getter::Extrahop => {
@@ -517,31 +536,31 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 Getter::Licenses => {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
                         let result = get_license(c).await?;
-                        licenses.insert(String::from(&c.hostname), result);
+                        licenses.insert(c.hostname.to_string(), result);
                     }
                 }
                 Getter::Networks => {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
                         let result = get_networks(c).await?;
-                        networks.insert(String::from(&c.hostname), result);
+                        networks.insert(c.hostname.to_string(), result);
                     }
                 }
                 Getter::NetworkLocalities => {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
                         let result = get_network_localities(c).await?;
-                        network_localities.insert(String::from(&c.hostname), result);
+                        network_localities.insert(c.hostname.to_string(), result);
                     }
                 }
                 Getter::Nodes => {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
                         let result = get_nodes(c).await?;
-                        nodes.insert(String::from(&c.hostname), result);
+                        nodes.insert(c.hostname.to_string(), result);
                     }
                 }
                 Getter::PacketCaptures => {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
                         let result = get_packet_captures(c).await?;
-                        packet_captures.insert(String::from(&c.hostname), result);
+                        packet_captures.insert(c.hostname.to_string(), result);
                     }
                 }
                 Getter::RunningConfig => {
@@ -552,31 +571,31 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 Getter::Software => {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
                         let result = get_software(c).await?;
-                        software.insert(String::from(&c.hostname), result);
+                        software.insert(c.hostname.to_string(), result);
                     }
                 }
                 Getter::Tags => {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
                         let result = get_tags(c).await?;
-                        tags.insert(String::from(&c.hostname), result);
+                        tags.insert(c.hostname.to_string(), result);
                     }
                 }
                 Getter::ThreatCollections => {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
                         let result = get_threat_collections(c).await?;
-                        threat_collections.insert(String::from(&c.hostname), result);
+                        threat_collections.insert(c.hostname.to_string(), result);
                     }
                 }
                 Getter::Triggers => {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
                         let result = get_triggers(c).await?;
-                        triggers.insert(String::from(&c.hostname), result);
+                        triggers.insert(c.hostname.to_string(), result);
                     }
                 }
                 Getter::Vlans => {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
                         let result = get_vlans(c).await?;
-                        vlans.insert(String::from(&c.hostname), result);
+                        vlans.insert(c.hostname.to_string(), result);
                     }
                 }
                 Getter::None => {
@@ -589,6 +608,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if !cli.backup {
         match cli.getter {
+            Getter::ActivityMaps => {
+                println!("{:#?}", activity_maps);
+            }
             Getter::ApiKeys => {
                 for (key, value) in api_keys {
                     println!("{key}:");

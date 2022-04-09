@@ -17,7 +17,7 @@ mod tests {
     fn test_extrahop_to_human_time() {
         assert_eq!(
             extrahop_to_human_time(1647679315125),
-            String::from("2022-03-19 18:41:55 UTC +10:00"),
+            "2022-03-19 18:41:55 UTC +10:00".to_string(),
         );
     }
 }
