@@ -20,6 +20,7 @@ use model::dashboard::Dashboard;
 use model::device::Device;
 use model::device_group::DeviceGroup;
 use model::email_group::EmailGroup;
+use model::exclusion_interval::ExclusionInterval;
 use model::extrahop::ExtraHop;
 use model::license::License;
 use model::network::Network;
@@ -183,6 +184,15 @@ async fn get_email_groups(
     Ok(email_groups)
 }
 
+async fn get_exclusion_intervals(
+    client: &ExtraHopClient,
+) -> Result<Vec<ExclusionInterval>, Box<dyn std::error::Error>> {
+    let response = reqwest_get(client, "exclusionintervals").await?;
+    let exclusion_intervals: Vec<ExclusionInterval> =
+        serde_json::from_str(&response.text().await?)?;
+    Ok(exclusion_intervals)
+}
+
 async fn get_extrahop(client: &ExtraHopClient) -> Result<ExtraHop, Box<dyn std::error::Error>> {
     let response = reqwest_get(client, "extrahop").await?;
     let extrahop: ExtraHop = serde_json::from_str(&response.text().await?)?;
@@ -316,6 +326,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::Dashboards,
             Getter::Devices,
             Getter::DeviceGroups,
+            Getter::ExclusionIntervals,
             Getter::Extrahop,
             Getter::Networks,
             Getter::NetworkLocalities,
@@ -343,6 +354,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::Devices,
             Getter::DeviceGroups,
             Getter::EmailGroups,
+            Getter::ExclusionIntervals,
             Getter::Extrahop,
             Getter::IdentityProviders,
             Getter::Licenses,
@@ -371,6 +383,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::Devices,
             Getter::DeviceGroups,
             Getter::EmailGroups,
+            Getter::ExclusionIntervals,
             Getter::Extrahop,
             Getter::IdentityProviders,
             Getter::Licenses,
@@ -497,6 +510,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut devices: HashMap<String, Vec<Device>> = HashMap::new();
     let mut device_groups: HashMap<String, Vec<DeviceGroup>> = HashMap::new();
     let mut email_groups: HashMap<String, Vec<EmailGroup>> = HashMap::new();
+    let mut exclusion_intervals: HashMap<String, Vec<ExclusionInterval>> = HashMap::new();
     let mut extrahops: Vec<ExtraHop> = Vec::new();
     let mut identity_providers: HashMap<String, Vec<IdentitiyProvider>> = HashMap::new();
     let mut licenses: HashMap<String, Vec<License>> = HashMap::new();
@@ -583,6 +597,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
                         let result = get_email_groups(c).await?;
                         email_groups.insert(c.hostname.to_string(), result);
+                    }
+                }
+                Getter::ExclusionIntervals => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                        let result = get_exclusion_intervals(c).await?;
+                        exclusion_intervals.insert(c.hostname.to_string(), result);
                     }
                 }
                 Getter::Extrahop => {
@@ -798,6 +818,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             Getter::EmailGroups => {
                 println!("{:#?}", email_groups);
+            }
+            Getter::ExclusionIntervals => {
+                println!("{:#?}", exclusion_intervals);
             }
             Getter::Extrahop => {
                 let table = Table::new(extrahops).with(Disable::Column(1..=1));

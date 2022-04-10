@@ -12,6 +12,7 @@ pub mod dashboard;
 pub mod device;
 pub mod device_group;
 pub mod email_group;
+pub mod exclusion_interval;
 pub mod extrahop;
 pub mod license;
 pub mod network;
