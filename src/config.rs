@@ -90,17 +90,17 @@ impl ExtraHopConfig {
 fn get_credentials(ehc: &mut Vec<ExtraHopCredential>) {
     for mut i in ehc.iter_mut() {
         if i.user_id.is_empty() {
-            i.user_id = get_env_var(format!("{}_USER_ID", i.hostname));
+            i.user_id = get_env_var(&format!("{}_USER_ID", i.hostname));
         }
         if i.api_key.is_empty() {
-            i.api_key = get_env_var(format!("{}_API_KEY", i.hostname));
+            i.api_key = get_env_var(&format!("{}_API_KEY", i.hostname));
         }
     }
 }
 
 /// Returns an environment variable or an empty string if
 /// the environment variable was not found.
-fn get_env_var(s: String) -> String {
+fn get_env_var(s: &str) -> String {
     let ts = to_env_var(s);
     match env::var(&ts) {
         Ok(c) => c,
@@ -111,7 +111,7 @@ fn get_env_var(s: String) -> String {
 /// Convert a string to an environment variable compatible string.
 /// Replaces dashes (-) and dots (.) with underscores (_)
 /// and transforms to UPPERCASE.
-fn to_env_var(s: String) -> String {
+fn to_env_var(s: &str) -> String {
     s.replace('-', "_").replace('.', "_").to_uppercase()
 }
 
@@ -121,9 +121,6 @@ mod tests {
 
     #[test]
     fn test_to_env_var() {
-        assert_eq!(
-            to_env_var("THIS_is-A.TEST".to_string()),
-            "THIS_IS_A_TEST".to_string(),
-        );
+        assert_eq!(to_env_var("THIS_is-A.TEST"), "THIS_IS_A_TEST",);
     }
 }

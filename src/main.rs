@@ -42,7 +42,7 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::Write;
 use std::process::exit;
-use tabled::{Alignment, Disable, Full, MaxWidth, Modify, Rotate, Row, Table};
+use tabled::{Alignment, Disable, Full, MaxWidth, MinWidth, Modify, Rotate, Rows, Table};
 
 async fn reqwest_get(
     client: &ExtraHopClient,
@@ -135,7 +135,7 @@ async fn create_customization(client: &ExtraHopClient) -> Result<(), Box<dyn std
         let customizations = get_customizations(client).await?;
         for c in customizations.iter() {
             if c.name.starts_with(&name) {
-                save_customization(client, c.id).await?;
+                save_customization(client, &c.id).await?;
             }
         }
     } else {
@@ -148,7 +148,7 @@ async fn create_customization(client: &ExtraHopClient) -> Result<(), Box<dyn std
 
 async fn save_customization(
     client: &ExtraHopClient,
-    id: i64,
+    id: &i64,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let name = format!("{}-{}", client.hostname, client.timestamp);
     let url = format!("{}/customizations/{}/download", client.base_url, id);
@@ -426,13 +426,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let token = get_oauth_token(&c.hostname, &c.user_id, &c.api_key).await?;
             let base_url = format!("https://{}/api/v1", &c.hostname);
             let client = ExtraHopClient::new(
-                c.hostname,
-                c.user_id,
-                c.api_key,
-                base_url,
-                timestamp.to_string(),
-                token.access_token,
-                c.allow_insecure_tls,
+                &c.hostname,
+                &c.user_id,
+                &c.api_key,
+                &base_url,
+                &timestamp.to_string(),
+                &token.access_token,
+                &c.allow_insecure_tls,
                 ExtraHopAppliance::CCP,
             );
             extrahop_appliaces.push(client);
@@ -442,13 +442,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     for c in configs.eca {
         let base_url = format!("https://{}/api/v1", &c.hostname);
         let client = ExtraHopClient::new(
-            c.hostname.to_string(),
-            c.user_id,
-            c.api_key,
-            base_url,
-            timestamp.to_string(),
-            "".to_string(),
-            c.allow_insecure_tls,
+            &c.hostname,
+            &c.user_id,
+            &c.api_key,
+            &base_url,
+            &timestamp.to_string(),
+            "",
+            &c.allow_insecure_tls,
             ExtraHopAppliance::ECA,
         );
         extrahop_appliaces.push(client);
@@ -457,13 +457,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     for c in configs.eda {
         let base_url = format!("https://{}/api/v1", &c.hostname);
         let client = ExtraHopClient::new(
-            c.hostname.to_string(),
-            c.user_id,
-            c.api_key,
-            base_url,
-            timestamp.to_string(),
-            "".to_string(),
-            c.allow_insecure_tls,
+            &c.hostname,
+            &c.user_id,
+            &c.api_key,
+            &base_url,
+            &timestamp.to_string(),
+            "",
+            &c.allow_insecure_tls,
             ExtraHopAppliance::EDA,
         );
         extrahop_appliaces.push(client);
@@ -472,13 +472,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     for c in configs.exa {
         let base_url = format!("https://{}/api/v1", &c.hostname);
         let client = ExtraHopClient::new(
-            c.hostname.to_string(),
-            c.user_id,
-            c.api_key,
-            base_url,
-            timestamp.to_string(),
-            "".to_string(),
-            c.allow_insecure_tls,
+            &c.hostname,
+            &c.user_id,
+            &c.api_key,
+            &base_url,
+            &timestamp.to_string(),
+            "",
+            &c.allow_insecure_tls,
             ExtraHopAppliance::EXA,
         );
         extrahop_appliaces.push(client);
@@ -487,13 +487,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     for c in configs.eta {
         let base_url = format!("https://{}/api/v1", &c.hostname);
         let client = ExtraHopClient::new(
-            c.hostname.to_string(),
-            c.user_id,
-            c.api_key,
-            base_url,
-            timestamp.to_string(),
-            "".to_string(),
-            c.allow_insecure_tls,
+            &c.hostname,
+            &c.user_id,
+            &c.api_key,
+            &base_url,
+            &timestamp.to_string(),
+            "",
+            &c.allow_insecure_tls,
             ExtraHopAppliance::ETA,
         );
         extrahop_appliaces.push(client);
@@ -710,9 +710,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     for a in value.iter() {
                         let table = Table::new(vec![a])
                             .with(
-                                Modify::new(Row(1..))
-                                    // .with(MinWidth::new(50))
-                                    .with(MaxWidth::wrapping(50)),
+                                Modify::new(Rows::new(1..))
+                                    .with(MinWidth::new(30))
+                                    .with(MaxWidth::wrapping(30)),
                             )
                             .with(Rotate::Left);
                         println!("{table}");
@@ -725,9 +725,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     for a in value.iter() {
                         let table = Table::new(vec![a])
                             .with(
-                                Modify::new(Row(1..))
-                                    // .with(MinWidth::new(50))
-                                    .with(MaxWidth::wrapping(50)),
+                                Modify::new(Rows::new(1..))
+                                    .with(MinWidth::new(30))
+                                    .with(MaxWidth::wrapping(30)),
                             )
                             .with(Rotate::Left);
                         println!("{table}");
@@ -739,11 +739,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     value.sort_by(|a, b| a.name.cmp(&b.name));
 
                     println!("=> {}:", key);
-                    let table = Table::new(value).with(
-                        Modify::new(Row(1..))
-                            // .with(MinWidth::new(50))
-                            .with(MaxWidth::wrapping(50)),
-                    );
+                    let table = Table::new(value)
+                        .with(
+                            Modify::new(Rows::new(1..))
+                                .with(MinWidth::new(30))
+                                .with(MaxWidth::wrapping(30)),
+                        )
+                        .with(Rotate::Left);
                     println!("{table}");
                 }
             }
@@ -773,8 +775,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             .with(
                                 Modify::new(Full)
                                     // Not released yet, will be in future version.
-                                    // .with(MinWidth::new(50))
-                                    .with(MaxWidth::wrapping(50))
+                                    .with(MinWidth::new(30))
+                                    .with(MaxWidth::wrapping(30))
                                     .with(Alignment::left()),
                             )
                             .with(Rotate::Left);
@@ -790,8 +792,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             .with(
                                 Modify::new(Full)
                                     // Not released yet, will be in future version.
-                                    // .with(MinWidth::new(50))
-                                    .with(MaxWidth::wrapping(50))
+                                    .with(MinWidth::new(30))
+                                    .with(MaxWidth::wrapping(30))
                                     .with(Alignment::left()),
                             )
                             .with(Rotate::Left);
@@ -807,8 +809,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             .with(
                                 Modify::new(Full)
                                     // Not released yet, will be in future version.
-                                    // .with(MinWidth::new(50))
-                                    .with(MaxWidth::wrapping(50))
+                                    .with(MinWidth::new(30))
+                                    .with(MaxWidth::wrapping(30))
                                     .with(Alignment::left()),
                             )
                             .with(Rotate::Left);
@@ -895,8 +897,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             .with(
                                 Modify::new(Full)
                                     // Not released yet, will be in future version.
-                                    // .with(MinWidth::new(50))
-                                    .with(MaxWidth::wrapping(50))
+                                    .with(MinWidth::new(30))
+                                    .with(MaxWidth::wrapping(30))
                                     .with(Alignment::left()),
                             )
                             .with(Rotate::Left);

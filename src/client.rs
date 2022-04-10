@@ -41,25 +41,25 @@ pub struct ExtraHopClient {
 #[allow(clippy::too_many_arguments)]
 impl ExtraHopClient {
     pub fn new(
-        hostname: String,
-        user_id: String,
-        api_key: String,
-        base_url: String,
-        timestamp: String,
-        api_token: String,
-        allow_insecure_tls: bool,
+        hostname: &str,
+        user_id: &str,
+        api_key: &str,
+        base_url: &str,
+        timestamp: &str,
+        api_token: &str,
+        allow_insecure_tls: &bool,
         appliance_type: ExtraHopAppliance,
     ) -> Self {
         let client = build_reqwest_client(&api_key, &api_token, &allow_insecure_tls);
 
         Self {
-            hostname,
-            user_id,
-            api_key,
-            api_token,
-            base_url,
-            timestamp,
-            allow_insecure_tls,
+            hostname: hostname.to_string(),
+            user_id: user_id.to_string(),
+            api_key: api_key.to_string(),
+            api_token: api_token.to_string(),
+            base_url: base_url.to_string(),
+            timestamp: timestamp.to_string(),
+            allow_insecure_tls: *allow_insecure_tls,
             appliance_type,
             reqwest_client: client,
         }
