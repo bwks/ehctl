@@ -12,12 +12,14 @@ use model::activity_map::ActivityMap;
 use model::alert::Alert;
 use model::api_key::ApiKey;
 use model::appliance::Appliance;
+use model::auth_provider::{IdentitiyProvider, SamlSp};
 use model::bundle::Bundles;
 use model::custom_device::CustomDevice;
 use model::customization::Customization;
 use model::dashboard::Dashboard;
 use model::device::Device;
 use model::device_group::DeviceGroup;
+use model::email_group::EmailGroup;
 use model::extrahop::ExtraHop;
 use model::license::License;
 use model::network::Network;
@@ -173,6 +175,14 @@ async fn get_custom_devices(
     Ok(custom_devices)
 }
 
+async fn get_email_groups(
+    client: &ExtraHopClient,
+) -> Result<Vec<EmailGroup>, Box<dyn std::error::Error>> {
+    let response = reqwest_get(client, "emailgroups").await?;
+    let email_groups: Vec<EmailGroup> = serde_json::from_str(&response.text().await?)?;
+    Ok(email_groups)
+}
+
 async fn get_extrahop(client: &ExtraHopClient) -> Result<ExtraHop, Box<dyn std::error::Error>> {
     let response = reqwest_get(client, "extrahop").await?;
     let extrahop: ExtraHop = serde_json::from_str(&response.text().await?)?;
@@ -198,6 +208,14 @@ async fn get_running_config(client: &ExtraHopClient) -> Result<(), Box<dyn std::
         eprintln!("{:#?}", response.error_for_status());
         exit(1)
     }
+}
+
+async fn get_identitiy_providers(
+    client: &ExtraHopClient,
+) -> Result<Vec<IdentitiyProvider>, Box<dyn std::error::Error>> {
+    let response = reqwest_get(client, "/auth/identityproviders").await?;
+    let identity_providers: Vec<IdentitiyProvider> = serde_json::from_str(&response.text().await?)?;
+    Ok(identity_providers)
 }
 
 async fn get_license(client: &ExtraHopClient) -> Result<Vec<License>, Box<dyn std::error::Error>> {
@@ -232,6 +250,12 @@ async fn get_packet_captures(
     let response = reqwest_get(client, "packetcaptures").await?;
     let packet_captures: Vec<PacketCapture> = serde_json::from_str(&response.text().await?)?;
     Ok(packet_captures)
+}
+
+async fn get_saml_sp(client: &ExtraHopClient) -> Result<Vec<SamlSp>, Box<dyn std::error::Error>> {
+    let response = reqwest_get(client, "/auth/samlsp").await?;
+    let saml_sp: SamlSp = serde_json::from_str(&response.text().await?)?;
+    Ok(vec![saml_sp])
 }
 
 async fn get_software(
@@ -318,7 +342,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::Dashboards,
             Getter::Devices,
             Getter::DeviceGroups,
+            Getter::EmailGroups,
             Getter::Extrahop,
+            Getter::IdentityProviders,
             Getter::Licenses,
             Getter::Networks,
             Getter::NetworkLocalities,
@@ -327,7 +353,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::Software,
             Getter::Tags,
             Getter::ThreatCollections,
-            // Getter::Triggers,
+            Getter::Triggers,
             Getter::Vlans,
         ],
     );
@@ -344,7 +370,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::Dashboards,
             Getter::Devices,
             Getter::DeviceGroups,
+            Getter::EmailGroups,
             Getter::Extrahop,
+            Getter::IdentityProviders,
             Getter::Licenses,
             Getter::Networks,
             Getter::NetworkLocalities,
@@ -353,7 +381,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::Software,
             Getter::Tags,
             Getter::ThreatCollections,
-            // Getter::Triggers,
+            Getter::Triggers,
             Getter::Vlans,
         ],
     );
@@ -383,12 +411,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     for c in configs.ccp {
         if !c.hostname.is_empty() {
             let token = get_oauth_token(&c.hostname, &c.user_id, &c.api_key).await?;
-
+            let base_url = format!("https://{}/api/v1", &c.hostname);
             let client = ExtraHopClient::new(
-                c.hostname.to_string(),
+                c.hostname,
                 c.user_id,
                 c.api_key,
-                format!("https://{}/api/v1", &c.hostname),
+                base_url,
                 timestamp.to_string(),
                 token.access_token,
                 c.allow_insecure_tls,
@@ -399,11 +427,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     for c in configs.eca {
+        let base_url = format!("https://{}/api/v1", &c.hostname);
         let client = ExtraHopClient::new(
             c.hostname.to_string(),
             c.user_id,
             c.api_key,
-            format!("https://{}/api/v1", &c.hostname),
+            base_url,
             timestamp.to_string(),
             "".to_string(),
             c.allow_insecure_tls,
@@ -413,11 +442,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     for c in configs.eda {
+        let base_url = format!("https://{}/api/v1", &c.hostname);
         let client = ExtraHopClient::new(
             c.hostname.to_string(),
             c.user_id,
             c.api_key,
-            format!("https://{}/api/v1", &c.hostname),
+            base_url,
             timestamp.to_string(),
             "".to_string(),
             c.allow_insecure_tls,
@@ -427,11 +457,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     for c in configs.exa {
+        let base_url = format!("https://{}/api/v1", &c.hostname);
         let client = ExtraHopClient::new(
             c.hostname.to_string(),
             c.user_id,
             c.api_key,
-            format!("https://{}/api/v1", &c.hostname),
+            base_url,
             timestamp.to_string(),
             "".to_string(),
             c.allow_insecure_tls,
@@ -441,11 +472,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     for c in configs.eta {
+        let base_url = format!("https://{}/api/v1", &c.hostname);
         let client = ExtraHopClient::new(
             c.hostname.to_string(),
             c.user_id,
             c.api_key,
-            format!("https://{}/api/v1", &c.hostname),
+            base_url,
             timestamp.to_string(),
             "".to_string(),
             c.allow_insecure_tls,
@@ -464,12 +496,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut dashboards: HashMap<String, Vec<Dashboard>> = HashMap::new();
     let mut devices: HashMap<String, Vec<Device>> = HashMap::new();
     let mut device_groups: HashMap<String, Vec<DeviceGroup>> = HashMap::new();
-    let mut extrahops = vec![];
+    let mut email_groups: HashMap<String, Vec<EmailGroup>> = HashMap::new();
+    let mut extrahops: Vec<ExtraHop> = Vec::new();
+    let mut identity_providers: HashMap<String, Vec<IdentitiyProvider>> = HashMap::new();
     let mut licenses: HashMap<String, Vec<License>> = HashMap::new();
     let mut networks: HashMap<String, Vec<Network>> = HashMap::new();
     let mut network_localities: HashMap<String, Vec<NetworkLocality>> = HashMap::new();
     let mut nodes: HashMap<String, Vec<Node>> = HashMap::new();
     let mut packet_captures: HashMap<String, Vec<PacketCapture>> = HashMap::new();
+    let mut saml_sps: HashMap<String, Vec<SamlSp>> = HashMap::new();
     let mut software: HashMap<String, Vec<Software>> = HashMap::new();
     let mut tags: HashMap<String, Vec<Tag>> = HashMap::new();
     let mut threat_collections: HashMap<String, Vec<ThreatCollection>> = HashMap::new();
@@ -544,10 +579,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         device_groups.insert(c.hostname.to_string(), result);
                     }
                 }
+                Getter::EmailGroups => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                        let result = get_email_groups(c).await?;
+                        email_groups.insert(c.hostname.to_string(), result);
+                    }
+                }
                 Getter::Extrahop => {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
                         let result = get_extrahop(c).await?;
                         extrahops.push(result);
+                    }
+                }
+                Getter::IdentityProviders => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                        let result = get_identitiy_providers(c).await?;
+                        identity_providers.insert(c.hostname.to_string(), result);
                     }
                 }
                 Getter::Licenses => {
@@ -583,6 +630,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 Getter::RunningConfig => {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
                         _ = get_running_config(c).await?;
+                    }
+                }
+                Getter::SamlSp => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                        let result = get_saml_sp(c).await?;
+                        saml_sps.insert(c.hostname.to_string(), result);
                     }
                 }
                 Getter::Software => {
@@ -743,9 +796,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
             }
+            Getter::EmailGroups => {
+                println!("{:#?}", email_groups);
+            }
             Getter::Extrahop => {
                 let table = Table::new(extrahops).with(Disable::Column(1..=1));
                 println!("{table}");
+            }
+            Getter::IdentityProviders => {
+                println!("{:#?}", identity_providers);
             }
             Getter::Licenses => {
                 for (key, value) in licenses {
@@ -774,6 +833,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     let table = Table::new(value).with(Rotate::Left);
                     println!("{table}");
                 }
+            }
+            Getter::SamlSp => {
+                println!("{:#?}", saml_sps);
             }
             Getter::Software => {
                 for (key, mut value) in software {
