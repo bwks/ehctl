@@ -10,6 +10,7 @@ pub mod bundle;
 pub mod custom_device;
 pub mod customization;
 pub mod dashboard;
+pub mod detection;
 pub mod device;
 pub mod device_group;
 pub mod email_group;

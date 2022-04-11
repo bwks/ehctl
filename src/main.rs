@@ -18,6 +18,7 @@ use model::bundle::Bundles;
 use model::custom_device::CustomDevice;
 use model::customization::Customization;
 use model::dashboard::Dashboard;
+use model::detection::Detection;
 use model::device::Device;
 use model::device_group::DeviceGroup;
 use model::email_group::EmailGroup;
@@ -108,6 +109,14 @@ async fn get_dashboards(
     let response = reqwest_get(client, "dashboards").await?;
     let dashboards: Vec<Dashboard> = serde_json::from_str(&response.text().await?)?;
     Ok(dashboards)
+}
+
+async fn get_detections(
+    client: &ExtraHopClient,
+) -> Result<Vec<Detection>, Box<dyn std::error::Error>> {
+    let response = reqwest_get(client, "detections").await?;
+    let detections: Vec<Detection> = serde_json::from_str(&response.text().await?)?;
+    Ok(detections)
 }
 
 async fn get_devices(client: &ExtraHopClient) -> Result<Vec<Device>, Box<dyn std::error::Error>> {
@@ -334,6 +343,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::Appliances,
             Getter::Bundles,
             Getter::Dashboards,
+            Getter::Detections,
             Getter::Devices,
             Getter::DeviceGroups,
             Getter::ExclusionIntervals,
@@ -362,6 +372,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             // I suspect its required to select the sensor
             // Getter::CustomDevices,
             Getter::Dashboards,
+            Getter::Detections,
             Getter::Devices,
             Getter::DeviceGroups,
             Getter::EmailGroups,
@@ -392,6 +403,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::Customizations,
             Getter::CustomDevices,
             Getter::Dashboards,
+            Getter::Detections,
             Getter::Devices,
             Getter::DeviceGroups,
             Getter::EmailGroups,
@@ -520,6 +532,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut customizations: HashMap<String, Vec<Customization>> = HashMap::new();
     let mut custom_devices: HashMap<String, Vec<CustomDevice>> = HashMap::new();
     let mut dashboards: HashMap<String, Vec<Dashboard>> = HashMap::new();
+    let mut detections: HashMap<String, Vec<Detection>> = HashMap::new();
     let mut devices: HashMap<String, Vec<Device>> = HashMap::new();
     let mut device_groups: HashMap<String, Vec<DeviceGroup>> = HashMap::new();
     let mut email_groups: HashMap<String, Vec<EmailGroup>> = HashMap::new();
@@ -598,6 +611,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
                         let result = get_dashboards(c).await?;
                         dashboards.insert(c.hostname.to_string(), result);
+                    }
+                }
+                Getter::Detections => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                        let result = get_detections(c).await?;
+                        detections.insert(c.hostname.to_string(), result);
                     }
                 }
                 Getter::Devices => {
@@ -805,6 +824,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         println!("{}", table);
                     }
                 }
+            }
+            Getter::Detections => {
+                println!("{:#?}", detections);
             }
             Getter::Devices => {
                 for (key, value) in devices {
