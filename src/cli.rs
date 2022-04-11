@@ -3,6 +3,7 @@ use clap::{Arg, Command};
 #[derive(Eq, PartialEq)]
 pub enum Getter {
     ActivityMaps,
+    AuditLogs,
     Alerts,
     Appliances,
     ApiKeys,
@@ -87,6 +88,7 @@ impl Cli {
             if let Some(getter) = get_matches.value_of("endpoint") {
                 cli.getter = match getter {
                     "activitymaps" => Getter::ActivityMaps,
+                    "auditlog" => Getter::AuditLogs,
                     "alerts" => Getter::Alerts,
                     "apikeys" => Getter::ApiKeys,
                     "appliances" => Getter::Appliances,

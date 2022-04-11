@@ -12,6 +12,7 @@ use model::activity_map::ActivityMap;
 use model::alert::Alert;
 use model::api_key::ApiKey;
 use model::appliance::Appliance;
+use model::audit_log::AuditLog;
 use model::auth_provider::{IdentitiyProvider, SamlSp};
 use model::bundle::Bundles;
 use model::custom_device::CustomDevice;
@@ -71,6 +72,14 @@ async fn get_activity_maps(
     let response = reqwest_get(client, "activitymaps").await?;
     let activity_maps: Vec<ActivityMap> = serde_json::from_str(&response.text().await?)?;
     Ok(activity_maps)
+}
+
+async fn get_audit_logs(
+    client: &ExtraHopClient,
+) -> Result<Vec<AuditLog>, Box<dyn std::error::Error>> {
+    let response = reqwest_get(client, "auditlog").await?;
+    let audit_logs: Vec<AuditLog> = serde_json::from_str(&response.text().await?)?;
+    Ok(audit_logs)
 }
 
 async fn get_alerts(client: &ExtraHopClient) -> Result<Vec<Alert>, Box<dyn std::error::Error>> {
@@ -320,6 +329,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         ExtraHopAppliance::CCP,
         vec![
             Getter::ActivityMaps,
+            Getter::AuditLogs,
             Getter::Alerts,
             Getter::Appliances,
             Getter::Bundles,
@@ -341,6 +351,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         ExtraHopAppliance::ECA,
         vec![
             Getter::ActivityMaps,
+            Getter::AuditLogs,
             Getter::Alerts,
             Getter::ApiKeys,
             Getter::Appliances,
@@ -373,6 +384,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         ExtraHopAppliance::EDA,
         vec![
             Getter::ActivityMaps,
+            Getter::AuditLogs,
             Getter::Alerts,
             Getter::ApiKeys,
             Getter::Appliances,
@@ -500,6 +512,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let mut activity_maps: HashMap<String, Vec<ActivityMap>> = HashMap::new();
+    let mut audit_logs: HashMap<String, Vec<AuditLog>> = HashMap::new();
     let mut alerts: HashMap<String, Vec<Alert>> = HashMap::new();
     let mut api_keys: HashMap<String, Vec<ApiKey>> = HashMap::new();
     let mut appliances: HashMap<String, Vec<Appliance>> = HashMap::new();
@@ -537,6 +550,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
                         let result = get_activity_maps(c).await?;
                         activity_maps.insert(c.hostname.to_string(), result);
+                    }
+                }
+                Getter::AuditLogs => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                        let result = get_audit_logs(c).await?;
+                        audit_logs.insert(c.hostname.to_string(), result);
                     }
                 }
                 Getter::Alerts => {
@@ -700,6 +719,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         match cli.getter {
             Getter::ActivityMaps => {
                 println!("{:#?}", activity_maps);
+            }
+            Getter::AuditLogs => {
+                println!("{:#?}", audit_logs);
             }
             Getter::Alerts => {
                 println!("{:#?}", alerts);
