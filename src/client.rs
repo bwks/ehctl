@@ -50,16 +50,16 @@ impl ExtraHopClient {
         allow_insecure_tls: &bool,
         appliance_type: ExtraHopAppliance,
     ) -> Self {
-        let client = build_reqwest_client(&api_key, &api_token, &allow_insecure_tls);
+        let client = build_reqwest_client(api_key, api_token, allow_insecure_tls);
 
         Self {
-            hostname: hostname.to_string(),
-            user_id: user_id.to_string(),
-            api_key: api_key.to_string(),
-            api_token: api_token.to_string(),
-            base_url: base_url.to_string(),
-            timestamp: timestamp.to_string(),
-            allow_insecure_tls: *allow_insecure_tls,
+            hostname: hostname.to_owned(),
+            user_id: user_id.to_owned(),
+            api_key: api_key.to_owned(),
+            api_token: api_token.to_owned(),
+            base_url: base_url.to_owned(),
+            timestamp: timestamp.to_owned(),
+            allow_insecure_tls: allow_insecure_tls.to_owned(),
             appliance_type,
             reqwest_client: client,
         }
