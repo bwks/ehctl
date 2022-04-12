@@ -8,11 +8,11 @@ mod cli;
 use cli::{Cli, Getter};
 
 mod model;
-use model::activity_map::ActivityMap;
+use model::activity_map::ActivityMaps;
 use model::alert::Alert;
 use model::api_key::ApiKey;
 use model::appliance::Appliance;
-use model::audit_log::AuditLog;
+use model::audit_log::AuditLogs;
 use model::auth_provider::{IdentitiyProvider, SamlSp};
 use model::bundle::Bundles;
 use model::custom_device::CustomDevice;
@@ -69,17 +69,19 @@ async fn get_api_keys(client: &ExtraHopClient) -> Result<Vec<ApiKey>, Box<dyn st
 
 async fn get_activity_maps(
     client: &ExtraHopClient,
-) -> Result<Vec<ActivityMap>, Box<dyn std::error::Error>> {
+) -> Result<ActivityMaps, Box<dyn std::error::Error>> {
     let response = reqwest_get(client, "activitymaps").await?;
-    let activity_maps: Vec<ActivityMap> = serde_json::from_str(&response.text().await?)?;
+    let activity_maps = ActivityMaps {
+        activity_maps: serde_json::from_str(&response.text().await?)?,
+    };
     Ok(activity_maps)
 }
 
-async fn get_audit_logs(
-    client: &ExtraHopClient,
-) -> Result<Vec<AuditLog>, Box<dyn std::error::Error>> {
+async fn get_audit_logs(client: &ExtraHopClient) -> Result<AuditLogs, Box<dyn std::error::Error>> {
     let response = reqwest_get(client, "auditlog").await?;
-    let audit_logs: Vec<AuditLog> = serde_json::from_str(&response.text().await?)?;
+    let audit_logs = AuditLogs {
+        audit_logs: serde_json::from_str(&response.text().await?)?,
+    };
     Ok(audit_logs)
 }
 
@@ -523,8 +525,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         extrahop_appliaces.push(client);
     }
 
-    let mut activity_maps: HashMap<String, Vec<ActivityMap>> = HashMap::new();
-    let mut audit_logs: HashMap<String, Vec<AuditLog>> = HashMap::new();
+    let mut activity_maps: HashMap<String, ActivityMaps> = HashMap::new();
+    let mut audit_logs: HashMap<String, AuditLogs> = HashMap::new();
     let mut alerts: HashMap<String, Vec<Alert>> = HashMap::new();
     let mut api_keys: HashMap<String, Vec<ApiKey>> = HashMap::new();
     let mut appliances: HashMap<String, Vec<Appliance>> = HashMap::new();
