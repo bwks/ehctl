@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde::Deserialize;
 
-use crate::model::null_to_default;
+use crate::deserialize::null_to_default;
 
 #[allow(dead_code)]
 #[derive(Debug, Deserialize)]

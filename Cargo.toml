@@ -6,7 +6,6 @@ readme = "README.md"
 license = "MIT OR Apache-2.0"
 categories = ["command-line-interface"]
 
-
 [dependencies]
 base64 = "0.13.0"
 chrono = "0.4"

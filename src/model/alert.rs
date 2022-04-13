@@ -2,18 +2,21 @@ use std::collections::HashMap;
 
 use serde::Deserialize;
 
-use crate::model::null_to_default;
+use crate::deserialize::null_to_default;
 
-#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
+pub struct Alerts {
+    pub alerts: Vec<Alert>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(default)]
 pub struct Alert {
     #[serde(deserialize_with = "null_to_default")]
     pub apply_all: bool,
     #[serde(deserialize_with = "null_to_default")]
     pub author: String,
-    #[serde(default)]
     pub categories: Vec<String>,
-    #[serde(default)]
     pub cc: Vec<String>,
     #[serde(deserialize_with = "null_to_default")]
     pub description: String,
@@ -35,17 +38,13 @@ pub struct Alert {
     pub name: String,
     #[serde(deserialize_with = "null_to_default")]
     pub notify_snmp: bool,
-    #[serde(default)]
     pub object_type: String,
     #[serde(deserialize_with = "null_to_default")]
     pub operand: String,
     #[serde(deserialize_with = "null_to_default")]
     pub operator: String,
-    #[serde(default)]
     pub param: HashMap<String, String>,
-    #[serde(default)]
     pub param2: HashMap<String, String>,
-    #[serde(default)]
     pub protocols: Vec<String>,
     #[serde(deserialize_with = "null_to_default")]
     pub refire_interval: i64,
@@ -58,4 +57,38 @@ pub struct Alert {
     pub _type: String,
     #[serde(deserialize_with = "null_to_default")]
     pub units: String,
+}
+
+impl Default for Alert {
+    fn default() -> Self {
+        let param: HashMap<String, String> = HashMap::new();
+        let param2: HashMap<String, String> = HashMap::new();
+        Self {
+            apply_all: false,
+            author: "".to_string(),
+            categories: vec![],
+            cc: vec![],
+            description: "".to_string(),
+            disabled: false,
+            field_name: "".to_string(),
+            field_name2: "".to_string(),
+            field_op: "".to_string(),
+            id: 0,
+            interval_length: 0,
+            mod_time: 0,
+            name: "".to_string(),
+            notify_snmp: false,
+            object_type: "".to_string(),
+            operand: "".to_string(),
+            operator: "".to_string(),
+            param,
+            param2,
+            protocols: vec![],
+            refire_interval: 0,
+            severity: 0,
+            stat_name: "".to_string(),
+            _type: "".to_string(),
+            units: "".to_string(),
+        }
+    }
 }

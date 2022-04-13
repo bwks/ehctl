@@ -1,5 +1,3 @@
-use serde::{Deserialize, Deserializer};
-
 pub mod activity_map;
 pub mod alert;
 pub mod api_key;
@@ -27,12 +25,3 @@ pub mod tag;
 pub mod threat_collection;
 pub mod trigger;
 pub mod vlan;
-
-pub fn null_to_default<'de, D, T>(deserializer: D) -> Result<T, D::Error>
-where
-    T: Default + Deserialize<'de>,
-    D: Deserializer<'de>,
-{
-    let opt = Option::deserialize(deserializer)?;
-    Ok(opt.unwrap_or_default())
-}

@@ -1,24 +1,27 @@
+mod cli;
+mod client;
 mod config;
+pub mod deserialize;
+mod model;
+mod util;
+
 use config::ExtraHopConfig;
 
-mod client;
 use client::{get_oauth_token, ExtraHopAppliance, ExtraHopClient};
 
-mod cli;
 use cli::{Cli, Getter};
 
-mod model;
 use model::activity_map::ActivityMaps;
-use model::alert::Alert;
+use model::alert::Alerts;
 use model::api_key::ApiKey;
 use model::appliance::Appliance;
 use model::audit_log::AuditLogs;
-use model::auth_provider::{IdentitiyProvider, SamlSp};
+use model::auth_provider::{IdentitiyProviders, SamlSp};
 use model::bundle::Bundles;
 use model::custom_device::CustomDevice;
 use model::customization::Customization;
 use model::dashboard::Dashboard;
-use model::detection::Detection;
+use model::detection::Detections;
 use model::device::Device;
 use model::device_group::DeviceGroup;
 use model::email_group::EmailGroup;
@@ -31,12 +34,10 @@ use model::node::Node;
 use model::packet_capture::PacketCapture;
 use model::running_config::RunningConfig;
 use model::software::Software;
-use model::tag::Tag;
+use model::tag::Tags;
 use model::threat_collection::ThreatCollection;
 use model::trigger::Trigger;
 use model::vlan::Vlan;
-
-mod util;
 
 use chrono::Local;
 use reqwest::StatusCode;
@@ -85,9 +86,11 @@ async fn get_audit_logs(client: &ExtraHopClient) -> Result<AuditLogs, Box<dyn st
     Ok(audit_logs)
 }
 
-async fn get_alerts(client: &ExtraHopClient) -> Result<Vec<Alert>, Box<dyn std::error::Error>> {
+async fn get_alerts(client: &ExtraHopClient) -> Result<Alerts, Box<dyn std::error::Error>> {
     let response = reqwest_get(client, "alerts").await?;
-    let alerts: Vec<Alert> = serde_json::from_str(&response.text().await?)?;
+    let alerts = Alerts {
+        alerts: serde_json::from_str(&response.text().await?)?,
+    };
     Ok(alerts)
 }
 
@@ -113,11 +116,11 @@ async fn get_dashboards(
     Ok(dashboards)
 }
 
-async fn get_detections(
-    client: &ExtraHopClient,
-) -> Result<Vec<Detection>, Box<dyn std::error::Error>> {
+async fn get_detections(client: &ExtraHopClient) -> Result<Detections, Box<dyn std::error::Error>> {
     let response = reqwest_get(client, "detections").await?;
-    let detections: Vec<Detection> = serde_json::from_str(&response.text().await?)?;
+    let detections = Detections {
+        detections: serde_json::from_str(&response.text().await?)?,
+    };
     Ok(detections)
 }
 
@@ -242,9 +245,11 @@ async fn get_running_config(client: &ExtraHopClient) -> Result<(), Box<dyn std::
 
 async fn get_identitiy_providers(
     client: &ExtraHopClient,
-) -> Result<Vec<IdentitiyProvider>, Box<dyn std::error::Error>> {
+) -> Result<IdentitiyProviders, Box<dyn std::error::Error>> {
     let response = reqwest_get(client, "/auth/identityproviders").await?;
-    let identity_providers: Vec<IdentitiyProvider> = serde_json::from_str(&response.text().await?)?;
+    let identity_providers = IdentitiyProviders {
+        identity_providers: serde_json::from_str(&response.text().await?)?,
+    };
     Ok(identity_providers)
 }
 
@@ -296,9 +301,11 @@ async fn get_software(
     Ok(software)
 }
 
-async fn get_tags(client: &ExtraHopClient) -> Result<Vec<Tag>, Box<dyn std::error::Error>> {
+async fn get_tags(client: &ExtraHopClient) -> Result<Tags, Box<dyn std::error::Error>> {
     let response = reqwest_get(client, "tags").await?;
-    let tags: Vec<Tag> = serde_json::from_str(&response.text().await?)?;
+    let tags = Tags {
+        tags: serde_json::from_str(&response.text().await?)?,
+    };
     Ok(tags)
 }
 
@@ -527,20 +534,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut activity_maps: HashMap<String, ActivityMaps> = HashMap::new();
     let mut audit_logs: HashMap<String, AuditLogs> = HashMap::new();
-    let mut alerts: HashMap<String, Vec<Alert>> = HashMap::new();
+    let mut alerts: HashMap<String, Alerts> = HashMap::new();
     let mut api_keys: HashMap<String, Vec<ApiKey>> = HashMap::new();
     let mut appliances: HashMap<String, Vec<Appliance>> = HashMap::new();
     let mut bundles: HashMap<String, Vec<Bundles>> = HashMap::new();
     let mut customizations: HashMap<String, Vec<Customization>> = HashMap::new();
     let mut custom_devices: HashMap<String, Vec<CustomDevice>> = HashMap::new();
     let mut dashboards: HashMap<String, Vec<Dashboard>> = HashMap::new();
-    let mut detections: HashMap<String, Vec<Detection>> = HashMap::new();
+    let mut detections: HashMap<String, Detections> = HashMap::new();
     let mut devices: HashMap<String, Vec<Device>> = HashMap::new();
     let mut device_groups: HashMap<String, Vec<DeviceGroup>> = HashMap::new();
     let mut email_groups: HashMap<String, Vec<EmailGroup>> = HashMap::new();
     let mut exclusion_intervals: HashMap<String, Vec<ExclusionInterval>> = HashMap::new();
     let mut extrahops: Vec<ExtraHop> = Vec::new();
-    let mut identity_providers: HashMap<String, Vec<IdentitiyProvider>> = HashMap::new();
+    let mut identity_providers: HashMap<String, IdentitiyProviders> = HashMap::new();
     let mut licenses: HashMap<String, Vec<License>> = HashMap::new();
     let mut networks: HashMap<String, Vec<Network>> = HashMap::new();
     let mut network_localities: HashMap<String, Vec<NetworkLocality>> = HashMap::new();
@@ -548,7 +555,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut packet_captures: HashMap<String, Vec<PacketCapture>> = HashMap::new();
     let mut saml_sps: HashMap<String, Vec<SamlSp>> = HashMap::new();
     let mut software: HashMap<String, Vec<Software>> = HashMap::new();
-    let mut tags: HashMap<String, Vec<Tag>> = HashMap::new();
+    let mut tags: HashMap<String, Tags> = HashMap::new();
     let mut threat_collections: HashMap<String, Vec<ThreatCollection>> = HashMap::new();
     let mut triggers: HashMap<String, Vec<Trigger>> = HashMap::new();
     let mut vlans: HashMap<String, Vec<Vlan>> = HashMap::new();
@@ -919,10 +926,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             Getter::Tags => {
                 for (key, mut value) in tags {
-                    value.sort_by(|a, b| b.name.cmp(&a.name));
+                    value.tags.sort_by(|a, b| b.name.cmp(&a.name));
 
                     println!("=> {}:", key);
-                    let table = Table::new(value);
+                    let table = Table::new(value.tags);
                     println!("{table}");
                 }
             }
