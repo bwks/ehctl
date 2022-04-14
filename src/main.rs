@@ -18,7 +18,7 @@ use model::appliance::Appliances;
 use model::audit_log::AuditLogs;
 use model::auth_provider::{IdentitiyProviders, SamlSps};
 use model::bundle::Bundles;
-use model::custom_device::CustomDevice;
+use model::custom_device::CustomDevices;
 use model::customization::Customization;
 use model::dashboard::Dashboard;
 use model::detection::Detections;
@@ -197,9 +197,11 @@ async fn save_customization(
 
 async fn get_custom_devices(
     client: &ExtraHopClient,
-) -> Result<Vec<CustomDevice>, Box<dyn std::error::Error>> {
+) -> Result<CustomDevices, Box<dyn std::error::Error>> {
     let response = reqwest_get(client, "customdevices").await?;
-    let custom_devices: Vec<CustomDevice> = serde_json::from_str(&response.text().await?)?;
+    let custom_devices = CustomDevices {
+        custom_devices: serde_json::from_str(&response.text().await?)?,
+    };
     Ok(custom_devices)
 }
 
@@ -545,7 +547,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut appliances: HashMap<String, Appliances> = HashMap::new();
     let mut bundles: HashMap<String, Bundles> = HashMap::new();
     let mut customizations: HashMap<String, Vec<Customization>> = HashMap::new();
-    let mut custom_devices: HashMap<String, Vec<CustomDevice>> = HashMap::new();
+    let mut custom_devices: HashMap<String, CustomDevices> = HashMap::new();
     let mut dashboards: HashMap<String, Vec<Dashboard>> = HashMap::new();
     let mut detections: HashMap<String, Detections> = HashMap::new();
     let mut devices: HashMap<String, Vec<Device>> = HashMap::new();
@@ -816,11 +818,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             Getter::CustomDevices => {
                 for (key, mut value) in custom_devices {
-                    value.sort_by(|a, b| a.name.cmp(&b.name));
+                    if value.custom_devices.is_empty() {
+                        println!("{}:", key);
+                        println!(" no custom devices");
+                    } else {
+                        value.custom_devices.sort_by(|a, b| a.name.cmp(&b.name));
 
-                    println!("{}:", key);
-                    let table = Table::new(value).with(Modify::new(Full).with(Alignment::left()));
-                    println!("{table}");
+                        println!("{}:", key);
+                        let table = Table::new(value.custom_devices)
+                            .with(Modify::new(Full).with(Alignment::left()));
+                        println!("{table}");
+                    }
                 }
             }
             Getter::Dashboards => {

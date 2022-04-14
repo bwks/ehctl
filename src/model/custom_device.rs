@@ -3,8 +3,14 @@ use tabled::Tabled;
 
 use crate::deserialize::null_to_default;
 
-#[allow(dead_code)]
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
+#[serde(default)]
+pub struct CustomDevices {
+    pub custom_devices: Vec<CustomDevice>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(default)]
 pub struct CustomDevice {
     #[serde(deserialize_with = "null_to_default")]
     pub author: String,
@@ -24,8 +30,8 @@ pub struct CustomDevice {
     pub name: String,
 }
 
-#[allow(dead_code)]
-#[derive(Debug, Tabled, Deserialize)]
+#[derive(Debug, Tabled, Default, Deserialize)]
+#[serde(default)]
 pub struct CustomDeviceCriteria {
     #[serde(deserialize_with = "null_to_default")]
     pub dst_port_max: i64,
