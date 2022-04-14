@@ -19,7 +19,7 @@ use model::audit_log::AuditLogs;
 use model::auth_provider::{IdentitiyProviders, SamlSps};
 use model::bundle::Bundles;
 use model::custom_device::CustomDevices;
-use model::customization::Customization;
+use model::customization::Customizations;
 use model::dashboard::Dashboard;
 use model::detection::Detections;
 use model::device::Device;
@@ -144,9 +144,11 @@ async fn get_device_groups(
 
 async fn get_customizations(
     client: &ExtraHopClient,
-) -> Result<Vec<Customization>, Box<dyn std::error::Error>> {
+) -> Result<Customizations, Box<dyn std::error::Error>> {
     let response = reqwest_get(client, "customizations").await?;
-    let customizations: Vec<Customization> = serde_json::from_str(&response.text().await?)?;
+    let customizations = Customizations {
+        customizations: serde_json::from_str(&response.text().await?)?,
+    };
     Ok(customizations)
 }
 
@@ -160,7 +162,7 @@ async fn create_customization(client: &ExtraHopClient) -> Result<(), Box<dyn std
     if response.status() == StatusCode::CREATED {
         println!("=> new customization added: {}", name);
         let customizations = get_customizations(client).await?;
-        for c in customizations.iter() {
+        for c in customizations.customizations.iter() {
             if c.name.starts_with(&name) {
                 save_customization(client, &c.id).await?;
             }
@@ -546,7 +548,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut api_keys: HashMap<String, ApiKeys> = HashMap::new();
     let mut appliances: HashMap<String, Appliances> = HashMap::new();
     let mut bundles: HashMap<String, Bundles> = HashMap::new();
-    let mut customizations: HashMap<String, Vec<Customization>> = HashMap::new();
+    let mut customizations: HashMap<String, Customizations> = HashMap::new();
     let mut custom_devices: HashMap<String, CustomDevices> = HashMap::new();
     let mut dashboards: HashMap<String, Vec<Dashboard>> = HashMap::new();
     let mut detections: HashMap<String, Detections> = HashMap::new();
@@ -809,10 +811,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             Getter::Customizations => {
                 for (key, mut value) in customizations {
-                    value.sort_by(|a, b| a.id.cmp(&b.id));
+                    value.customizations.sort_by(|a, b| a.id.cmp(&b.id));
 
                     println!("{}:", key);
-                    let table = Table::new(value);
+                    let table = Table::new(value.customizations);
                     println!("{table}");
                 }
             }
