@@ -858,8 +858,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             .with(
                                 Modify::new(Full)
                                     // Not released yet, will be in future version.
-                                    .with(MinWidth::new(30))
-                                    .with(MaxWidth::wrapping(30))
+                                    // .with(MinWidth::new(20))
+                                    // .with(MaxWidth::wrapping(100))
                                     .with(Alignment::left()),
                             )
                             .with(Rotate::Left);

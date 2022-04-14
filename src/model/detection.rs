@@ -83,18 +83,82 @@ impl Tabled for Detection {
     const LENGTH: usize = 50;
 
     fn fields(&self) -> Vec<String> {
+        let mut mitre_tactics = vec![];
+        for m in self.mitre_tactics.iter() {
+            let tmp = format!(
+                "        id: {}
+legacy_ids: {}
+      name: {}
+       url: {}
+            --",
+                m.id,
+                m.legacy_ids.join(", "),
+                m.name,
+                m.url,
+            );
+            mitre_tactics.push(tmp);
+        }
+
+        let mut mitre_techniques = vec![];
+        for m in self.mitre_techniques.iter() {
+            let tmp = format!(
+                "        id: {}
+legacy_ids: {}
+      name: {}
+       url: {}
+            --",
+                m.id,
+                m.legacy_ids.join(", "),
+                m.name,
+                m.url,
+            );
+            mitre_techniques.push(tmp);
+        }
+
+        let mut participants = vec![];
+        for p in self.participants.iter() {
+            let tmp = format!(
+                "    external: {}
+    hostname: {}
+          id: {}
+   object_id: {}
+ object_type: {}
+object_value: {}
+     origins: {}
+        role: {}
+   usernames: {}
+              --",
+                p.external,
+                p.hostname,
+                p.id,
+                p.object_id,
+                p.object_type,
+                p.object_value,
+                p.origins.join(" "),
+                p.role,
+                p.usernames.join(" "),
+            );
+            participants.push(tmp);
+        }
+
+        let mut properties = vec![];
+        for (k, v) in self.properties.iter() {
+            let tmp = format!("{k:>12}: {v}");
+            properties.push(tmp);
+        }
+
         vec![
             self.appliance_id.to_string(),
             self.assignee.to_string(),
-            // self.categories.to_string(),
-            self.description.to_string(),
+            self.categories.join("\n"),
+            // self.description.to_string(),
             self.end_time.to_string(),
             self.id.to_string(),
             self.is_user_created.to_string(),
-            // self.mitre_tactics.to_string(),
-            // self.mitre_techniques.to_string(),
-            // self.participants.to_string(),
-            // self.properties.to_string(),
+            mitre_tactics.join("\n"),
+            mitre_techniques.join("\n"),
+            participants.join("\n"),
+            properties.join("\n"),
             self.resolution.to_string(),
             self.risk_score.to_string(),
             self.start_time.to_string(),
@@ -111,15 +175,15 @@ impl Tabled for Detection {
         vec![
             "appliance_id".to_string(),
             "assignee".to_string(),
-            // "categories".to_string(),
-            "description".to_string(),
+            "categories".to_string(),
+            // "description".to_string(),
             "end_time".to_string(),
             "id".to_string(),
             "is_user_created".to_string(),
-            // "mitre_tactics".to_string(),
-            // "mitre_techniques".to_string(),
-            // "participants".to_string(),
-            // "properties".to_string(),
+            "mitre_tactics".to_string(),
+            "mitre_techniques".to_string(),
+            "participants".to_string(),
+            "properties".to_string(),
             "resolution".to_string(),
             "risk_score".to_string(),
             "start_time".to_string(),
