@@ -14,7 +14,7 @@ use cli::{Cli, Getter};
 use model::activity_map::ActivityMaps;
 use model::alert::Alerts;
 use model::api_key::ApiKeys;
-use model::appliance::Appliance;
+use model::appliance::Appliances;
 use model::audit_log::AuditLogs;
 use model::auth_provider::{IdentitiyProviders, SamlSp};
 use model::bundle::Bundles;
@@ -96,11 +96,11 @@ async fn get_alerts(client: &ExtraHopClient) -> Result<Alerts, Box<dyn std::erro
     Ok(alerts)
 }
 
-async fn get_appliances(
-    client: &ExtraHopClient,
-) -> Result<Vec<Appliance>, Box<dyn std::error::Error>> {
+async fn get_appliances(client: &ExtraHopClient) -> Result<Appliances, Box<dyn std::error::Error>> {
     let response = reqwest_get(client, "appliances").await?;
-    let appliances: Vec<Appliance> = serde_json::from_str(&response.text().await?)?;
+    let appliances = Appliances {
+        appliances: serde_json::from_str(&response.text().await?)?,
+    };
     Ok(appliances)
 }
 
@@ -538,7 +538,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut audit_logs: HashMap<String, AuditLogs> = HashMap::new();
     let mut alerts: HashMap<String, Alerts> = HashMap::new();
     let mut api_keys: HashMap<String, ApiKeys> = HashMap::new();
-    let mut appliances: HashMap<String, Vec<Appliance>> = HashMap::new();
+    let mut appliances: HashMap<String, Appliances> = HashMap::new();
     let mut bundles: HashMap<String, Vec<Bundles>> = HashMap::new();
     let mut customizations: HashMap<String, Vec<Customization>> = HashMap::new();
     let mut custom_devices: HashMap<String, Vec<CustomDevice>> = HashMap::new();
@@ -774,7 +774,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::Appliances => {
                 for (key, value) in appliances {
                     println!("{key}:");
-                    for a in value.iter() {
+                    for a in value.appliances.iter() {
                         let table = Table::new(vec![a])
                             .with(
                                 Modify::new(Rows::new(1..))
