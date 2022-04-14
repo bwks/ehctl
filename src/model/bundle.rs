@@ -3,9 +3,15 @@ use tabled::Tabled;
 
 use crate::deserialize::null_to_default;
 
-#[allow(dead_code)]
-#[derive(Debug, Tabled, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
+#[serde(default)]
 pub struct Bundles {
+    pub bundles: Vec<Bundle>,
+}
+
+#[derive(Debug, Default, Tabled, Deserialize)]
+#[serde(default)]
+pub struct Bundle {
     pub built_in: bool,
     #[serde(deserialize_with = "null_to_default")]
     pub created_time: i64,

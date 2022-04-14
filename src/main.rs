@@ -104,9 +104,11 @@ async fn get_appliances(client: &ExtraHopClient) -> Result<Appliances, Box<dyn s
     Ok(appliances)
 }
 
-async fn get_bundles(client: &ExtraHopClient) -> Result<Vec<Bundles>, Box<dyn std::error::Error>> {
+async fn get_bundles(client: &ExtraHopClient) -> Result<Bundles, Box<dyn std::error::Error>> {
     let response = reqwest_get(client, "bundles").await?;
-    let bundles: Vec<Bundles> = serde_json::from_str(&response.text().await?)?;
+    let bundles = Bundles {
+        bundles: serde_json::from_str(&response.text().await?)?,
+    };
     Ok(bundles)
 }
 
@@ -541,7 +543,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut alerts: HashMap<String, Alerts> = HashMap::new();
     let mut api_keys: HashMap<String, ApiKeys> = HashMap::new();
     let mut appliances: HashMap<String, Appliances> = HashMap::new();
-    let mut bundles: HashMap<String, Vec<Bundles>> = HashMap::new();
+    let mut bundles: HashMap<String, Bundles> = HashMap::new();
     let mut customizations: HashMap<String, Vec<Customization>> = HashMap::new();
     let mut custom_devices: HashMap<String, Vec<CustomDevice>> = HashMap::new();
     let mut dashboards: HashMap<String, Vec<Dashboard>> = HashMap::new();
@@ -790,10 +792,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             Getter::Bundles => {
                 for (key, mut value) in bundles {
-                    value.sort_by(|a, b| a.name.cmp(&b.name));
+                    value.bundles.sort_by(|a, b| a.name.cmp(&b.name));
 
                     println!("=> {}:", key);
-                    let table = Table::new(value)
+                    let table = Table::new(value.bundles)
                         .with(
                             Modify::new(Rows::new(1..))
                                 .with(MinWidth::new(30))
