@@ -20,7 +20,7 @@ use model::auth_provider::{IdentitiyProviders, SamlSps};
 use model::bundle::Bundles;
 use model::custom_device::CustomDevices;
 use model::customization::Customizations;
-use model::dashboard::Dashboard;
+use model::dashboard::Dashboards;
 use model::detection::Detections;
 use model::device::Device;
 use model::device_group::DeviceGroup;
@@ -112,11 +112,11 @@ async fn get_bundles(client: &ExtraHopClient) -> Result<Bundles, Box<dyn std::er
     Ok(bundles)
 }
 
-async fn get_dashboards(
-    client: &ExtraHopClient,
-) -> Result<Vec<Dashboard>, Box<dyn std::error::Error>> {
+async fn get_dashboards(client: &ExtraHopClient) -> Result<Dashboards, Box<dyn std::error::Error>> {
     let response = reqwest_get(client, "dashboards").await?;
-    let dashboards: Vec<Dashboard> = serde_json::from_str(&response.text().await?)?;
+    let dashboards = Dashboards {
+        dashboards: serde_json::from_str(&response.text().await?)?,
+    };
     Ok(dashboards)
 }
 
@@ -550,7 +550,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut bundles: HashMap<String, Bundles> = HashMap::new();
     let mut customizations: HashMap<String, Customizations> = HashMap::new();
     let mut custom_devices: HashMap<String, CustomDevices> = HashMap::new();
-    let mut dashboards: HashMap<String, Vec<Dashboard>> = HashMap::new();
+    let mut dashboards: HashMap<String, Dashboards> = HashMap::new();
     let mut detections: HashMap<String, Detections> = HashMap::new();
     let mut devices: HashMap<String, Vec<Device>> = HashMap::new();
     let mut device_groups: HashMap<String, Vec<DeviceGroup>> = HashMap::new();
@@ -836,7 +836,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::Dashboards => {
                 for (key, value) in dashboards {
                     println!("{}:", key);
-                    for d in value.iter() {
+                    for d in value.dashboards.iter() {
                         let table = Table::new(vec![d])
                             .with(
                                 Modify::new(Full)

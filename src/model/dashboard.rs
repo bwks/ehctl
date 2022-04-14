@@ -3,8 +3,14 @@ use tabled::Tabled;
 
 use crate::deserialize::null_to_default;
 
-#[allow(dead_code)]
-#[derive(Debug, Deserialize)]
+#[derive(Default, Deserialize)]
+#[serde(default)]
+pub struct Dashboards {
+    pub dashboards: Vec<Dashboard>,
+}
+
+#[derive(Default, Deserialize)]
+#[serde(default)]
 pub struct Dashboard {
     #[serde(deserialize_with = "null_to_default")]
     pub author: String,
@@ -18,7 +24,6 @@ pub struct Dashboard {
     pub name: String,
     #[serde(deserialize_with = "null_to_default")]
     pub owner: String,
-    #[serde(deserialize_with = "null_to_default")]
     pub rights: Vec<String>,
     #[serde(deserialize_with = "null_to_default")]
     pub short_code: String,
