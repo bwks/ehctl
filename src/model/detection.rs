@@ -1,24 +1,22 @@
-use std::collections::HashMap;
-
 use serde::Deserialize;
+use std::collections::HashMap;
+use tabled::Tabled;
 
 use crate::deserialize::null_to_default;
 
-#[allow(dead_code)]
-#[derive(Debug, Deserialize)]
+#[derive(Default, Deserialize)]
+#[serde(default)]
 pub struct Detections {
     pub detections: Vec<Detection>,
 }
 
-#[allow(dead_code)]
-#[derive(Debug, Deserialize)]
+#[derive(Deserialize)]
 #[serde(default)]
 pub struct Detection {
     #[serde(deserialize_with = "null_to_default")]
     pub appliance_id: i64,
     #[serde(deserialize_with = "null_to_default")]
     pub assignee: String,
-    #[serde(default)]
     pub categories: Vec<String>,
     #[serde(deserialize_with = "null_to_default")]
     pub description: String,
@@ -28,13 +26,9 @@ pub struct Detection {
     pub id: i64,
     #[serde(deserialize_with = "null_to_default")]
     pub is_user_created: bool,
-    #[serde(default)]
     pub mitre_tactics: Vec<MitreField>,
-    #[serde(default)]
     pub mitre_techniques: Vec<MitreField>,
-    #[serde(default)]
     pub participants: Vec<Participant>,
-    #[serde(default)]
     pub properties: HashMap<String, serde_json::Value>,
     #[serde(deserialize_with = "null_to_default")]
     pub resolution: String,
@@ -47,7 +41,6 @@ pub struct Detection {
     #[serde(deserialize_with = "null_to_default")]
     pub ticket_id: String,
     #[serde(deserialize_with = "null_to_default")]
-    #[serde(default)]
     pub ticket_url: String,
     #[serde(deserialize_with = "null_to_default")]
     pub title: String,
@@ -86,70 +79,89 @@ impl Default for Detection {
     }
 }
 
-#[allow(dead_code)]
-#[derive(Debug, Deserialize)]
+impl Tabled for Detection {
+    const LENGTH: usize = 50;
+
+    fn fields(&self) -> Vec<String> {
+        vec![
+            self.appliance_id.to_string(),
+            self.assignee.to_string(),
+            // self.categories.to_string(),
+            self.description.to_string(),
+            self.end_time.to_string(),
+            self.id.to_string(),
+            self.is_user_created.to_string(),
+            // self.mitre_tactics.to_string(),
+            // self.mitre_techniques.to_string(),
+            // self.participants.to_string(),
+            // self.properties.to_string(),
+            self.resolution.to_string(),
+            self.risk_score.to_string(),
+            self.start_time.to_string(),
+            self.status.to_string(),
+            self.ticket_id.to_string(),
+            self.ticket_url.to_string(),
+            self.title.to_string(),
+            self._type.to_string(),
+            self.update_time.to_string(),
+        ]
+    }
+
+    fn headers() -> Vec<String> {
+        vec![
+            "appliance_id".to_string(),
+            "assignee".to_string(),
+            // "categories".to_string(),
+            "description".to_string(),
+            "end_time".to_string(),
+            "id".to_string(),
+            "is_user_created".to_string(),
+            // "mitre_tactics".to_string(),
+            // "mitre_techniques".to_string(),
+            // "participants".to_string(),
+            // "properties".to_string(),
+            "resolution".to_string(),
+            "risk_score".to_string(),
+            "start_time".to_string(),
+            "status".to_string(),
+            "ticket_id".to_string(),
+            "ticket_url".to_string(),
+            "title".to_string(),
+            "type".to_string(),
+            "update_time".to_string(),
+        ]
+    }
+}
+
+#[derive(Default, Deserialize)]
 #[serde(default)]
 pub struct Participant {
     #[serde(deserialize_with = "null_to_default")]
     pub external: bool,
     #[serde(deserialize_with = "null_to_default")]
-    #[serde(default)]
     pub hostname: String,
     #[serde(deserialize_with = "null_to_default")]
     pub id: i64,
     #[serde(deserialize_with = "null_to_default")]
-    #[serde(default)]
     pub object_id: i64,
     #[serde(deserialize_with = "null_to_default")]
     pub object_type: String,
     #[serde(deserialize_with = "null_to_default")]
-    #[serde(default)]
     pub object_value: String,
-    #[serde(default)]
     pub origins: Vec<String>,
     #[serde(deserialize_with = "null_to_default")]
     pub role: String,
-    #[serde(default)]
     pub usernames: Vec<String>,
 }
 
-impl Default for Participant {
-    fn default() -> Self {
-        Self {
-            external: false,
-            hostname: "".to_string(),
-            id: 0,
-            object_id: 0,
-            object_type: "".to_string(),
-            object_value: "".to_string(),
-            origins: vec![],
-            role: "".to_string(),
-            usernames: vec![],
-        }
-    }
-}
-
-#[allow(dead_code)]
-#[derive(Debug, Deserialize)]
+#[derive(Default, Deserialize)]
 #[serde(default)]
 pub struct MitreField {
     #[serde(deserialize_with = "null_to_default")]
     pub id: String,
-    #[serde(default)]
     pub legacy_ids: Vec<String>,
     #[serde(deserialize_with = "null_to_default")]
     pub name: String,
     #[serde(deserialize_with = "null_to_default")]
     pub url: String,
-}
-
-impl Default for MitreField {
-    fn default() -> Self {
-        Self {
-            id: "".to_string(),
-            legacy_ids: vec![],
-            name: "".to_string(),
-            url: "".to_string(),
-        }
-    }
 }

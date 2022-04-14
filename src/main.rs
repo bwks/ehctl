@@ -851,7 +851,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
             Getter::Detections => {
-                println!("{:#?}", detections);
+                for (key, value) in detections {
+                    println!("{}:", key);
+                    for d in value.detections.iter() {
+                        let table = Table::new(vec![d])
+                            .with(
+                                Modify::new(Full)
+                                    // Not released yet, will be in future version.
+                                    .with(MinWidth::new(30))
+                                    .with(MaxWidth::wrapping(30))
+                                    .with(Alignment::left()),
+                            )
+                            .with(Rotate::Left);
+                        println!("{}", table);
+                    }
+                }
             }
             Getter::Devices => {
                 for (key, value) in devices {
