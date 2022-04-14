@@ -13,7 +13,7 @@ use cli::{Cli, Getter};
 
 use model::activity_map::ActivityMaps;
 use model::alert::Alerts;
-use model::api_key::ApiKey;
+use model::api_key::ApiKeys;
 use model::appliance::Appliance;
 use model::audit_log::AuditLogs;
 use model::auth_provider::{IdentitiyProviders, SamlSp};
@@ -62,9 +62,11 @@ async fn reqwest_get(
     }
 }
 
-async fn get_api_keys(client: &ExtraHopClient) -> Result<Vec<ApiKey>, Box<dyn std::error::Error>> {
+async fn get_api_keys(client: &ExtraHopClient) -> Result<ApiKeys, Box<dyn std::error::Error>> {
     let response = reqwest_get(client, "apikeys").await?;
-    let api_keys: Vec<ApiKey> = serde_json::from_str(&response.text().await?)?;
+    let api_keys = ApiKeys {
+        api_keys: serde_json::from_str(&response.text().await?)?,
+    };
     Ok(api_keys)
 }
 
@@ -535,7 +537,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut activity_maps: HashMap<String, ActivityMaps> = HashMap::new();
     let mut audit_logs: HashMap<String, AuditLogs> = HashMap::new();
     let mut alerts: HashMap<String, Alerts> = HashMap::new();
-    let mut api_keys: HashMap<String, Vec<ApiKey>> = HashMap::new();
+    let mut api_keys: HashMap<String, ApiKeys> = HashMap::new();
     let mut appliances: HashMap<String, Vec<Appliance>> = HashMap::new();
     let mut bundles: HashMap<String, Vec<Bundles>> = HashMap::new();
     let mut customizations: HashMap<String, Vec<Customization>> = HashMap::new();
@@ -757,7 +759,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::ApiKeys => {
                 for (key, value) in api_keys {
                     println!("{key}:");
-                    for a in value.iter() {
+                    for a in value.api_keys.iter() {
                         let table = Table::new(vec![a])
                             .with(
                                 Modify::new(Rows::new(1..))
