@@ -1,15 +1,16 @@
+use std::collections::HashMap;
+
 use serde::Deserialize;
 
 use crate::deserialize::null_to_default;
 
-#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 pub struct ActivityMaps {
     pub activity_maps: Vec<ActivityMap>,
 }
 
-#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
+#[serde(default)]
 pub struct ActivityMap {
     #[serde(deserialize_with = "null_to_default")]
     pub description: String,
@@ -23,7 +24,6 @@ pub struct ActivityMap {
     pub name: String,
     #[serde(deserialize_with = "null_to_default")]
     pub owner: String,
-    #[serde(deserialize_with = "null_to_default")]
     pub rights: Vec<String>,
     #[serde(deserialize_with = "null_to_default")]
     pub short_code: String,
@@ -35,19 +35,35 @@ pub struct ActivityMap {
     // #[serde(deserialize_with = "null_to_default")]
     // #[serde(default)]
     // pub walks: Vec<Walks>,
+    pub walks: Vec<HashMap<String, serde_json::Value>>,
+}
+impl Default for ActivityMap {
+    fn default() -> Self {
+        Self {
+            description: "".to_string(),
+            id: 0,
+            mod_time: 0,
+            mode: "".to_string(),
+            name: "".to_string(),
+            owner: "".to_string(),
+            rights: vec![],
+            short_code: "".to_string(),
+            show_alert_status: false,
+            weighting: "".to_string(),
+            walks: vec![],
+        }
+    }
 }
 
-#[allow(dead_code)]
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
+#[serde(default)]
 pub struct Walks {
-    #[serde(deserialize_with = "null_to_default")]
     pub origins: Vec<ObjectIdType>,
-    #[serde(deserialize_with = "null_to_default")]
     pub steps: Vec<Steps>,
 }
 
-#[allow(dead_code)]
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
+#[serde(default)]
 pub struct ObjectIdType {
     #[serde(deserialize_with = "null_to_default")]
     pub object_id: i64,
@@ -55,8 +71,8 @@ pub struct ObjectIdType {
     pub object_type: String,
 }
 
-#[allow(dead_code)]
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
+#[serde(default)]
 pub struct ProtocolRole {
     #[serde(deserialize_with = "null_to_default")]
     pub protocol: String,
@@ -64,13 +80,10 @@ pub struct ProtocolRole {
     pub role: String,
 }
 
-#[allow(dead_code)]
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
+#[serde(default)]
 pub struct Steps {
-    #[serde(deserialize_with = "null_to_default")]
     pub peer_in: Vec<ObjectIdType>,
-    #[serde(deserialize_with = "null_to_default")]
     pub peer_not_in: Vec<ObjectIdType>,
-    #[serde(deserialize_with = "null_to_default")]
     pub relationships: Vec<ProtocolRole>,
 }
