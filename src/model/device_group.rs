@@ -3,8 +3,14 @@ use tabled::Tabled;
 
 use crate::deserialize::null_to_default;
 
-#[allow(dead_code)]
-#[derive(Tabled, Debug, Deserialize)]
+#[derive(Default, Deserialize)]
+#[serde(default)]
+pub struct DeviceGroups {
+    pub device_groups: Vec<DeviceGroup>,
+}
+
+#[derive(Tabled, Default, Deserialize)]
+#[serde(default)]
 pub struct DeviceGroup {
     #[serde(deserialize_with = "null_to_default")]
     pub built_in: bool,

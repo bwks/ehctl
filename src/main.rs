@@ -23,7 +23,7 @@ use model::customization::Customizations;
 use model::dashboard::Dashboards;
 use model::detection::Detections;
 use model::device::Device;
-use model::device_group::DeviceGroup;
+use model::device_group::DeviceGroups;
 use model::email_group::EmailGroup;
 use model::exclusion_interval::ExclusionInterval;
 use model::extrahop::ExtraHop;
@@ -136,9 +136,11 @@ async fn get_devices(client: &ExtraHopClient) -> Result<Vec<Device>, Box<dyn std
 
 async fn get_device_groups(
     client: &ExtraHopClient,
-) -> Result<Vec<DeviceGroup>, Box<dyn std::error::Error>> {
+) -> Result<DeviceGroups, Box<dyn std::error::Error>> {
     let response = reqwest_get(client, "devicegroups").await?;
-    let device_groups: Vec<DeviceGroup> = serde_json::from_str(&response.text().await?)?;
+    let device_groups = DeviceGroups {
+        device_groups: serde_json::from_str(&response.text().await?)?,
+    };
     Ok(device_groups)
 }
 
@@ -553,7 +555,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut dashboards: HashMap<String, Dashboards> = HashMap::new();
     let mut detections: HashMap<String, Detections> = HashMap::new();
     let mut devices: HashMap<String, Vec<Device>> = HashMap::new();
-    let mut device_groups: HashMap<String, Vec<DeviceGroup>> = HashMap::new();
+    let mut device_groups: HashMap<String, DeviceGroups> = HashMap::new();
     let mut email_groups: HashMap<String, Vec<EmailGroup>> = HashMap::new();
     let mut exclusion_intervals: HashMap<String, Vec<ExclusionInterval>> = HashMap::new();
     let mut extrahops: Vec<ExtraHop> = Vec::new();
@@ -887,7 +889,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::DeviceGroups => {
                 for (key, value) in device_groups {
                     println!("{}:", key);
-                    for d in value.iter() {
+                    for d in value.device_groups.iter() {
                         let table = Table::new(vec![d])
                             .with(
                                 Modify::new(Full)
