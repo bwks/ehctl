@@ -4,10 +4,15 @@ use tabled::Tabled;
 
 use crate::deserialize::null_to_default;
 
-#[allow(dead_code)]
-#[derive(Debug, Deserialize)]
+#[derive(Default, Deserialize)]
+#[serde(default)]
+pub struct Devices {
+    pub devices: Vec<Device>,
+}
+
+#[derive(Default, Deserialize)]
+#[serde(default)]
 pub struct Device {
-    #[serde(default)]
     pub activity: Vec<String>,
     #[serde(deserialize_with = "null_to_default")]
     pub analysis: String,
