@@ -16,7 +16,7 @@ use model::alert::Alerts;
 use model::api_key::ApiKeys;
 use model::appliance::Appliances;
 use model::audit_log::AuditLogs;
-use model::auth_provider::{IdentitiyProviders, SamlSp};
+use model::auth_provider::{IdentitiyProviders, SamlSps};
 use model::bundle::Bundles;
 use model::custom_device::CustomDevice;
 use model::customization::Customization;
@@ -289,10 +289,12 @@ async fn get_packet_captures(
     Ok(packet_captures)
 }
 
-async fn get_saml_sp(client: &ExtraHopClient) -> Result<Vec<SamlSp>, Box<dyn std::error::Error>> {
+async fn get_saml_sp(client: &ExtraHopClient) -> Result<SamlSps, Box<dyn std::error::Error>> {
     let response = reqwest_get(client, "/auth/samlsp").await?;
-    let saml_sp: SamlSp = serde_json::from_str(&response.text().await?)?;
-    Ok(vec![saml_sp])
+    let saml_sps = SamlSps {
+        saml_sps: serde_json::from_str(&response.text().await?)?,
+    };
+    Ok(saml_sps)
 }
 
 async fn get_software(
@@ -555,7 +557,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut network_localities: HashMap<String, Vec<NetworkLocality>> = HashMap::new();
     let mut nodes: HashMap<String, Vec<Node>> = HashMap::new();
     let mut packet_captures: HashMap<String, Vec<PacketCapture>> = HashMap::new();
-    let mut saml_sps: HashMap<String, Vec<SamlSp>> = HashMap::new();
+    let mut saml_sps: HashMap<String, SamlSps> = HashMap::new();
     let mut software: HashMap<String, Vec<Software>> = HashMap::new();
     let mut tags: HashMap<String, Tags> = HashMap::new();
     let mut threat_collections: HashMap<String, Vec<ThreatCollection>> = HashMap::new();

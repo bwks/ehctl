@@ -2,14 +2,14 @@ use serde::Deserialize;
 
 use crate::deserialize::null_to_default;
 
-#[allow(dead_code)]
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
+#[serde(default)]
 pub struct IdentitiyProviders {
     pub identity_providers: Vec<IdentitiyProvider>,
 }
 
-#[allow(dead_code)]
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
+#[serde(default)]
 pub struct IdentitiyProvider {
     #[serde(deserialize_with = "null_to_default")]
     pub auto_provision_users: bool,
@@ -30,23 +30,14 @@ pub struct IdentitiyProvider {
     pub _type: String,
 }
 
-impl Default for IdentitiyProvider {
-    fn default() -> Self {
-        Self {
-            auto_provision_users: false,
-            enabled: false,
-            entity_id: "".to_string(),
-            id: 0,
-            name: "".to_string(),
-            signing_certificate: "".to_string(),
-            sso_url: "".to_string(),
-            _type: "".to_string(),
-        }
-    }
+#[derive(Debug, Default, Deserialize)]
+#[serde(default)]
+pub struct SamlSps {
+    pub saml_sps: Vec<SamlSp>,
 }
 
-#[allow(dead_code)]
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
+#[serde(default)]
 pub struct SamlSp {
     #[serde(deserialize_with = "null_to_default")]
     pub acs_url: String,
@@ -54,14 +45,4 @@ pub struct SamlSp {
     pub entity_id: String,
     #[serde(deserialize_with = "null_to_default")]
     pub xml: String,
-}
-
-impl Default for SamlSp {
-    fn default() -> Self {
-        Self {
-            acs_url: "".to_string(),
-            entity_id: "".to_string(),
-            xml: "".to_string(),
-        }
-    }
 }
