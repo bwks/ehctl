@@ -24,7 +24,7 @@ use model::dashboard::Dashboards;
 use model::detection::Detections;
 use model::device::Devices;
 use model::device_group::DeviceGroups;
-use model::email_group::EmailGroup;
+use model::email_group::EmailGroups;
 use model::exclusion_interval::ExclusionInterval;
 use model::extrahop::ExtraHop;
 use model::license::License;
@@ -213,9 +213,11 @@ async fn get_custom_devices(
 
 async fn get_email_groups(
     client: &ExtraHopClient,
-) -> Result<Vec<EmailGroup>, Box<dyn std::error::Error>> {
+) -> Result<EmailGroups, Box<dyn std::error::Error>> {
     let response = reqwest_get(client, "emailgroups").await?;
-    let email_groups: Vec<EmailGroup> = serde_json::from_str(&response.text().await?)?;
+    let email_groups = EmailGroups {
+        email_groups: serde_json::from_str(&response.text().await?)?,
+    };
     Ok(email_groups)
 }
 
@@ -558,7 +560,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut detections: HashMap<String, Detections> = HashMap::new();
     let mut devices: HashMap<String, Devices> = HashMap::new();
     let mut device_groups: HashMap<String, DeviceGroups> = HashMap::new();
-    let mut email_groups: HashMap<String, Vec<EmailGroup>> = HashMap::new();
+    let mut email_groups: HashMap<String, EmailGroups> = HashMap::new();
     let mut exclusion_intervals: HashMap<String, Vec<ExclusionInterval>> = HashMap::new();
     let mut extrahops: Vec<ExtraHop> = Vec::new();
     let mut identity_providers: HashMap<String, IdentitiyProviders> = HashMap::new();
@@ -906,7 +908,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
             Getter::EmailGroups => {
-                println!("{:#?}", email_groups);
+                for (key, value) in email_groups {
+                    println!("{}:", key);
+                    for d in value.email_groups.iter() {
+                        let table = Table::new(vec![d])
+                            .with(
+                                Modify::new(Full)
+                                    // Not released yet, will be in future version.
+                                    .with(MinWidth::new(30))
+                                    .with(MaxWidth::wrapping(30))
+                                    .with(Alignment::left()),
+                            )
+                            .with(Rotate::Left);
+                        println!("{}", table);
+                    }
+                }
             }
             Getter::ExclusionIntervals => {
                 println!("{:#?}", exclusion_intervals);
