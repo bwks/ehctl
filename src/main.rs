@@ -1,7 +1,7 @@
 mod cli;
 mod client;
 mod config;
-pub mod deserialize;
+mod deserialize;
 mod model;
 mod util;
 
