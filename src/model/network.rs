@@ -3,8 +3,14 @@ use tabled::Tabled;
 
 use crate::deserialize::null_to_default;
 
-#[allow(dead_code)]
-#[derive(Tabled, Debug, Deserialize)]
+#[derive(Default, Deserialize)]
+#[serde(default)]
+pub struct Networks {
+    pub networks: Vec<Network>,
+}
+
+#[derive(Tabled, Default, Deserialize)]
+#[serde(default)]
 pub struct Network {
     #[serde(deserialize_with = "null_to_default")]
     pub appliance_uuid: String,

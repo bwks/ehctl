@@ -28,7 +28,7 @@ use model::email_group::EmailGroups;
 use model::exclusion_interval::ExclusionIntervals;
 use model::extrahop::ExtraHop;
 use model::license::License;
-use model::network::Network;
+use model::network::Networks;
 use model::network_locality::NetworkLocalities;
 use model::node::Node;
 use model::packet_capture::PacketCapture;
@@ -274,9 +274,11 @@ async fn get_license(client: &ExtraHopClient) -> Result<License, Box<dyn std::er
     Ok(license)
 }
 
-async fn get_networks(client: &ExtraHopClient) -> Result<Vec<Network>, Box<dyn std::error::Error>> {
+async fn get_networks(client: &ExtraHopClient) -> Result<Networks, Box<dyn std::error::Error>> {
     let response = reqwest_get(client, "networks").await?;
-    let networks: Vec<Network> = serde_json::from_str(&response.text().await?)?;
+    let networks = Networks {
+        networks: serde_json::from_str(&response.text().await?)?,
+    };
     Ok(networks)
 }
 
@@ -568,7 +570,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut extrahops: Vec<ExtraHop> = Vec::new();
     let mut identity_providers: HashMap<String, IdentitiyProviders> = HashMap::new();
     let mut licenses: HashMap<String, License> = HashMap::new();
-    let mut networks: HashMap<String, Vec<Network>> = HashMap::new();
+    let mut networks: HashMap<String, Networks> = HashMap::new();
     let mut network_localities: HashMap<String, NetworkLocalities> = HashMap::new();
     let mut nodes: HashMap<String, Vec<Node>> = HashMap::new();
     let mut packet_captures: HashMap<String, Vec<PacketCapture>> = HashMap::new();
@@ -961,7 +963,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::Networks => {
                 for (key, value) in networks {
                     println!("{}:", key);
-                    let table = Table::new(value);
+                    let table = Table::new(value.networks);
                     println!("{table}");
                 }
             }
