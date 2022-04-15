@@ -35,7 +35,7 @@ use model::packet_capture::PacketCaptures;
 use model::running_config::RunningConfig;
 use model::software::Softwares;
 use model::tag::Tags;
-use model::threat_collection::ThreatCollection;
+use model::threat_collection::ThreatCollections;
 use model::trigger::Trigger;
 use model::vlan::Vlan;
 
@@ -336,9 +336,11 @@ async fn get_tags(client: &ExtraHopClient) -> Result<Tags, Box<dyn std::error::E
 
 async fn get_threat_collections(
     client: &ExtraHopClient,
-) -> Result<Vec<ThreatCollection>, Box<dyn std::error::Error>> {
+) -> Result<ThreatCollections, Box<dyn std::error::Error>> {
     let response = reqwest_get(client, "threatcollections").await?;
-    let threat_collections: Vec<ThreatCollection> = serde_json::from_str(&response.text().await?)?;
+    let threat_collections = ThreatCollections {
+        threat_collections: serde_json::from_str(&response.text().await?)?,
+    };
     Ok(threat_collections)
 }
 
@@ -581,7 +583,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut saml_sps: HashMap<String, SamlSps> = HashMap::new();
     let mut software: HashMap<String, Softwares> = HashMap::new();
     let mut tags: HashMap<String, Tags> = HashMap::new();
-    let mut threat_collections: HashMap<String, Vec<ThreatCollection>> = HashMap::new();
+    let mut threat_collections: HashMap<String, ThreatCollections> = HashMap::new();
     let mut triggers: HashMap<String, Vec<Trigger>> = HashMap::new();
     let mut vlans: HashMap<String, Vec<Vlan>> = HashMap::new();
 
@@ -1008,10 +1010,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             Getter::ThreatCollections => {
                 for (key, mut value) in threat_collections {
-                    value.sort_by(|a, b| b.name.cmp(&a.name));
+                    value.threat_collections.sort_by(|a, b| b.name.cmp(&a.name));
 
                     println!("=> {}:", key);
-                    let table = Table::new(value);
+                    let table = Table::new(value.threat_collections);
                     println!("{table}");
                 }
             }
