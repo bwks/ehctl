@@ -29,7 +29,7 @@ use model::exclusion_interval::ExclusionIntervals;
 use model::extrahop::ExtraHop;
 use model::license::License;
 use model::network::Network;
-use model::network_locality::NetworkLocality;
+use model::network_locality::NetworkLocalities;
 use model::node::Node;
 use model::packet_capture::PacketCapture;
 use model::running_config::RunningConfig;
@@ -282,9 +282,11 @@ async fn get_networks(client: &ExtraHopClient) -> Result<Vec<Network>, Box<dyn s
 
 async fn get_network_localities(
     client: &ExtraHopClient,
-) -> Result<Vec<NetworkLocality>, Box<dyn std::error::Error>> {
+) -> Result<NetworkLocalities, Box<dyn std::error::Error>> {
     let response = reqwest_get(client, "networklocalities").await?;
-    let network_localities: Vec<NetworkLocality> = serde_json::from_str(&response.text().await?)?;
+    let network_localities = NetworkLocalities {
+        network_localities: serde_json::from_str(&response.text().await?)?,
+    };
     Ok(network_localities)
 }
 
@@ -567,7 +569,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut identity_providers: HashMap<String, IdentitiyProviders> = HashMap::new();
     let mut licenses: HashMap<String, License> = HashMap::new();
     let mut networks: HashMap<String, Vec<Network>> = HashMap::new();
-    let mut network_localities: HashMap<String, Vec<NetworkLocality>> = HashMap::new();
+    let mut network_localities: HashMap<String, NetworkLocalities> = HashMap::new();
     let mut nodes: HashMap<String, Vec<Node>> = HashMap::new();
     let mut packet_captures: HashMap<String, Vec<PacketCapture>> = HashMap::new();
     let mut saml_sps: HashMap<String, SamlSps> = HashMap::new();
@@ -966,7 +968,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::NetworkLocalities => {
                 for (key, value) in network_localities {
                     println!("{}:", key);
-                    let table = Table::new(value);
+                    let table = Table::new(value.network_localities);
                     println!("{table}");
                 }
             }

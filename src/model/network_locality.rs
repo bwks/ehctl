@@ -3,8 +3,14 @@ use tabled::Tabled;
 
 use crate::deserialize::null_to_default;
 
-#[allow(dead_code)]
-#[derive(Tabled, Debug, Deserialize)]
+#[derive(Default, Deserialize)]
+#[serde(default)]
+pub struct NetworkLocalities {
+    pub network_localities: Vec<NetworkLocality>,
+}
+
+#[derive(Tabled, Default, Deserialize)]
+#[serde(default)]
 pub struct NetworkLocality {
     #[serde(deserialize_with = "null_to_default")]
     pub description: String,
