@@ -3,8 +3,14 @@ use tabled::Tabled;
 
 use crate::deserialize::null_to_default;
 
-#[allow(dead_code)]
-#[derive(Tabled, Deserialize)]
+#[derive(Default, Deserialize)]
+#[serde(default)]
+pub struct PacketCaptures {
+    pub packet_captures: Vec<PacketCapture>,
+}
+
+#[derive(Tabled, Default, Deserialize)]
+#[serde(default)]
 pub struct PacketCapture {
     #[serde(deserialize_with = "null_to_default")]
     pub bytes: i64,

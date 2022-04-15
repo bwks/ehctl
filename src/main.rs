@@ -31,7 +31,7 @@ use model::license::License;
 use model::network::Networks;
 use model::network_locality::NetworkLocalities;
 use model::node::Nodes;
-use model::packet_capture::PacketCapture;
+use model::packet_capture::PacketCaptures;
 use model::running_config::RunningConfig;
 use model::software::Software;
 use model::tag::Tags;
@@ -302,9 +302,11 @@ async fn get_nodes(client: &ExtraHopClient) -> Result<Nodes, Box<dyn std::error:
 
 async fn get_packet_captures(
     client: &ExtraHopClient,
-) -> Result<Vec<PacketCapture>, Box<dyn std::error::Error>> {
+) -> Result<PacketCaptures, Box<dyn std::error::Error>> {
     let response = reqwest_get(client, "packetcaptures").await?;
-    let packet_captures: Vec<PacketCapture> = serde_json::from_str(&response.text().await?)?;
+    let packet_captures = PacketCaptures {
+        packet_captures: serde_json::from_str(&response.text().await?)?,
+    };
     Ok(packet_captures)
 }
 
@@ -575,7 +577,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut networks: HashMap<String, Networks> = HashMap::new();
     let mut network_localities: HashMap<String, NetworkLocalities> = HashMap::new();
     let mut nodes: HashMap<String, Nodes> = HashMap::new();
-    let mut packet_captures: HashMap<String, Vec<PacketCapture>> = HashMap::new();
+    let mut packet_captures: HashMap<String, PacketCaptures> = HashMap::new();
     let mut saml_sps: HashMap<String, SamlSps> = HashMap::new();
     let mut software: HashMap<String, Vec<Software>> = HashMap::new();
     let mut tags: HashMap<String, Tags> = HashMap::new();
