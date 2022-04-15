@@ -37,7 +37,7 @@ use model::software::Softwares;
 use model::tag::Tags;
 use model::threat_collection::ThreatCollections;
 use model::trigger::Triggers;
-use model::vlan::Vlan;
+use model::vlan::Vlans;
 
 use chrono::Local;
 use reqwest::StatusCode;
@@ -352,9 +352,11 @@ async fn get_triggers(client: &ExtraHopClient) -> Result<Triggers, Box<dyn std::
     Ok(triggers)
 }
 
-async fn get_vlans(client: &ExtraHopClient) -> Result<Vec<Vlan>, Box<dyn std::error::Error>> {
+async fn get_vlans(client: &ExtraHopClient) -> Result<Vlans, Box<dyn std::error::Error>> {
     let response = reqwest_get(client, "vlans").await?;
-    let vlans: Vec<Vlan> = serde_json::from_str(&response.text().await?)?;
+    let vlans = Vlans {
+        vlans: serde_json::from_str(&response.text().await?)?,
+    };
     Ok(vlans)
 }
 
@@ -587,7 +589,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut tags: HashMap<String, Tags> = HashMap::new();
     let mut threat_collections: HashMap<String, ThreatCollections> = HashMap::new();
     let mut triggers: HashMap<String, Triggers> = HashMap::new();
-    let mut vlans: HashMap<String, Vec<Vlan>> = HashMap::new();
+    let mut vlans: HashMap<String, Vlans> = HashMap::new();
 
     for c in extrahop_appliaces.iter() {
         if cli.backup {
@@ -1038,10 +1040,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             Getter::Vlans => {
                 for (key, mut value) in vlans {
-                    value.sort_by(|a, b| a.vlanid.cmp(&b.vlanid));
+                    value.vlans.sort_by(|a, b| a.vlanid.cmp(&b.vlanid));
 
                     println!("{}:", key);
-                    let table = Table::new(value);
+                    let table = Table::new(value.vlans);
                     println!("{table}");
                 }
             }
