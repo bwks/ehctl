@@ -3,8 +3,14 @@ use tabled::Tabled;
 
 use crate::deserialize::null_to_default;
 
-#[allow(dead_code)]
-#[derive(Tabled, Debug, Deserialize)]
+#[derive(Default, Deserialize)]
+#[serde(default)]
+pub struct Nodes {
+    pub nodes: Vec<Node>,
+}
+
+#[derive(Tabled, Default, Deserialize)]
+#[serde(default)]
 pub struct Node {
     #[serde(deserialize_with = "null_to_default")]
     pub add_time: i64,
@@ -21,7 +27,7 @@ pub struct Node {
     pub license_status: String,
     #[serde(deserialize_with = "null_to_default")]
     pub nickname: String,
-    ntp_sync: bool,
+    pub ntp_sync: bool,
     #[serde(deserialize_with = "null_to_default")]
     pub product_key: String,
     #[serde(deserialize_with = "null_to_default")]

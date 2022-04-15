@@ -30,7 +30,7 @@ use model::extrahop::ExtraHop;
 use model::license::License;
 use model::network::Networks;
 use model::network_locality::NetworkLocalities;
-use model::node::Node;
+use model::node::Nodes;
 use model::packet_capture::PacketCapture;
 use model::running_config::RunningConfig;
 use model::software::Software;
@@ -292,9 +292,11 @@ async fn get_network_localities(
     Ok(network_localities)
 }
 
-async fn get_nodes(client: &ExtraHopClient) -> Result<Vec<Node>, Box<dyn std::error::Error>> {
+async fn get_nodes(client: &ExtraHopClient) -> Result<Nodes, Box<dyn std::error::Error>> {
     let response = reqwest_get(client, "nodes").await?;
-    let nodes: Vec<Node> = serde_json::from_str(&response.text().await?)?;
+    let nodes = Nodes {
+        nodes: serde_json::from_str(&response.text().await?)?,
+    };
     Ok(nodes)
 }
 
@@ -572,7 +574,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut licenses: HashMap<String, License> = HashMap::new();
     let mut networks: HashMap<String, Networks> = HashMap::new();
     let mut network_localities: HashMap<String, NetworkLocalities> = HashMap::new();
-    let mut nodes: HashMap<String, Vec<Node>> = HashMap::new();
+    let mut nodes: HashMap<String, Nodes> = HashMap::new();
     let mut packet_captures: HashMap<String, Vec<PacketCapture>> = HashMap::new();
     let mut saml_sps: HashMap<String, SamlSps> = HashMap::new();
     let mut software: HashMap<String, Vec<Software>> = HashMap::new();
@@ -977,7 +979,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::Nodes => {
                 for (key, value) in nodes {
                     println!("{}:", key);
-                    let table = Table::new(value).with(Rotate::Left);
+                    let table = Table::new(value.nodes).with(Rotate::Left);
                     println!("{table}");
                 }
             }

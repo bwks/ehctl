@@ -3,8 +3,8 @@ use tabled::Tabled;
 
 use crate::deserialize::null_to_default;
 
-#[allow(dead_code)]
-#[derive(Tabled, Debug, Deserialize)]
+#[derive(Tabled, Default, Deserialize)]
+#[serde(default)]
 pub struct ExtraHop {
     #[serde(deserialize_with = "null_to_default")]
     pub display_host: String,
