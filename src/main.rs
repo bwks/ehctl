@@ -25,7 +25,7 @@ use model::detection::Detections;
 use model::device::Devices;
 use model::device_group::DeviceGroups;
 use model::email_group::EmailGroups;
-use model::exclusion_interval::ExclusionInterval;
+use model::exclusion_interval::ExclusionIntervals;
 use model::extrahop::ExtraHop;
 use model::license::License;
 use model::network::Network;
@@ -223,10 +223,11 @@ async fn get_email_groups(
 
 async fn get_exclusion_intervals(
     client: &ExtraHopClient,
-) -> Result<Vec<ExclusionInterval>, Box<dyn std::error::Error>> {
+) -> Result<ExclusionIntervals, Box<dyn std::error::Error>> {
     let response = reqwest_get(client, "exclusionintervals").await?;
-    let exclusion_intervals: Vec<ExclusionInterval> =
-        serde_json::from_str(&response.text().await?)?;
+    let exclusion_intervals = ExclusionIntervals {
+        exclusion_intervals: serde_json::from_str(&response.text().await?)?,
+    };
     Ok(exclusion_intervals)
 }
 
@@ -561,7 +562,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut devices: HashMap<String, Devices> = HashMap::new();
     let mut device_groups: HashMap<String, DeviceGroups> = HashMap::new();
     let mut email_groups: HashMap<String, EmailGroups> = HashMap::new();
-    let mut exclusion_intervals: HashMap<String, Vec<ExclusionInterval>> = HashMap::new();
+    let mut exclusion_intervals: HashMap<String, ExclusionIntervals> = HashMap::new();
     let mut extrahops: Vec<ExtraHop> = Vec::new();
     let mut identity_providers: HashMap<String, IdentitiyProviders> = HashMap::new();
     let mut licenses: HashMap<String, Vec<License>> = HashMap::new();
@@ -925,7 +926,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
             Getter::ExclusionIntervals => {
-                println!("{:#?}", exclusion_intervals);
+                for (key, value) in exclusion_intervals {
+                    println!("{}:", key);
+                    for d in value.exclusion_intervals.iter() {
+                        let table = Table::new(vec![d])
+                            .with(
+                                Modify::new(Full)
+                                    // Not released yet, will be in future version.
+                                    .with(MinWidth::new(30))
+                                    .with(MaxWidth::wrapping(30))
+                                    .with(Alignment::left()),
+                            )
+                            .with(Rotate::Left);
+                        println!("{}", table);
+                    }
+                }
             }
             Getter::Extrahop => {
                 let table = Table::new(extrahops).with(Disable::Column(1..=1));

@@ -1,9 +1,16 @@
 use serde::Deserialize;
+use tabled::Tabled;
 
 use crate::deserialize::null_to_default;
 
-#[allow(dead_code)]
-#[derive(Debug, Deserialize)]
+#[derive(Default, Deserialize)]
+#[serde(default)]
+pub struct ExclusionIntervals {
+    pub exclusion_intervals: Vec<ExclusionInterval>,
+}
+
+#[derive(Default, Deserialize, Tabled)]
+#[serde(default)]
 pub struct ExclusionInterval {
     #[serde(deserialize_with = "null_to_default")]
     pub alert_apply_all: bool,
