@@ -268,10 +268,10 @@ async fn get_identitiy_providers(
     Ok(identity_providers)
 }
 
-async fn get_license(client: &ExtraHopClient) -> Result<Vec<License>, Box<dyn std::error::Error>> {
+async fn get_license(client: &ExtraHopClient) -> Result<License, Box<dyn std::error::Error>> {
     let response = reqwest_get(client, "license").await?;
-    let licenses: License = serde_json::from_str(&response.text().await?)?;
-    Ok(vec![licenses])
+    let license: License = serde_json::from_str(&response.text().await?)?;
+    Ok(license)
 }
 
 async fn get_networks(client: &ExtraHopClient) -> Result<Vec<Network>, Box<dyn std::error::Error>> {
@@ -405,7 +405,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::ExclusionIntervals,
             Getter::Extrahop,
             Getter::IdentityProviders,
-            Getter::Licenses,
+            Getter::License,
             Getter::Networks,
             Getter::NetworkLocalities,
             Getter::Nodes,
@@ -436,7 +436,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::ExclusionIntervals,
             Getter::Extrahop,
             Getter::IdentityProviders,
-            Getter::Licenses,
+            Getter::License,
             Getter::Networks,
             Getter::NetworkLocalities,
             Getter::PacketCaptures,
@@ -454,7 +454,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::ApiKeys,
             Getter::Appliances,
             Getter::Extrahop,
-            Getter::Licenses,
+            Getter::License,
             Getter::RunningConfig,
         ],
     );
@@ -464,7 +464,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::ApiKeys,
             Getter::Appliances,
             Getter::Extrahop,
-            Getter::Licenses,
+            Getter::License,
             Getter::RunningConfig,
         ],
     );
@@ -565,7 +565,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut exclusion_intervals: HashMap<String, ExclusionIntervals> = HashMap::new();
     let mut extrahops: Vec<ExtraHop> = Vec::new();
     let mut identity_providers: HashMap<String, IdentitiyProviders> = HashMap::new();
-    let mut licenses: HashMap<String, Vec<License>> = HashMap::new();
+    let mut licenses: HashMap<String, License> = HashMap::new();
     let mut networks: HashMap<String, Vec<Network>> = HashMap::new();
     let mut network_localities: HashMap<String, Vec<NetworkLocality>> = HashMap::new();
     let mut nodes: HashMap<String, Vec<Node>> = HashMap::new();
@@ -681,7 +681,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         identity_providers.insert(c.hostname.to_string(), result);
                     }
                 }
-                Getter::Licenses => {
+                Getter::License => {
                     if getter_map[&c.appliance_type].contains(&cli.getter) {
                         let result = get_license(c).await?;
                         licenses.insert(c.hostname.to_string(), result);
@@ -949,10 +949,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::IdentityProviders => {
                 println!("{:#?}", identity_providers);
             }
-            Getter::Licenses => {
+            Getter::License => {
                 for (key, value) in licenses {
                     println!("{}:", key);
-                    let table = Table::new(value);
+                    let table = Table::new(vec![value]);
                     println!("{table}");
                 }
             }

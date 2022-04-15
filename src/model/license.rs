@@ -4,8 +4,8 @@ use tabled::Tabled;
 
 use crate::deserialize::null_to_default;
 
-#[allow(dead_code)]
-#[derive(Tabled, Debug, Deserialize)]
+#[derive(Default, Deserialize)]
+#[serde(default)]
 pub struct License {
     #[serde(deserialize_with = "null_to_default")]
     pub dossier: String,
@@ -13,8 +13,8 @@ pub struct License {
     pub edition: String,
     #[serde(deserialize_with = "null_to_default")]
     pub expires_at: i64,
-    // pub modules: LicenseModules,
-    // pub options: LicenseOptions,
+    pub modules: HashMap<String, serde_json::Value>,
+    pub options: HashMap<String, serde_json::Value>,
     pub expires_in: i64,
     #[serde(deserialize_with = "null_to_default")]
     pub platform: String,
@@ -24,16 +24,45 @@ pub struct License {
     pub serial: String,
 }
 
-#[allow(dead_code)]
-#[derive(Debug, Deserialize)]
-pub struct LicenseModules {
-    #[serde(deserialize_with = "null_to_default")]
-    pub modules: HashMap<String, bool>,
-}
+impl Tabled for License {
+    const LENGTH: usize = 42;
 
-#[allow(dead_code)]
-#[derive(Debug, Deserialize)]
-pub struct LicenseOptions {
-    #[serde(deserialize_with = "null_to_default")]
-    pub options: HashMap<String, bool>,
+    fn fields(&self) -> Vec<String> {
+        let mut modules = vec![];
+        for (k, v) in self.modules.iter() {
+            let tmp = format!("{k:11}: {v}");
+            modules.push(tmp);
+        }
+        let mut options = vec![];
+        for (k, v) in self.options.iter() {
+            let tmp = format!("{k:24}: {v}");
+            options.push(tmp);
+        }
+
+        vec![
+            self.dossier.to_string(),
+            self.edition.to_string(),
+            self.expires_at.to_string(),
+            modules.join("\n"),
+            options.join("\n"),
+            self.expires_in.to_string(),
+            self.platform.to_string(),
+            self.product_key.to_string(),
+            self.serial.to_string(),
+        ]
+    }
+
+    fn headers() -> Vec<String> {
+        vec![
+            "dossier".to_string(),
+            "edition".to_string(),
+            "expires_at".to_string(),
+            "modules".to_string(),
+            "options".to_string(),
+            "expires_in".to_string(),
+            "platform".to_string(),
+            "product_key".to_string(),
+            "serial".to_string(),
+        ]
+    }
 }
