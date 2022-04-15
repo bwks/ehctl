@@ -36,7 +36,7 @@ use model::running_config::RunningConfig;
 use model::software::Softwares;
 use model::tag::Tags;
 use model::threat_collection::ThreatCollections;
-use model::trigger::Trigger;
+use model::trigger::Triggers;
 use model::vlan::Vlan;
 
 use chrono::Local;
@@ -344,9 +344,11 @@ async fn get_threat_collections(
     Ok(threat_collections)
 }
 
-async fn get_triggers(client: &ExtraHopClient) -> Result<Vec<Trigger>, Box<dyn std::error::Error>> {
+async fn get_triggers(client: &ExtraHopClient) -> Result<Triggers, Box<dyn std::error::Error>> {
     let response = reqwest_get(client, "triggers").await?;
-    let triggers: Vec<Trigger> = serde_json::from_str(&response.text().await?)?;
+    let triggers = Triggers {
+        triggers: serde_json::from_str(&response.text().await?)?,
+    };
     Ok(triggers)
 }
 
@@ -584,7 +586,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut software: HashMap<String, Softwares> = HashMap::new();
     let mut tags: HashMap<String, Tags> = HashMap::new();
     let mut threat_collections: HashMap<String, ThreatCollections> = HashMap::new();
-    let mut triggers: HashMap<String, Vec<Trigger>> = HashMap::new();
+    let mut triggers: HashMap<String, Triggers> = HashMap::new();
     let mut vlans: HashMap<String, Vec<Vlan>> = HashMap::new();
 
     for c in extrahop_appliaces.iter() {
@@ -1020,13 +1022,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::Triggers => {
                 for (key, value) in triggers {
                     println!("{}:", key);
-                    for d in value.iter() {
+                    for d in value.triggers.iter() {
                         let table = Table::new(vec![d])
                             .with(
                                 Modify::new(Full)
                                     // Not released yet, will be in future version.
-                                    .with(MinWidth::new(30))
-                                    .with(MaxWidth::wrapping(30))
+                                    // .with(MinWidth::new(30))
+                                    // .with(MaxWidth::wrapping(30))
                                     .with(Alignment::left()),
                             )
                             .with(Rotate::Left);

@@ -3,12 +3,17 @@ use tabled::Tabled;
 
 use crate::deserialize::null_to_default;
 
-#[allow(dead_code)]
-#[derive(Debug, Deserialize)]
-// #[serde(rename_all = "camelCase")]
+#[derive(Default, Deserialize)]
+#[serde(default)]
+pub struct Triggers {
+    pub triggers: Vec<Trigger>,
+}
+
+#[derive(Default, Deserialize)]
+#[serde(default)]
 pub struct Trigger {
-    // #[serde(deserialize_with = "null_to_default")]
-    // pub apply_all: bool,
+    #[serde(deserialize_with = "null_to_default")]
+    pub apply_all: bool,
     #[serde(deserialize_with = "null_to_default")]
     pub author: String,
     #[serde(deserialize_with = "null_to_default")]
@@ -27,12 +32,11 @@ pub struct Trigger {
     pub name: String,
     #[serde(deserialize_with = "null_to_default")]
     pub script: String,
-    // #[serde(deserialize_with = "null_to_default")]
-    // pub hints: TriggerHints,
+    pub hints: TriggerHints,
 }
 
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Default, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
 pub struct TriggerHints {
     #[serde(deserialize_with = "null_to_default")]
     pub flow_client_portmin: i64,
@@ -55,24 +59,24 @@ impl Tabled for Trigger {
     const LENGTH: usize = 50;
 
     fn fields(&self) -> Vec<String> {
-        //         let hints_str = format!(
-        //             "flow_client_port_min: {}
-        // flow_client_bytes:    {}
-        // flow_client_port_max: {}
-        // flow_server_bytes:    {}
-        // flow_payload_turn:    {}
-        // flow_server_portmin: {}
-        // flow_server_port_max: {}",
-        //             self.hints.flow_client_portmin,
-        //             self.hints.flow_client_bytes,
-        //             self.hints.flow_client_port_max,
-        //             self.hints.flow_server_bytes,
-        //             self.hints.flow_payload_turn,
-        //             self.hints.flow_server_port_min,
-        //             self.hints.flow_server_port_max
-        //         );
+        let hints_str = format!(
+            "flow_client_port_min : {}
+flow_client_bytes    : {}
+flow_client_port_max : {}
+flow_server_bytes    : {}
+flow_payload_turn    : {}
+flow_server_portmin  : {}
+flow_server_port_max : {}",
+            self.hints.flow_client_portmin,
+            self.hints.flow_client_bytes,
+            self.hints.flow_client_port_max,
+            self.hints.flow_server_bytes,
+            self.hints.flow_payload_turn,
+            self.hints.flow_server_port_min,
+            self.hints.flow_server_port_max
+        );
         vec![
-            // format!("{}", self.apply_all),
+            format!("{}", self.apply_all),
             self.author.to_string(),
             self.debug.to_string(),
             self.description.to_string(),
@@ -82,12 +86,12 @@ impl Tabled for Trigger {
             self.mod_time.to_string(),
             self.name.to_string(),
             // self.script.to_string(),
-            // hints_str,
+            hints_str,
         ]
     }
     fn headers() -> Vec<String> {
         vec![
-            // String::from("apply_all"),
+            "apply_all".to_string(),
             "author".to_string(),
             "debug".to_string(),
             "description".to_string(),
@@ -97,7 +101,7 @@ impl Tabled for Trigger {
             "mod_time".to_string(),
             "name".to_string(),
             // "script".to_string(),
-            // "hints".to_string(),
+            "hints".to_string(),
         ]
     }
 }
