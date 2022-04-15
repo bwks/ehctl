@@ -33,7 +33,7 @@ use model::network_locality::NetworkLocalities;
 use model::node::Nodes;
 use model::packet_capture::PacketCaptures;
 use model::running_config::RunningConfig;
-use model::software::Software;
+use model::software::Softwares;
 use model::tag::Tags;
 use model::threat_collection::ThreatCollection;
 use model::trigger::Trigger;
@@ -318,11 +318,11 @@ async fn get_saml_sp(client: &ExtraHopClient) -> Result<SamlSps, Box<dyn std::er
     Ok(saml_sps)
 }
 
-async fn get_software(
-    client: &ExtraHopClient,
-) -> Result<Vec<Software>, Box<dyn std::error::Error>> {
+async fn get_software(client: &ExtraHopClient) -> Result<Softwares, Box<dyn std::error::Error>> {
     let response = reqwest_get(client, "software").await?;
-    let software: Vec<Software> = serde_json::from_str(&response.text().await?)?;
+    let software = Softwares {
+        softwares: serde_json::from_str(&response.text().await?)?,
+    };
     Ok(software)
 }
 
@@ -579,7 +579,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut nodes: HashMap<String, Nodes> = HashMap::new();
     let mut packet_captures: HashMap<String, PacketCaptures> = HashMap::new();
     let mut saml_sps: HashMap<String, SamlSps> = HashMap::new();
-    let mut software: HashMap<String, Vec<Software>> = HashMap::new();
+    let mut software: HashMap<String, Softwares> = HashMap::new();
     let mut tags: HashMap<String, Tags> = HashMap::new();
     let mut threat_collections: HashMap<String, Vec<ThreatCollection>> = HashMap::new();
     let mut triggers: HashMap<String, Vec<Trigger>> = HashMap::new();
@@ -990,10 +990,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             Getter::Software => {
                 for (key, mut value) in software {
-                    value.sort_by(|a, b| a.name.cmp(&b.name));
+                    value.softwares.sort_by(|a, b| a.name.cmp(&b.name));
 
                     println!("=> {}:", key);
-                    let table = Table::new(value);
+                    let table = Table::new(value.softwares);
                     println!("{table}");
                 }
             }

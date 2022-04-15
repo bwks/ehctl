@@ -3,8 +3,14 @@ use tabled::Tabled;
 
 use crate::deserialize::null_to_default;
 
-#[allow(dead_code)]
-#[derive(Tabled, Deserialize)]
+#[derive(Default, Deserialize)]
+#[serde(default)]
+pub struct Softwares {
+    pub softwares: Vec<Software>,
+}
+
+#[derive(Tabled, Default, Deserialize)]
+#[serde(default)]
 pub struct Software {
     #[serde(deserialize_with = "null_to_default")]
     pub description: String,
