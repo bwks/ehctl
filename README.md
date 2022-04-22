@@ -90,7 +90,7 @@ export EDA01_LAN_USER_ID="setup"
 export EDA01_LAN_API_KEY="qwer..."
 ```
 
-#### Powershell
+#### Windows Powershell
 Set environment variables in your `$profile`.
 ```powershell
 $env:EHCTL_CONFIG = "$Env:HOMEPATH\.ehctl\config.toml"
@@ -98,7 +98,7 @@ $env:EDA01_LAN_USER_ID = "setup"
 $env:EDA01_LAN_API_KEY = "qwer..."
 ```
 
-#### CMD
+#### Windows CMD
 Set environment variables manually.
 ```bat
 setx EHCTL_CONFIG "%HOMEPATH%\.ehctl\config.toml"
