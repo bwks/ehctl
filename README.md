@@ -82,7 +82,7 @@ The variables must be defined in the following format:
 > Note: Dashes (-) and/or dots (.) must be converted to underscores to be a valid environment variable.
 
 #### POSIX
-Set environment variables in your `~.bashrc`, `~/.zshrc`, etc profile.
+Set environment variables in your `~/.bashrc`, `~/.zshrc`, etc profile.
 ```ini
 # eda01.lan
 export EHCTL_CONFIG="${HOME}/.ehctl/config.toml"
