@@ -807,7 +807,32 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
             Getter::Alerts => {
-                println!("{:#?}", alerts);
+                for (key, value) in alerts {
+                    println!("{key}:");
+
+                    match cli.output_option {
+                        OutputOption::Detail => {
+                            for a in value.alerts {
+                                let table = Table::new(vec![a])
+                                    .with(
+                                        Modify::new(Rows::new(1..))
+                                            .with(MinWidth::new(30))
+                                            .with(MaxWidth::wrapping(50)),
+                                    )
+                                    .with(Rotate::Left);
+                                println!("{table}");
+                            }
+                        }
+                        OutputOption::Brief => {
+                            let mut data = Vec::new();
+                            for a in value.alerts {
+                                data.push(a.brief());
+                            }
+                            let table = Table::new(data);
+                            println!("{table}");
+                        }
+                    }
+                }
             }
             Getter::ApiKeys => {
                 for (key, value) in api_keys {
@@ -928,17 +953,27 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::Devices => {
                 for (key, value) in devices {
                     println!("{}:", key);
-                    for d in value.devices.iter() {
-                        let table = Table::new(vec![d])
-                            .with(
-                                Modify::new(Full)
-                                    // Not released yet, will be in future version.
-                                    .with(MinWidth::new(30))
-                                    .with(MaxWidth::wrapping(30))
-                                    .with(Alignment::left()),
-                            )
-                            .with(Rotate::Left);
-                        println!("{}", table);
+                    match cli.output_option {
+                        OutputOption::Detail => {
+                            for a in value.devices {
+                                let table = Table::new(vec![a])
+                                    .with(
+                                        Modify::new(Rows::new(1..))
+                                            .with(MinWidth::new(30))
+                                            .with(MaxWidth::wrapping(30)),
+                                    )
+                                    .with(Rotate::Left);
+                                println!("{table}");
+                            }
+                        }
+                        OutputOption::Brief => {
+                            let mut data = Vec::new();
+                            for a in value.devices {
+                                data.push(a.brief());
+                            }
+                            let table = Table::new(data);
+                            println!("{table}");
+                        }
                     }
                 }
             }

@@ -39,7 +39,7 @@ details:  {}",
             body,
             self.id.to_string(),
             self.occur_time.to_string(),
-            self.time.to_string(),
+            self.time.clone(),
         ]
     }
 

@@ -5,12 +5,12 @@ use tabled::Tabled;
 
 use crate::deserialize::null_to_default;
 
-#[derive(Debug, Deserialize)]
+#[derive(Deserialize)]
 pub struct ActivityMaps {
     pub activity_maps: Vec<ActivityMap>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Default, Deserialize)]
 #[serde(default)]
 pub struct ActivityMap {
     #[serde(deserialize_with = "null_to_default")]
@@ -38,23 +38,6 @@ pub struct ActivityMap {
     // pub walks: Vec<Walks>,
     pub walks: Vec<HashMap<String, serde_json::Value>>,
 }
-impl Default for ActivityMap {
-    fn default() -> Self {
-        Self {
-            description: "".to_string(),
-            id: 0,
-            mod_time: 0,
-            mode: "".to_string(),
-            name: "".to_string(),
-            owner: "".to_string(),
-            rights: vec![],
-            short_code: "".to_string(),
-            show_alert_status: false,
-            weighting: "".to_string(),
-            walks: vec![],
-        }
-    }
-}
 
 impl Tabled for ActivityMap {
     const LENGTH: usize = 50;
@@ -67,16 +50,16 @@ impl Tabled for ActivityMap {
             }
         }
         vec![
-            self.description.to_string(),
+            self.description.clone(),
             self.id.to_string(),
             self.mod_time.to_string(),
-            self.mode.to_string(),
-            self.name.to_string(),
-            self.owner.to_string(),
+            self.mode.clone(),
+            self.name.clone(),
+            self.owner.clone(),
             self.rights.join("\n"),
-            self.short_code.to_string(),
+            self.short_code.clone(),
             self.show_alert_status.to_string(),
-            self.weighting.to_string(),
+            self.weighting.clone(),
             walks.join("\n"),
         ]
     }

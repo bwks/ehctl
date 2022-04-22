@@ -4,6 +4,21 @@ use tabled::Tabled;
 
 use crate::deserialize::null_to_default;
 
+#[derive(Default, Deserialize, Tabled)]
+#[serde(default)]
+pub struct DeviceBrief {
+    #[serde(deserialize_with = "null_to_default")]
+    pub device_class: String,
+    #[serde(deserialize_with = "null_to_default")]
+    pub display_name: String,
+    #[serde(deserialize_with = "null_to_default")]
+    pub ipaddr4: String,
+    #[serde(deserialize_with = "null_to_default")]
+    pub ipaddr6: String,
+    #[serde(deserialize_with = "null_to_default")]
+    pub macaddr: String,
+}
+
 #[derive(Default, Deserialize)]
 #[serde(default)]
 pub struct Devices {
@@ -97,6 +112,18 @@ pub struct Device {
     pub vpc_id: String,
 }
 
+impl Device {
+    pub fn brief(&self) -> DeviceBrief {
+        DeviceBrief {
+            device_class: self.device_class.clone(),
+            display_name: self.display_name.clone(),
+            ipaddr4: self.ipaddr4.clone(),
+            ipaddr6: self.ipaddr6.clone(),
+            macaddr: self.macaddr.clone(),
+        }
+    }
+}
+
 impl Tabled for Device {
     const LENGTH: usize = 42;
 
@@ -107,48 +134,48 @@ impl Tabled for Device {
             activities.push(tmp);
         }
         vec![
-            self.analysis.to_string(),
+            self.analysis.clone(),
             self.analysis_level.to_string(),
-            self.auto_role.to_string(),
-            self.cdp_name.to_string(),
-            self.cloud_account.to_string(),
-            self.cloud_instance_id.to_string(),
-            self.cloud_instance_name.to_string(),
-            self.cloud_instance_type.to_string(),
+            self.auto_role.clone(),
+            self.cdp_name.clone(),
+            self.cloud_account.clone(),
+            self.cloud_instance_id.clone(),
+            self.cloud_instance_name.clone(),
+            self.cloud_instance_type.clone(),
             self.critical.to_string(),
-            self.custom_criticality.to_string(),
-            self.custom_make.to_string(),
-            self.custom_model.to_string(),
-            self.custom_name.to_string(),
-            self.custom_type.to_string(),
-            self.default_name.to_string(),
-            self.description.to_string(),
-            self.device_class.to_string(),
-            self.dhcp_name.to_string(),
+            self.custom_criticality.clone(),
+            self.custom_make.clone(),
+            self.custom_model.clone(),
+            self.custom_name.clone(),
+            self.custom_type.clone(),
+            self.default_name.clone(),
+            self.description.clone(),
+            self.device_class.clone(),
+            self.dhcp_name.clone(),
             self.discover_time.to_string(),
-            self.discovery_id.to_string(),
-            self.display_name.to_string(),
-            self.dns_name.to_string(),
-            self.extrahop_id.to_string(),
+            self.discovery_id.clone(),
+            self.display_name.clone(),
+            self.dns_name.clone(),
+            self.extrahop_id.clone(),
             self.id.to_string(),
-            self.ipaddr4.to_string(),
-            self.ipaddr6.to_string(),
+            self.ipaddr4.clone(),
+            self.ipaddr6.clone(),
             self.is_l3.to_string(),
             self.last_seen_time.to_string(),
-            self.macaddr.to_string(),
+            self.macaddr.clone(),
             self.mod_time.to_string(),
-            self.model.to_string(),
-            self.model_override.to_string(),
-            self.netbios_name.to_string(),
+            self.model.clone(),
+            self.model_override.clone(),
+            self.netbios_name.clone(),
             self.node_id.to_string(),
             self.on_watchlist.to_string(),
             self.parent_id.to_string(),
-            self.role.to_string(),
-            self.subnet_id.to_string(),
+            self.role.clone(),
+            self.subnet_id.clone(),
             self.user_mod_time.to_string(),
-            self.vendor.to_string(),
+            self.vendor.clone(),
             self.vlanid.to_string(),
-            self.vpc_id.to_string(),
+            self.vpc_id.clone(),
             activities.join("\n"),
         ]
     }

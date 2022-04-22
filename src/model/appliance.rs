@@ -61,10 +61,10 @@ pub struct Appliance {
 impl Appliance {
     pub fn brief(&self) -> ApplianceBrief {
         ApplianceBrief {
-            hostname: self.hostname.to_owned(),
+            hostname: self.hostname.clone(),
             id: self.id,
-            firmware_version: self.firmware_version.to_owned(),
-            platform: self.platform.to_owned(),
+            firmware_version: self.firmware_version.clone(),
+            platform: self.platform.clone(),
         }
     }
 }
