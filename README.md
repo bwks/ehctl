@@ -81,7 +81,7 @@ The variables must be defined in the following format:
 
 > Note: Dashes (-) and/or dots (.) must be converted to underscores to be a valid environment variable.
 
-#### POSIX
+#### Linux/Mac
 Set environment variables in your `~/.bashrc`, `~/.zshrc`, etc profile.
 ```ini
 # eda01.lan
