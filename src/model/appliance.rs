@@ -3,6 +3,15 @@ use tabled::Tabled;
 
 use crate::deserialize::null_to_default;
 
+#[derive(Tabled, Default, Debug, Deserialize)]
+#[serde(default)]
+pub struct ApplianceBrief {
+    pub hostname: String,
+    pub id: i64,
+    pub firmware_version: String,
+    pub platform: String,
+}
+
 #[derive(Default, Debug, Deserialize)]
 #[serde(default)]
 pub struct Appliances {
@@ -47,4 +56,15 @@ pub struct Appliance {
     pub sync_time: i64,
     #[serde(deserialize_with = "null_to_default")]
     pub uuid: String,
+}
+
+impl Appliance {
+    pub fn brief(&self) -> ApplianceBrief {
+        ApplianceBrief {
+            hostname: self.hostname.to_owned(),
+            id: self.id,
+            firmware_version: self.firmware_version.to_owned(),
+            platform: self.platform.to_owned(),
+        }
+    }
 }

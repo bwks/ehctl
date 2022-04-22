@@ -40,17 +40,13 @@ SUBCOMMANDS:
 ```
 
 ## Config
-You can set the location of the config file with the `EHCTL_CONFIG` environment variable.
-```shell
-export EHCTL_CONFIG="${HOME}/.ehctl/config.toml"
-```
-
-If the `EHCTL_CONFIG` environment variable is not found the config file must be located in: 
-* Linux/Mac - `$HOME/.ehctl/config.toml`
-* Windows - `$HOME\.ehctl\config.toml`
 
 ### Config File
 Configs are defined in the `TOML` format. 
+
+Config must be located in: 
+* Linux/Mac - `$HOME/.ehctl/config.toml`
+* Windows - `$HOMEPATH\.ehctl\config.toml`
 
 ```toml
 [[ccp]]
@@ -60,8 +56,7 @@ allow_insecure_tls = false
 [[eca]]
 hostname = "eca01.lan"
 allow_insecure_tls = true
-# Credentials can be defined in here or 
-# as an environment variable.
+# Credentials can be defined in here or as an environment variable.
 user_id = "setup" 
 api_key = "abcd..."
 
@@ -86,8 +81,27 @@ The variables must be defined in the following format:
 
 > Note: Dashes (-) and/or dots (.) must be converted to underscores to be a valid environment variable.
 
+#### POSIX
+Set environment variables in your `~.bashrc`, `~/.zshrc`, etc profile.
 ```ini
 # eda01.lan
+export EHCTL_CONFIG="${HOME}/.ehctl/config.toml"
 export EDA01_LAN_USER_ID="setup"
 export EDA01_LAN_API_KEY="qwer..."
+```
+
+#### Powershell
+Set environment variables in your `$profile`.
+```powershell
+$env:EHCTL_CONFIG = "$Env:HOMEPATH\.ehctl\config.toml"
+$env:EDA01_LAN_USER_ID = "setup"
+$env:EDA01_LAN_API_KEY = "qwer..."
+```
+
+#### CMD
+Set environment variables manually.
+```bat
+setx EHCTL_CONFIG "%HOMEPATH%\.ehctl\config.toml"
+setx EDA01_LAN_USER_ID "setup"
+setx EDA01_LAN_API_KEY "qwer..."
 ```

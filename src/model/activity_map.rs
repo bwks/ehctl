@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use serde::Deserialize;
+use tabled::Tabled;
 
 use crate::deserialize::null_to_default;
 
@@ -52,6 +53,48 @@ impl Default for ActivityMap {
             weighting: "".to_string(),
             walks: vec![],
         }
+    }
+}
+
+impl Tabled for ActivityMap {
+    const LENGTH: usize = 50;
+
+    fn fields(&self) -> Vec<String> {
+        let mut walks = vec![];
+        for w in self.walks.iter() {
+            for (k, v) in w {
+                walks.push(format!("{}: {}", k, v));
+            }
+        }
+        vec![
+            self.description.to_string(),
+            self.id.to_string(),
+            self.mod_time.to_string(),
+            self.mode.to_string(),
+            self.name.to_string(),
+            self.owner.to_string(),
+            self.rights.join("\n"),
+            self.short_code.to_string(),
+            self.show_alert_status.to_string(),
+            self.weighting.to_string(),
+            walks.join("\n"),
+        ]
+    }
+
+    fn headers() -> Vec<String> {
+        vec![
+            "description".to_string(),
+            "id".to_string(),
+            "mod_time".to_string(),
+            "mode".to_string(),
+            "name".to_string(),
+            "owner".to_string(),
+            "rights".to_string(),
+            "short_code".to_string(),
+            "show_alert_status".to_string(),
+            "weighting".to_string(),
+            "walks".to_string(),
+        ]
     }
 }
 

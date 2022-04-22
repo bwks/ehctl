@@ -3,29 +3,22 @@ use std::env;
 use std::fs;
 use std::process::exit;
 
-#[derive(Debug, Deserialize)]
+#[derive(Default, Deserialize)]
+#[serde(default)]
 pub struct ExtraHopConfig {
-    #[serde(default)]
     pub ccp: Vec<ExtraHopCredential>,
-    #[serde(default)]
     pub eca: Vec<ExtraHopCredential>,
-    #[serde(default)]
     pub eda: Vec<ExtraHopCredential>,
-    #[serde(default)]
     pub exa: Vec<ExtraHopCredential>,
-    #[serde(default)]
     pub eta: Vec<ExtraHopCredential>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Default, Deserialize)]
+#[serde(default)]
 pub struct ExtraHopCredential {
-    #[serde(default)]
     pub hostname: String,
-    #[serde(default)]
     pub allow_insecure_tls: bool,
-    #[serde(default)]
     pub user_id: String,
-    #[serde(default)]
     pub api_key: String,
 }
 
@@ -44,15 +37,8 @@ impl ExtraHopConfig {
         let config_file = match env::var("EHCTL_CONFIG") {
             Ok(cf) => cf,
             Err(_) => {
-                let home_dir = match env::var("HOME") {
-                    Ok(hd) => hd,
-                    Err(_) => {
-                        println!("=> could not access `EHCTL_CONFIG` environment variable");
-                        println!("=> could not access `HOME` environment variable");
-                        exit(1);
-                    }
-                };
-                format!("{home_dir}/.ehctl/config.toml")
+                println!("=> could not access `EHCTL_CONFIG` environment variable");
+                exit(1);
             }
         };
 
@@ -71,7 +57,7 @@ impl ExtraHopConfig {
             Ok(c) => c,
             Err(e) => {
                 eprintln!(
-                    "=> unable to load data from confg file `{config_file}`, got error `{e}`"
+                    "=> unable to load data from config file `{config_file}`, got error `{e}`"
                 );
                 exit(1);
             }
@@ -87,7 +73,7 @@ impl ExtraHopConfig {
 
 /// Loads the credentials from environment variables
 /// if the credentials are not defined.
-fn get_credentials(ehc: &mut Vec<ExtraHopCredential>) {
+fn get_credentials(ehc: &mut [ExtraHopCredential]) {
     for mut i in ehc.iter_mut() {
         if i.user_id.is_empty() {
             i.user_id = get_env_var(&format!("{}_USER_ID", i.hostname));

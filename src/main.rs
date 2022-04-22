@@ -9,7 +9,7 @@ use config::ExtraHopConfig;
 
 use client::{get_oauth_token, ExtraHopAppliance, ExtraHopClient};
 
-use cli::{Cli, Getter};
+use cli::{Cli, Getter, OutputOption};
 
 use model::activity_map::ActivityMaps;
 use model::alert::Alerts;
@@ -777,10 +777,34 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if !cli.backup {
         match cli.getter {
             Getter::ActivityMaps => {
-                println!("{:#?}", activity_maps);
+                for (key, value) in activity_maps {
+                    println!("{key}:");
+                    for a in value.activity_maps.iter() {
+                        let table = Table::new(vec![a])
+                            .with(
+                                Modify::new(Rows::new(1..))
+                                    .with(MinWidth::new(30))
+                                    .with(MaxWidth::wrapping(30)),
+                            )
+                            .with(Rotate::Left);
+                        println!("{table}");
+                    }
+                }
             }
             Getter::AuditLogs => {
-                println!("{:#?}", audit_logs);
+                for (key, value) in audit_logs {
+                    println!("{key}:");
+                    for a in value.audit_logs.iter() {
+                        let table = Table::new(vec![a])
+                            .with(
+                                Modify::new(Rows::new(1..))
+                                    // .with(MinWidth::new(30))
+                                    // .with(MaxWidth::wrapping(99)),
+                            )
+                            .with(Rotate::Left);
+                        println!("{table}");
+                    }
+                }
             }
             Getter::Alerts => {
                 println!("{:#?}", alerts);
@@ -803,15 +827,28 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Getter::Appliances => {
                 for (key, value) in appliances {
                     println!("{key}:");
-                    for a in value.appliances.iter() {
-                        let table = Table::new(vec![a])
-                            .with(
-                                Modify::new(Rows::new(1..))
-                                    .with(MinWidth::new(30))
-                                    .with(MaxWidth::wrapping(30)),
-                            )
-                            .with(Rotate::Left);
-                        println!("{table}");
+
+                    match cli.output_option {
+                        OutputOption::Detail => {
+                            for a in value.appliances {
+                                let table = Table::new(vec![a])
+                                    .with(
+                                        Modify::new(Rows::new(1..))
+                                            .with(MinWidth::new(30))
+                                            .with(MaxWidth::wrapping(30)),
+                                    )
+                                    .with(Rotate::Left);
+                                println!("{table}");
+                            }
+                        }
+                        OutputOption::Brief => {
+                            let mut data = Vec::new();
+                            for a in value.appliances {
+                                data.push(a.brief());
+                            }
+                            let table = Table::new(data);
+                            println!("{table}");
+                        }
                     }
                 }
             }
