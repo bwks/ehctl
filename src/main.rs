@@ -1033,7 +1033,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 println!("{table}");
             }
             Getter::IdentityProviders => {
-                println!("{:#?}", identity_providers);
+                for (key, value) in identity_providers {
+                    println!("{}:", key);
+                    let table = Table::new(value.identity_providers);
+                    println!("{table}");
+                }
             }
             Getter::License => {
                 for (key, value) in licenses {
@@ -1064,7 +1068,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
             Getter::SamlSp => {
-                println!("{:#?}", saml_sps);
+                for (key, value) in saml_sps {
+                    println!("{}:", key);
+                    let table = Table::new(value.saml_sps);
+                    println!("{table}");
+                }
             }
             Getter::Software => {
                 for (key, mut value) in software {

@@ -1,14 +1,15 @@
 use serde::Deserialize;
+use tabled::Tabled;
 
 use crate::deserialize::null_to_default;
 
-#[derive(Debug, Default, Deserialize)]
+#[derive(Default, Deserialize)]
 #[serde(default)]
 pub struct IdentitiyProviders {
     pub identity_providers: Vec<IdentitiyProvider>,
 }
 
-#[derive(Debug, Default, Deserialize)]
+#[derive(Tabled, Default, Deserialize)]
 #[serde(default)]
 pub struct IdentitiyProvider {
     #[serde(deserialize_with = "null_to_default")]
@@ -30,13 +31,13 @@ pub struct IdentitiyProvider {
     pub _type: String,
 }
 
-#[derive(Debug, Default, Deserialize)]
+#[derive(Default, Deserialize)]
 #[serde(default)]
 pub struct SamlSps {
     pub saml_sps: Vec<SamlSp>,
 }
 
-#[derive(Debug, Default, Deserialize)]
+#[derive(Tabled, Default, Deserialize)]
 #[serde(default)]
 pub struct SamlSp {
     #[serde(deserialize_with = "null_to_default")]
