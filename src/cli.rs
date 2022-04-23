@@ -82,6 +82,12 @@ impl Cli {
                             .help("Verbose output"),
                     ),
             )
+            .subcommand(
+                Command::new("packetsearch")
+                    .about("packetsearch <TODO>")
+                    .arg(Arg::new("from").help("Beginning timestamp").required(true))
+                    .arg(Arg::new("detail").long("detail").help("Verbose output")),
+            )
             .get_matches();
 
         let mut cli = Cli::default();
