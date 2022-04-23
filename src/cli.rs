@@ -56,7 +56,7 @@ impl Cli {
     }
     pub fn new() -> Self {
         let matches = Command::new("ehctl")
-            .version("0.1.6")
+            .version("0.1.7")
             .about("Extrahop CLI")
             .subcommand(
                 Command::new("backup")
