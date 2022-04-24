@@ -1,8 +1,3 @@
-#![allow(dead_code)]
-
-use serde::Serialize;
-
-#[derive(Debug, Serialize)]
 pub struct PacketSearch {
     pub output: String,
     pub limit_bytes: String,

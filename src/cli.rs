@@ -64,11 +64,11 @@ impl Cli {
     }
     pub fn new() -> Self {
         let matches = Command::new("ehctl")
-            .version("0.1.7")
+            .version("0.1.8")
             .about("Extrahop CLI")
             .subcommand(
                 Command::new("backup")
-                    .about("backup device customizations (currently `all` devices are backed up)")
+                    .about("Backup device customizations (currently `all` devices are backed up)")
                     .arg(
                         Arg::new("device")
                             .help("`all` or `device name` to backup")
@@ -78,7 +78,7 @@ impl Cli {
             )
             .subcommand(
                 Command::new("get")
-                    .about("get <endpoint>")
+                    .about("Get data from a HTTP GET <endpoint>")
                     .arg(
                         Arg::new("endpoint")
                             .help("the uri endpoint to get")
@@ -95,6 +95,7 @@ impl Cli {
             )
             .subcommand(
                 Command::new("packet-search")
+                    .about("Download a packet capture")
                     .arg(
                         Arg::new("output")
                             .long("output")
@@ -230,9 +231,7 @@ impl Cli {
             let mut options = PacketSearch::new();
             if let Some(output) = backup_matches.value_of("output") {
                 options.output = match output {
-                    "pcap" => output.to_string(),
-                    "keylog_txt" => output.to_string(),
-                    "zip" => output.to_string(),
+                    "pcap" | "keylog_txt" | "zip" => output.to_string(),
                     _ => {
                         eprintln!("=> unknown output type `{output}`");
                         exit(1)
