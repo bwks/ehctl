@@ -41,6 +41,7 @@ use model::trigger::Triggers;
 use model::vlan::Vlans;
 
 use chrono::Local;
+use futures_util::StreamExt;
 use reqwest::StatusCode;
 use std::collections::HashMap;
 use std::fs::File;
@@ -88,21 +89,31 @@ async fn packet_search(
         ("until", options.until.to_owned()),
     );
 
-    let response = client.reqwest_client.post(url).form(&params).send().await?;
+    let response = client
+        .reqwest_client
+        .post(&url)
+        .form(&params)
+        .send()
+        .await?;
 
     if response.status() == StatusCode::OK {
-        println!("=> downloading packets to: {}", &filename);
-        let bytes = response.bytes().await?;
+        println!("=> downloading packets to `{}`", &filename);
+        let mut file =
+            File::create(&filename).map_err(|_| format!("=> failed to create `{}`", &filename))?;
 
-        let mut wf = File::create(&filename)?;
-        wf.write_all(&bytes)
-            .expect("=> error writing packets to file");
+        let mut stream = response.bytes_stream();
+
+        while let Some(item) = stream.next().await {
+            let chunk = item.map_err(|_| format!("=> error while downloading `{}`", &filename))?;
+            file.write_all(&chunk)
+                .map_err(|_| format!("=> error while writing to `{}`", &filename))?;
+        }
         Ok(())
     } else if response.status() == StatusCode::NO_CONTENT {
         println!("=> no packets returned from query");
         Ok(())
     } else {
-        eprintln!("=> unable to save packets to: {}", &filename);
+        eprintln!("=> unable to save packets to `{}1", &filename);
         eprintln!("{:#?}", response.error_for_status());
         exit(1)
     }
