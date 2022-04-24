@@ -19,6 +19,7 @@ pub mod network;
 pub mod network_locality;
 pub mod node;
 pub mod packet_capture;
+pub mod packet_search;
 pub mod running_config;
 pub mod software;
 pub mod tag;

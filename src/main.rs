@@ -9,7 +9,7 @@ use config::ExtraHopConfig;
 
 use client::{get_oauth_token, ExtraHopAppliance, ExtraHopClient};
 
-use cli::{Cli, Getter, OutputOption};
+use cli::{Cli, GetterType, OutputOption};
 
 use model::activity_map::ActivityMaps;
 use model::alert::Alerts;
@@ -32,6 +32,7 @@ use model::network::Networks;
 use model::network_locality::NetworkLocalities;
 use model::node::Nodes;
 use model::packet_capture::PacketCaptures;
+use model::packet_search::PacketSearch;
 use model::running_config::RunningConfig;
 use model::software::Softwares;
 use model::tag::Tags;
@@ -56,7 +57,52 @@ async fn reqwest_get(
     if response.status() == StatusCode::OK {
         Ok(response)
     } else {
-        println!("unable to get {endpoint}");
+        eprintln!("unable to get {endpoint}");
+        eprintln!("{:#?}", response.error_for_status());
+        exit(1)
+    }
+}
+
+async fn packet_search(
+    client: &ExtraHopClient,
+    options: &PacketSearch,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let name = format!("{}-{}", client.hostname, client.timestamp);
+    let filename = format!("{}.{}", name, options.output);
+    let url = format!("{}/packets/search", client.base_url);
+
+    let params = (
+        ("always_return_body", options.always_return_body),
+        ("bpf", options.bpf.to_owned()),
+        ("from", options.from.to_owned()),
+        ("ip1", options.ip1.to_owned()),
+        ("ip2", options.ip2.to_owned()),
+        ("limit_bytes", options.limit_bytes.to_owned()),
+        (
+            "limit_search_duration",
+            options.limit_search_duration.to_owned(),
+        ),
+        ("output", options.output.to_owned()),
+        ("port1", options.port1.to_owned()),
+        ("port2", options.port2.to_owned()),
+        ("until", options.until.to_owned()),
+    );
+
+    let response = client.reqwest_client.post(url).form(&params).send().await?;
+
+    if response.status() == StatusCode::OK {
+        println!("=> downloading packets to: {}", &filename);
+        let bytes = response.bytes().await?;
+
+        let mut wf = File::create(&filename)?;
+        wf.write_all(&bytes)
+            .expect("=> error writing packets to file");
+        Ok(())
+    } else if response.status() == StatusCode::NO_CONTENT {
+        println!("=> no packets returned from query");
+        Ok(())
+    } else {
+        eprintln!("=> unable to save packets to: {}", &filename);
         eprintln!("{:#?}", response.error_for_status());
         exit(1)
     }
@@ -172,7 +218,7 @@ async fn create_customization(client: &ExtraHopClient) -> Result<(), Box<dyn std
             }
         }
     } else {
-        println!("=> unable to add customization: {}", name);
+        eprintln!("=> unable to add customization: {}", name);
         eprintln!("{:#?}", response.error_for_status());
         exit(1)
     }
@@ -195,7 +241,7 @@ async fn save_customization(
             .expect("=> error writing customization to file");
         Ok(())
     } else {
-        println!("=> unable to save customization: {}", name);
+        eprintln!("=> unable to save customization: {}", name);
         eprintln!("{:#?}", response.error_for_status());
         exit(1)
     }
@@ -252,7 +298,7 @@ async fn get_running_config(client: &ExtraHopClient) -> Result<(), Box<dyn std::
         };
         Ok(())
     } else {
-        println!("unable to get running config");
+        eprintln!("unable to get running config");
         eprintln!("{:#?}", response.error_for_status());
         exit(1)
     }
@@ -364,122 +410,118 @@ async fn get_vlans(client: &ExtraHopClient) -> Result<Vlans, Box<dyn std::error:
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::new();
 
-    if !cli.backup && cli.getter == Getter::None {
-        exit(1)
-    }
-
     let time_now = Local::now();
     let timestamp = time_now.format("%Y-%m-%d--%H-%M-%S");
 
     let configs = ExtraHopConfig::new();
 
-    let mut getter_map: HashMap<ExtraHopAppliance, Vec<Getter>> = HashMap::new();
+    let mut getter_map: HashMap<ExtraHopAppliance, Vec<GetterType>> = HashMap::new();
     getter_map.insert(
         ExtraHopAppliance::CCP,
         vec![
-            Getter::ActivityMaps,
-            Getter::AuditLogs,
-            Getter::Alerts,
-            Getter::Appliances,
-            Getter::Bundles,
-            Getter::Dashboards,
-            Getter::Detections,
-            Getter::Devices,
-            Getter::DeviceGroups,
-            Getter::ExclusionIntervals,
-            Getter::Extrahop,
-            Getter::Networks,
-            Getter::NetworkLocalities,
-            Getter::Tags,
-            Getter::Triggers,
-            Getter::Software,
-            Getter::ThreatCollections,
-            Getter::Vlans,
+            GetterType::ActivityMaps,
+            GetterType::AuditLogs,
+            GetterType::Alerts,
+            GetterType::Appliances,
+            GetterType::Bundles,
+            GetterType::Dashboards,
+            GetterType::Detections,
+            GetterType::Devices,
+            GetterType::DeviceGroups,
+            GetterType::ExclusionIntervals,
+            GetterType::Extrahop,
+            GetterType::Networks,
+            GetterType::NetworkLocalities,
+            GetterType::Tags,
+            GetterType::Triggers,
+            GetterType::Software,
+            GetterType::ThreatCollections,
+            GetterType::Vlans,
         ],
     );
     getter_map.insert(
         ExtraHopAppliance::ECA,
         vec![
-            Getter::ActivityMaps,
-            Getter::AuditLogs,
-            Getter::Alerts,
-            Getter::ApiKeys,
-            Getter::Appliances,
-            Getter::Bundles,
-            Getter::Customizations,
+            GetterType::ActivityMaps,
+            GetterType::AuditLogs,
+            GetterType::Alerts,
+            GetterType::ApiKeys,
+            GetterType::Appliances,
+            GetterType::Bundles,
+            GetterType::Customizations,
             // TODO: This endpoint does not work on ECA
             // API doc says its supported
             // I suspect its required to select the sensor
-            // Getter::CustomDevices,
-            Getter::Dashboards,
-            Getter::Detections,
-            Getter::Devices,
-            Getter::DeviceGroups,
-            Getter::EmailGroups,
-            Getter::ExclusionIntervals,
-            Getter::Extrahop,
-            Getter::IdentityProviders,
-            Getter::License,
-            Getter::Networks,
-            Getter::NetworkLocalities,
-            Getter::Nodes,
-            Getter::RunningConfig,
-            Getter::Software,
-            Getter::Tags,
-            Getter::ThreatCollections,
-            Getter::Triggers,
-            Getter::Vlans,
+            // GetterType::CustomDevices,
+            GetterType::Dashboards,
+            GetterType::Detections,
+            GetterType::Devices,
+            GetterType::DeviceGroups,
+            GetterType::EmailGroups,
+            GetterType::ExclusionIntervals,
+            GetterType::Extrahop,
+            GetterType::IdentityProviders,
+            GetterType::License,
+            GetterType::Networks,
+            GetterType::NetworkLocalities,
+            GetterType::Nodes,
+            GetterType::RunningConfig,
+            GetterType::Software,
+            GetterType::Tags,
+            GetterType::ThreatCollections,
+            GetterType::Triggers,
+            GetterType::Vlans,
         ],
     );
     getter_map.insert(
         ExtraHopAppliance::EDA,
         vec![
-            Getter::ActivityMaps,
-            Getter::AuditLogs,
-            Getter::Alerts,
-            Getter::ApiKeys,
-            Getter::Appliances,
-            Getter::Bundles,
-            Getter::Customizations,
-            Getter::CustomDevices,
-            Getter::Dashboards,
-            Getter::Detections,
-            Getter::Devices,
-            Getter::DeviceGroups,
-            Getter::EmailGroups,
-            Getter::ExclusionIntervals,
-            Getter::Extrahop,
-            Getter::IdentityProviders,
-            Getter::License,
-            Getter::Networks,
-            Getter::NetworkLocalities,
-            Getter::PacketCaptures,
-            Getter::RunningConfig,
-            Getter::Software,
-            Getter::Tags,
-            Getter::ThreatCollections,
-            Getter::Triggers,
-            Getter::Vlans,
+            GetterType::ActivityMaps,
+            GetterType::AuditLogs,
+            GetterType::Alerts,
+            GetterType::ApiKeys,
+            GetterType::Appliances,
+            GetterType::Bundles,
+            GetterType::Customizations,
+            GetterType::CustomDevices,
+            GetterType::Dashboards,
+            GetterType::Detections,
+            GetterType::Devices,
+            GetterType::DeviceGroups,
+            GetterType::EmailGroups,
+            GetterType::ExclusionIntervals,
+            GetterType::Extrahop,
+            GetterType::IdentityProviders,
+            GetterType::License,
+            GetterType::Networks,
+            GetterType::NetworkLocalities,
+            GetterType::PacketCaptures,
+            GetterType::RunningConfig,
+            GetterType::Software,
+            GetterType::Tags,
+            GetterType::ThreatCollections,
+            GetterType::Triggers,
+            GetterType::Vlans,
         ],
     );
     getter_map.insert(
         ExtraHopAppliance::ETA,
         vec![
-            Getter::ApiKeys,
-            Getter::Appliances,
-            Getter::Extrahop,
-            Getter::License,
-            Getter::RunningConfig,
+            GetterType::ApiKeys,
+            GetterType::Appliances,
+            GetterType::Extrahop,
+            GetterType::License,
+            GetterType::RunningConfig,
         ],
     );
     getter_map.insert(
         ExtraHopAppliance::EXA,
         vec![
-            Getter::ApiKeys,
-            Getter::Appliances,
-            Getter::Extrahop,
-            Getter::License,
-            Getter::RunningConfig,
+            GetterType::ApiKeys,
+            GetterType::Appliances,
+            GetterType::Extrahop,
+            GetterType::License,
+            GetterType::RunningConfig,
         ],
     );
 
@@ -597,186 +639,192 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 ExtraHopAppliance::ECA | ExtraHopAppliance::EDA => create_customization(c).await?,
                 _ => {}
             }
-        } else {
-            match cli.getter {
-                Getter::ActivityMaps => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+        } else if cli.packet_search {
+            match c.appliance_type {
+                ExtraHopAppliance::CCP | ExtraHopAppliance::ECA => {
+                    packet_search(c, &cli.packet_search_options).await?
+                }
+                _ => {}
+            }
+        } else if cli.getter {
+            match cli.getter_type {
+                GetterType::ActivityMaps => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
                         let result = get_activity_maps(c).await?;
                         activity_maps.insert(c.hostname.to_string(), result);
                     }
                 }
-                Getter::AuditLogs => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                GetterType::AuditLogs => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
                         let result = get_audit_logs(c).await?;
                         audit_logs.insert(c.hostname.to_string(), result);
                     }
                 }
-                Getter::Alerts => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                GetterType::Alerts => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
                         let result = get_alerts(c).await?;
                         alerts.insert(c.hostname.to_string(), result);
                     }
                 }
-                Getter::ApiKeys => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                GetterType::ApiKeys => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
                         let result = get_api_keys(c).await?;
                         api_keys.insert(c.hostname.to_string(), result);
                     }
                 }
-                Getter::Appliances => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                GetterType::Appliances => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
                         let result = get_appliances(c).await?;
                         appliances.insert(c.hostname.to_string(), result);
                     }
                 }
-                Getter::Bundles => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                GetterType::Bundles => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
                         let result = get_bundles(c).await?;
                         bundles.insert(c.hostname.to_string(), result);
                     }
                 }
-                Getter::Customizations => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                GetterType::Customizations => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
                         let result = get_customizations(c).await?;
                         customizations.insert(c.hostname.to_string(), result);
                     }
                 }
-                Getter::CustomDevices => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                GetterType::CustomDevices => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
                         let result = get_custom_devices(c).await?;
                         custom_devices.insert(c.hostname.to_string(), result);
                     }
                 }
-                Getter::Dashboards => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                GetterType::Dashboards => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
                         let result = get_dashboards(c).await?;
                         dashboards.insert(c.hostname.to_string(), result);
                     }
                 }
-                Getter::Detections => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                GetterType::Detections => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
                         let result = get_detections(c).await?;
                         detections.insert(c.hostname.to_string(), result);
                     }
                 }
-                Getter::Devices => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                GetterType::Devices => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
                         let result = get_devices(c).await?;
                         devices.insert(c.hostname.to_string(), result);
                     }
                 }
-                Getter::DeviceGroups => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                GetterType::DeviceGroups => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
                         let result = get_device_groups(c).await?;
                         device_groups.insert(c.hostname.to_string(), result);
                     }
                 }
-                Getter::EmailGroups => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                GetterType::EmailGroups => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
                         let result = get_email_groups(c).await?;
                         email_groups.insert(c.hostname.to_string(), result);
                     }
                 }
-                Getter::ExclusionIntervals => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                GetterType::ExclusionIntervals => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
                         let result = get_exclusion_intervals(c).await?;
                         exclusion_intervals.insert(c.hostname.to_string(), result);
                     }
                 }
-                Getter::Extrahop => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                GetterType::Extrahop => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
                         let result = get_extrahop(c).await?;
                         extrahops.push(result);
                     }
                 }
-                Getter::IdentityProviders => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                GetterType::IdentityProviders => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
                         let result = get_identitiy_providers(c).await?;
                         identity_providers.insert(c.hostname.to_string(), result);
                     }
                 }
-                Getter::License => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                GetterType::License => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
                         let result = get_license(c).await?;
                         licenses.insert(c.hostname.to_string(), result);
                     }
                 }
-                Getter::Networks => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                GetterType::Networks => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
                         let result = get_networks(c).await?;
                         networks.insert(c.hostname.to_string(), result);
                     }
                 }
-                Getter::NetworkLocalities => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                GetterType::NetworkLocalities => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
                         let result = get_network_localities(c).await?;
                         network_localities.insert(c.hostname.to_string(), result);
                     }
                 }
-                Getter::Nodes => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                GetterType::Nodes => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
                         let result = get_nodes(c).await?;
                         nodes.insert(c.hostname.to_string(), result);
                     }
                 }
-                Getter::PacketCaptures => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                GetterType::PacketCaptures => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
                         let result = get_packet_captures(c).await?;
                         packet_captures.insert(c.hostname.to_string(), result);
                     }
                 }
-                Getter::RunningConfig => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                GetterType::RunningConfig => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
                         _ = get_running_config(c).await?;
                     }
                 }
-                Getter::SamlSp => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                GetterType::SamlSp => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
                         let result = get_saml_sp(c).await?;
                         saml_sps.insert(c.hostname.to_string(), result);
                     }
                 }
-                Getter::Software => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                GetterType::Software => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
                         let result = get_software(c).await?;
                         software.insert(c.hostname.to_string(), result);
                     }
                 }
-                Getter::Tags => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                GetterType::Tags => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
                         let result = get_tags(c).await?;
                         tags.insert(c.hostname.to_string(), result);
                     }
                 }
-                Getter::ThreatCollections => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                GetterType::ThreatCollections => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
                         let result = get_threat_collections(c).await?;
                         threat_collections.insert(c.hostname.to_string(), result);
                     }
                 }
-                Getter::Triggers => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                GetterType::Triggers => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
                         let result = get_triggers(c).await?;
                         triggers.insert(c.hostname.to_string(), result);
                     }
                 }
-                Getter::Vlans => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter) {
+                GetterType::Vlans => {
+                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
                         let result = get_vlans(c).await?;
                         vlans.insert(c.hostname.to_string(), result);
                     }
                 }
-                Getter::None => {
-                    println!("unknown endpoint");
-                    exit(1)
+                _ => {
+                    // Should never get here
                 }
             }
         }
     }
 
-    if !cli.backup {
-        match cli.getter {
-            Getter::ActivityMaps => {
+    if cli.getter {
+        match cli.getter_type {
+            GetterType::ActivityMaps => {
                 for (key, value) in activity_maps {
                     println!("{key}:");
                     for a in value.activity_maps.iter() {
@@ -791,7 +839,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
             }
-            Getter::AuditLogs => {
+            GetterType::AuditLogs => {
                 for (key, value) in audit_logs {
                     println!("{key}:");
                     for a in value.audit_logs.iter() {
@@ -806,7 +854,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
             }
-            Getter::Alerts => {
+            GetterType::Alerts => {
                 for (key, value) in alerts {
                     println!("{key}:");
 
@@ -834,7 +882,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
             }
-            Getter::ApiKeys => {
+            GetterType::ApiKeys => {
                 for (key, value) in api_keys {
                     println!("{key}:");
                     for a in value.api_keys.iter() {
@@ -849,7 +897,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
             }
-            Getter::Appliances => {
+            GetterType::Appliances => {
                 for (key, value) in appliances {
                     println!("{key}:");
 
@@ -877,7 +925,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
             }
-            Getter::Bundles => {
+            GetterType::Bundles => {
                 for (key, mut value) in bundles {
                     value.bundles.sort_by(|a, b| a.name.cmp(&b.name));
 
@@ -892,7 +940,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     println!("{table}");
                 }
             }
-            Getter::Customizations => {
+            GetterType::Customizations => {
                 for (key, mut value) in customizations {
                     value.customizations.sort_by(|a, b| a.id.cmp(&b.id));
 
@@ -901,7 +949,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     println!("{table}");
                 }
             }
-            Getter::CustomDevices => {
+            GetterType::CustomDevices => {
                 for (key, mut value) in custom_devices {
                     if value.custom_devices.is_empty() {
                         println!("{}:", key);
@@ -916,7 +964,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
             }
-            Getter::Dashboards => {
+            GetterType::Dashboards => {
                 for (key, value) in dashboards {
                     println!("{}:", key);
                     for d in value.dashboards.iter() {
@@ -933,7 +981,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
             }
-            Getter::Detections => {
+            GetterType::Detections => {
                 for (key, value) in detections {
                     println!("{}:", key);
                     for d in value.detections.iter() {
@@ -950,7 +998,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
             }
-            Getter::Devices => {
+            GetterType::Devices => {
                 for (key, value) in devices {
                     println!("{}:", key);
                     match cli.output_option {
@@ -977,7 +1025,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
             }
-            Getter::DeviceGroups => {
+            GetterType::DeviceGroups => {
                 for (key, value) in device_groups {
                     println!("{}:", key);
                     for d in value.device_groups.iter() {
@@ -994,7 +1042,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
             }
-            Getter::EmailGroups => {
+            GetterType::EmailGroups => {
                 for (key, value) in email_groups {
                     println!("{}:", key);
                     for d in value.email_groups.iter() {
@@ -1011,7 +1059,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
             }
-            Getter::ExclusionIntervals => {
+            GetterType::ExclusionIntervals => {
                 for (key, value) in exclusion_intervals {
                     println!("{}:", key);
                     for d in value.exclusion_intervals.iter() {
@@ -1028,53 +1076,53 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
             }
-            Getter::Extrahop => {
+            GetterType::Extrahop => {
                 let table = Table::new(extrahops).with(Disable::Column(1..=1));
                 println!("{table}");
             }
-            Getter::IdentityProviders => {
+            GetterType::IdentityProviders => {
                 for (key, value) in identity_providers {
                     println!("{}:", key);
                     let table = Table::new(value.identity_providers);
                     println!("{table}");
                 }
             }
-            Getter::License => {
+            GetterType::License => {
                 for (key, value) in licenses {
                     println!("{}:", key);
                     let table = Table::new(vec![value]);
                     println!("{table}");
                 }
             }
-            Getter::Networks => {
+            GetterType::Networks => {
                 for (key, value) in networks {
                     println!("{}:", key);
                     let table = Table::new(value.networks);
                     println!("{table}");
                 }
             }
-            Getter::NetworkLocalities => {
+            GetterType::NetworkLocalities => {
                 for (key, value) in network_localities {
                     println!("{}:", key);
                     let table = Table::new(value.network_localities);
                     println!("{table}");
                 }
             }
-            Getter::Nodes => {
+            GetterType::Nodes => {
                 for (key, value) in nodes {
                     println!("{}:", key);
                     let table = Table::new(value.nodes).with(Rotate::Left);
                     println!("{table}");
                 }
             }
-            Getter::SamlSp => {
+            GetterType::SamlSp => {
                 for (key, value) in saml_sps {
                     println!("{}:", key);
                     let table = Table::new(value.saml_sps);
                     println!("{table}");
                 }
             }
-            Getter::Software => {
+            GetterType::Software => {
                 for (key, mut value) in software {
                     value.softwares.sort_by(|a, b| a.name.cmp(&b.name));
 
@@ -1083,7 +1131,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     println!("{table}");
                 }
             }
-            Getter::Tags => {
+            GetterType::Tags => {
                 for (key, mut value) in tags {
                     value.tags.sort_by(|a, b| b.name.cmp(&a.name));
 
@@ -1092,7 +1140,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     println!("{table}");
                 }
             }
-            Getter::ThreatCollections => {
+            GetterType::ThreatCollections => {
                 for (key, mut value) in threat_collections {
                     value.threat_collections.sort_by(|a, b| b.name.cmp(&a.name));
 
@@ -1101,7 +1149,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     println!("{table}");
                 }
             }
-            Getter::Triggers => {
+            GetterType::Triggers => {
                 for (key, value) in triggers {
                     println!("{}:", key);
                     for d in value.triggers.iter() {
@@ -1118,7 +1166,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
             }
-            Getter::Vlans => {
+            GetterType::Vlans => {
                 for (key, mut value) in vlans {
                     value.vlans.sort_by(|a, b| a.vlanid.cmp(&b.vlanid));
 
@@ -1127,7 +1175,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     println!("{table}");
                 }
             }
-            _ => {}
+            _ => {
+                // Should never get here
+            }
         }
     }
 
