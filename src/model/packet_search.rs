@@ -1,19 +1,17 @@
 #![allow(dead_code)]
-pub enum PacketOutput {
-    Pcap,
-    Keylog,
-    Zip,
-}
 
+use serde::Serialize;
+
+#[derive(Debug, Serialize)]
 pub struct PacketSearch {
-    pub output: PacketOutput,
+    pub output: String,
     pub limit_bytes: String,
     pub limit_search_duration: String,
     pub always_return_body: bool,
     pub from: String,
-    pub from_ms: i64,
+    pub from_ms: u64,
     pub until: String,
-    pub until_ms: i64,
+    pub until_ms: u64,
     pub bpf: String,
     pub ip1: String,
     pub port1: String,
@@ -24,7 +22,7 @@ pub struct PacketSearch {
 impl Default for PacketSearch {
     fn default() -> Self {
         Self {
-            output: PacketOutput::Pcap,
+            output: "pcap".to_string(),
             limit_bytes: "100MB".to_string(),
             limit_search_duration: "5m".to_string(),
             always_return_body: false,
@@ -42,7 +40,7 @@ impl Default for PacketSearch {
 }
 
 impl PacketSearch {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             ..PacketSearch::default()
         }

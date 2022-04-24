@@ -1,7 +1,9 @@
+use crate::model::packet_search::PacketSearch;
 use clap::{Arg, Command};
+use std::process::exit;
 
 #[derive(Eq, PartialEq)]
-pub enum Getter {
+pub enum GetterType {
     ActivityMaps,
     AuditLogs,
     Alerts,
@@ -30,7 +32,7 @@ pub enum Getter {
     ThreatCollections,
     Triggers,
     Vlans,
-    None,
+    Unknown,
 }
 
 pub enum OutputOption {
@@ -41,7 +43,10 @@ pub enum OutputOption {
 pub struct Cli {
     pub backup: bool,
     pub backup_device: String,
-    pub getter: Getter,
+    pub packet_search: bool,
+    pub packet_search_options: PacketSearch,
+    pub getter: bool,
+    pub getter_type: GetterType,
     pub output_option: OutputOption,
 }
 
@@ -50,7 +55,10 @@ impl Cli {
         Self {
             backup: false,
             backup_device: "".to_string(),
-            getter: Getter::None,
+            packet_search: false,
+            packet_search_options: PacketSearch::default(),
+            getter: false,
+            getter_type: GetterType::Unknown,
             output_option: OutputOption::Brief,
         }
     }
@@ -64,6 +72,7 @@ impl Cli {
                     .arg(
                         Arg::new("device")
                             .help("`all` or `device name` to backup")
+                            .takes_value(true)
                             .required(true),
                     ),
             )
@@ -73,20 +82,89 @@ impl Cli {
                     .arg(
                         Arg::new("endpoint")
                             .help("the uri endpoint to get")
+                            .takes_value(true)
                             .required(true),
                     )
                     .arg(
                         Arg::new("detail")
+                            .help("Verbose output")
                             .long("detail")
                             .takes_value(false)
-                            .help("Verbose output"),
+                            .required(false),
                     ),
             )
             .subcommand(
-                Command::new("packetsearch")
-                    .about("packetsearch <TODO>")
-                    .arg(Arg::new("from").help("Beginning timestamp").required(true))
-                    .arg(Arg::new("detail").long("detail").help("Verbose output")),
+                Command::new("packet-search")
+                    .arg(
+                        Arg::new("output")
+                            .long("output")
+                            .help("Output format\nChoices: ( pcap | keylog_txt | zip )\nDefault: pcap")
+                            .takes_value(true)
+                            .required(false),
+                    )
+                    .arg(
+                        Arg::new("limit-bytes")
+                            .long("limit-bytes")
+                            .help("Maximum bytes to return\nDefault: 100MB")
+                            .takes_value(true)
+                            .required(false),
+                    )
+                    .arg(
+                        Arg::new("limit-duration")
+                            .long("limit-duration")
+                            .help("Limit search duration\nDefault: 5m")
+                            .takes_value(true)
+                            .required(false),
+                    )
+                    .arg(
+                        Arg::new("from")
+                            .long("from")
+                            .help("Beginning timestamp IE: -30m *Required*")
+                            .takes_value(true)
+                            .required(true),
+                    )
+                    .arg(
+                        Arg::new("until")
+                            .long("until")
+                            .help("Ending timestamp\nDefault: -1ms")
+                            .required(false)
+                            .takes_value(true),
+                    )
+                    .arg(
+                        Arg::new("bpf")
+                            .long("bpf")
+                            .help("Berkeley Packet Filter to apply")
+                            .required(false)
+                            .takes_value(true),
+                    )
+                    .arg(
+                        Arg::new("ip1")
+                            .long("ip1")
+                            .help("Returns packets sent to or received by the specified IP address")
+                            .required(false)
+                            .takes_value(true),
+                    )
+                    .arg(
+                        Arg::new("port1")
+                            .long("port1")
+                            .help("Returns packets sent to or received by the specified port")
+                            .required(false)
+                            .takes_value(true),
+                    )
+                    .arg(
+                        Arg::new("ip2")
+                            .long("ip2")
+                            .help("Returns packets sent to or received by the specified IP address")
+                            .required(false)
+                            .takes_value(true),
+                    )
+                    .arg(
+                        Arg::new("port2")
+                            .long("port2")
+                            .help("Returns packets sent to or received by the specified port")
+                            .required(false)
+                            .takes_value(true),
+                    ),
             )
             .get_matches();
 
@@ -99,52 +177,97 @@ impl Cli {
                     cli.backup = true;
                     cli.backup_device = device.to_string()
                 } else {
-                    println!("=> unknown device `{device}`");
-                    cli.backup = false
+                    eprintln!("=> unknown device `{device}`");
+                    exit(1)
                 }
             };
         }
         // get
         else if let Some(get_matches) = matches.subcommand_matches("get") {
+            cli.getter = true;
             if get_matches.is_present("detail") {
                 cli.output_option = OutputOption::Detail
             }
             if let Some(getter) = get_matches.value_of("endpoint") {
-                cli.getter = match getter {
-                    "activitymaps" => Getter::ActivityMaps,
-                    "auditlog" => Getter::AuditLogs,
-                    "alerts" => Getter::Alerts,
-                    "apikeys" => Getter::ApiKeys,
-                    "appliances" => Getter::Appliances,
-                    "bundles" => Getter::Bundles,
-                    "customizations" => Getter::Customizations,
-                    "customdevices" => Getter::CustomDevices,
-                    "dashboards" => Getter::Dashboards,
-                    "detections" => Getter::Detections,
-                    "devicegroups" => Getter::DeviceGroups,
-                    "devices" => Getter::Devices,
-                    "emailgroups" => Getter::EmailGroups,
-                    "exclusionintervals" => Getter::ExclusionIntervals,
-                    "extrahop" => Getter::Extrahop,
-                    "identityproviders" => Getter::IdentityProviders,
-                    "license" => Getter::License,
-                    "networks" => Getter::Networks,
-                    "networklocalities" => Getter::NetworkLocalities,
-                    "nodes" => Getter::Nodes,
-                    "packetcaptures" => Getter::PacketCaptures,
-                    "runningconfig" => Getter::RunningConfig,
-                    "samlsp" => Getter::SamlSp,
-                    "software" => Getter::Software,
-                    "tags" => Getter::Tags,
-                    "threatcollections" => Getter::ThreatCollections,
-                    "triggers" => Getter::Triggers,
-                    "vlans" => Getter::Vlans,
+                cli.getter_type = match getter {
+                    "activitymaps" => GetterType::ActivityMaps,
+                    "auditlog" => GetterType::AuditLogs,
+                    "alerts" => GetterType::Alerts,
+                    "apikeys" => GetterType::ApiKeys,
+                    "appliances" => GetterType::Appliances,
+                    "bundles" => GetterType::Bundles,
+                    "customizations" => GetterType::Customizations,
+                    "customdevices" => GetterType::CustomDevices,
+                    "dashboards" => GetterType::Dashboards,
+                    "detections" => GetterType::Detections,
+                    "devicegroups" => GetterType::DeviceGroups,
+                    "devices" => GetterType::Devices,
+                    "emailgroups" => GetterType::EmailGroups,
+                    "exclusionintervals" => GetterType::ExclusionIntervals,
+                    "extrahop" => GetterType::Extrahop,
+                    "identityproviders" => GetterType::IdentityProviders,
+                    "license" => GetterType::License,
+                    "networks" => GetterType::Networks,
+                    "networklocalities" => GetterType::NetworkLocalities,
+                    "nodes" => GetterType::Nodes,
+                    "packetcaptures" => GetterType::PacketCaptures,
+                    "runningconfig" => GetterType::RunningConfig,
+                    "samlsp" => GetterType::SamlSp,
+                    "software" => GetterType::Software,
+                    "tags" => GetterType::Tags,
+                    "threatcollections" => GetterType::ThreatCollections,
+                    "triggers" => GetterType::Triggers,
+                    "vlans" => GetterType::Vlans,
                     _ => {
-                        println!("=> unknown endpoint `{}`", getter);
-                        Getter::None
+                        eprintln!("=> unknown endpoint `{}`", getter);
+                        exit(1)
                     }
                 };
             }
+        }
+        // packet-search
+        else if let Some(backup_matches) = matches.subcommand_matches("packet-search") {
+            let mut options = PacketSearch::new();
+            if let Some(output) = backup_matches.value_of("output") {
+                options.output = match output {
+                    "pcap" => output.to_string(),
+                    "keylog_txt" => output.to_string(),
+                    "zip" => output.to_string(),
+                    _ => {
+                        eprintln!("=> unknown output type `{output}`");
+                        exit(1)
+                    }
+                }
+            }
+            if let Some(from) = backup_matches.value_of("from") {
+                options.from = from.to_string()
+            };
+            if let Some(limit_bytes) = backup_matches.value_of("limit-bytes") {
+                options.limit_bytes = limit_bytes.to_string()
+            };
+            if let Some(limit_duration) = backup_matches.value_of("limit-duration") {
+                options.limit_search_duration = limit_duration.to_string()
+            };
+            if let Some(until) = backup_matches.value_of("until") {
+                options.until = until.to_string()
+            };
+            if let Some(bpf) = backup_matches.value_of("bpf") {
+                options.bpf = bpf.to_string()
+            };
+            if let Some(ip1) = backup_matches.value_of("ip1") {
+                options.ip1 = ip1.to_string()
+            };
+            if let Some(port1) = backup_matches.value_of("port1") {
+                options.port1 = port1.to_string()
+            };
+            if let Some(ip2) = backup_matches.value_of("ip2") {
+                options.ip2 = ip2.to_string()
+            };
+            if let Some(port2) = backup_matches.value_of("port2") {
+                options.port2 = port2.to_string()
+            };
+            cli.packet_search = true;
+            cli.packet_search_options = options;
         }
         cli
     }
