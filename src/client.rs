@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::process::exit;
 
+use anyhow::Result;
 use base64::encode;
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, AUTHORIZATION, CONTENT_TYPE};
 use reqwest::StatusCode;
@@ -81,7 +82,10 @@ fn build_reqwest_client(
 
     let auth_value_header = match HeaderValue::from_str(&auth_value) {
         Ok(avh) => avh,
-        Err(_) => panic!("API key error"),
+        Err(_) => {
+            eprintln!("API key error");
+            exit(1)
+        }
     };
 
     let mut headers = HeaderMap::new();
@@ -97,7 +101,10 @@ fn build_reqwest_client(
         .build()
     {
         Ok(c) => c,
-        _ => panic!("client builder error"),
+        _ => {
+            eprintln!("client builder error");
+            exit(1)
+        }
     };
 
     client
@@ -107,7 +114,7 @@ pub async fn get_oauth_token(
     hostname: &str,
     user_id: &str,
     api_key: &str,
-) -> Result<ExtraHopToken, Box<dyn std::error::Error>> {
+) -> Result<ExtraHopToken> {
     let auth_url = format!("https://{hostname}/oauth2/token");
 
     let mut params = HashMap::new();
@@ -118,7 +125,10 @@ pub async fn get_oauth_token(
     let auth = encode(format!("{user_id}:{api_key}"));
     let key = match HeaderValue::from_str(&format!("Basic {auth}")) {
         Ok(k) => k,
-        Err(_) => panic!("API key error"),
+        Err(_) => {
+            eprintln!("API key error");
+            exit(1)
+        }
     };
 
     headers.insert(AUTHORIZATION, key);
@@ -134,7 +144,7 @@ pub async fn get_oauth_token(
     {
         Ok(c) => c,
         Err(e) => {
-            println!("error building oauth client");
+            eprintln!("error building oauth client");
             eprintln!("{:#?}", e);
             exit(1)
         }
@@ -143,7 +153,7 @@ pub async fn get_oauth_token(
     let response = match client.post(auth_url).form(&params).send().await {
         Ok(r) => r,
         Err(e) => {
-            println!("error getting token");
+            eprintln!("error getting token");
             eprintln!("{:#?}", e);
             exit(1)
         }
@@ -153,7 +163,7 @@ pub async fn get_oauth_token(
         let token: ExtraHopToken = serde_json::from_str(&response.text().await?)?;
         Ok(token)
     } else {
-        println!("unable to get token");
+        eprintln!("unable to get token");
         eprintln!("{:#?}", response.error_for_status());
         exit(1)
     }

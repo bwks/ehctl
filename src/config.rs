@@ -13,7 +13,7 @@ pub struct ExtraHopConfig {
     pub eta: Vec<ExtraHopCredential>,
 }
 
-#[derive(Default, Deserialize)]
+#[derive(Default, Deserialize, PartialEq)]
 #[serde(default)]
 pub struct ExtraHopCredential {
     pub hostname: String,
@@ -23,21 +23,11 @@ pub struct ExtraHopCredential {
 }
 
 impl ExtraHopConfig {
-    #[allow(dead_code)]
-    pub fn default() -> Self {
-        Self {
-            ccp: vec![],
-            eca: vec![],
-            eda: vec![],
-            exa: vec![],
-            eta: vec![],
-        }
-    }
     pub fn new() -> Self {
         let config_file = match env::var("EHCTL_CONFIG") {
             Ok(cf) => cf,
             Err(_) => {
-                println!("=> could not access `EHCTL_CONFIG` environment variable");
+                eprintln!("=> could not access `EHCTL_CONFIG` environment variable");
                 exit(1);
             }
         };
@@ -53,7 +43,7 @@ impl ExtraHopConfig {
             }
         };
 
-        let mut config: Self = match toml::from_str(&contents) {
+        let mut config: ExtraHopConfig = match toml::from_str(&contents) {
             Ok(c) => c,
             Err(e) => {
                 eprintln!(
@@ -62,11 +52,35 @@ impl ExtraHopConfig {
                 exit(1);
             }
         };
-        get_credentials(&mut config.ccp);
-        get_credentials(&mut config.eda);
-        get_credentials(&mut config.eca);
-        get_credentials(&mut config.exa);
-        get_credentials(&mut config.eta);
+
+        let empty_credential = vec![ExtraHopCredential::default()];
+
+        if config.ccp == empty_credential {
+            config.ccp = vec![]
+        } else {
+            get_credentials(&mut config.ccp);
+        };
+        if config.eca == empty_credential {
+            config.eca = vec![]
+        } else {
+            get_credentials(&mut config.eda);
+        };
+        if config.eda == empty_credential {
+            config.eda = vec![]
+        } else {
+            get_credentials(&mut config.eca);
+        };
+        if config.exa == empty_credential {
+            config.exa = vec![]
+        } else {
+            get_credentials(&mut config.exa);
+        };
+        if config.eta == empty_credential {
+            config.eta = vec![]
+        } else {
+            get_credentials(&mut config.eta);
+        };
+
         config
     }
 }
@@ -80,6 +94,10 @@ fn get_credentials(ehc: &mut [ExtraHopCredential]) {
         }
         if i.api_key.is_empty() {
             i.api_key = get_env_var(&format!("{}_API_KEY", i.hostname));
+        }
+        if i.user_id.is_empty() && i.api_key.is_empty() {
+            eprintln!("=> no credentials found for {}", i.hostname);
+            exit(1);
         }
     }
 }

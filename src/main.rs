@@ -40,6 +40,7 @@ use model::threat_collection::ThreatCollections;
 use model::trigger::Triggers;
 use model::vlan::Vlans;
 
+use anyhow::{Context, Result};
 use chrono::Local;
 use futures_util::StreamExt;
 use reqwest::StatusCode;
@@ -49,10 +50,7 @@ use std::io::Write;
 use std::process::exit;
 use tabled::{Alignment, Disable, Full, MaxWidth, MinWidth, Modify, Rotate, Rows, Table};
 
-async fn reqwest_get(
-    client: &ExtraHopClient,
-    endpoint: &str,
-) -> Result<reqwest::Response, Box<dyn std::error::Error>> {
+async fn reqwest_get(client: &ExtraHopClient, endpoint: &str) -> Result<reqwest::Response> {
     let url = format!("{}/{}", client.base_url, endpoint);
     let response = client.reqwest_client.get(url).send().await?;
     if response.status() == StatusCode::OK {
@@ -64,10 +62,7 @@ async fn reqwest_get(
     }
 }
 
-async fn packet_search(
-    client: &ExtraHopClient,
-    options: &PacketSearch,
-) -> Result<(), Box<dyn std::error::Error>> {
+async fn packet_search(client: &ExtraHopClient, options: &PacketSearch) -> Result<()> {
     let name = format!("{}-{}", client.hostname, client.timestamp);
     let filename = format!("{}.{}", name, options.output);
     let url = format!("{}/packets/search", client.base_url);
@@ -98,28 +93,28 @@ async fn packet_search(
 
     if response.status() == StatusCode::OK {
         println!("=> downloading packets to `{}`", &filename);
-        let mut file =
-            File::create(&filename).map_err(|_| format!("=> failed to create `{}`", &filename))?;
+        let mut file = File::create(&filename)
+            .with_context(|| format!("=> failed to create `{}`", &filename))?;
 
         let mut stream = response.bytes_stream();
 
         while let Some(item) = stream.next().await {
-            let chunk = item.map_err(|_| format!("=> error while downloading `{}`", &filename))?;
+            let chunk =
+                item.with_context(|| format!("=> error while downloading `{}`", &filename))?;
             file.write_all(&chunk)
-                .map_err(|_| format!("=> error while writing to `{}`", &filename))?;
+                .with_context(|| format!("=> error while writing to `{}`", &filename))?;
         }
-        Ok(())
     } else if response.status() == StatusCode::NO_CONTENT {
-        println!("=> no packets returned from query");
-        Ok(())
+        println!("=> no packets returned from query")
     } else {
-        eprintln!("=> unable to save packets to `{}1", &filename);
+        eprintln!("=> unable to save packets to `{}`", &filename);
         eprintln!("{:#?}", response.error_for_status());
         exit(1)
     }
+    Ok(())
 }
 
-async fn get_api_keys(client: &ExtraHopClient) -> Result<ApiKeys, Box<dyn std::error::Error>> {
+async fn get_api_keys(client: &ExtraHopClient) -> Result<ApiKeys> {
     let response = reqwest_get(client, "apikeys").await?;
     let api_keys = ApiKeys {
         api_keys: serde_json::from_str(&response.text().await?)?,
@@ -127,9 +122,7 @@ async fn get_api_keys(client: &ExtraHopClient) -> Result<ApiKeys, Box<dyn std::e
     Ok(api_keys)
 }
 
-async fn get_activity_maps(
-    client: &ExtraHopClient,
-) -> Result<ActivityMaps, Box<dyn std::error::Error>> {
+async fn get_activity_maps(client: &ExtraHopClient) -> Result<ActivityMaps> {
     let response = reqwest_get(client, "activitymaps").await?;
     let activity_maps = ActivityMaps {
         activity_maps: serde_json::from_str(&response.text().await?)?,
@@ -137,7 +130,7 @@ async fn get_activity_maps(
     Ok(activity_maps)
 }
 
-async fn get_audit_logs(client: &ExtraHopClient) -> Result<AuditLogs, Box<dyn std::error::Error>> {
+async fn get_audit_logs(client: &ExtraHopClient) -> Result<AuditLogs> {
     let response = reqwest_get(client, "auditlog").await?;
     let audit_logs = AuditLogs {
         audit_logs: serde_json::from_str(&response.text().await?)?,
@@ -145,7 +138,7 @@ async fn get_audit_logs(client: &ExtraHopClient) -> Result<AuditLogs, Box<dyn st
     Ok(audit_logs)
 }
 
-async fn get_alerts(client: &ExtraHopClient) -> Result<Alerts, Box<dyn std::error::Error>> {
+async fn get_alerts(client: &ExtraHopClient) -> Result<Alerts> {
     let response = reqwest_get(client, "alerts").await?;
     let alerts = Alerts {
         alerts: serde_json::from_str(&response.text().await?)?,
@@ -153,7 +146,7 @@ async fn get_alerts(client: &ExtraHopClient) -> Result<Alerts, Box<dyn std::erro
     Ok(alerts)
 }
 
-async fn get_appliances(client: &ExtraHopClient) -> Result<Appliances, Box<dyn std::error::Error>> {
+async fn get_appliances(client: &ExtraHopClient) -> Result<Appliances> {
     let response = reqwest_get(client, "appliances").await?;
     let appliances = Appliances {
         appliances: serde_json::from_str(&response.text().await?)?,
@@ -161,7 +154,7 @@ async fn get_appliances(client: &ExtraHopClient) -> Result<Appliances, Box<dyn s
     Ok(appliances)
 }
 
-async fn get_bundles(client: &ExtraHopClient) -> Result<Bundles, Box<dyn std::error::Error>> {
+async fn get_bundles(client: &ExtraHopClient) -> Result<Bundles> {
     let response = reqwest_get(client, "bundles").await?;
     let bundles = Bundles {
         bundles: serde_json::from_str(&response.text().await?)?,
@@ -169,7 +162,7 @@ async fn get_bundles(client: &ExtraHopClient) -> Result<Bundles, Box<dyn std::er
     Ok(bundles)
 }
 
-async fn get_dashboards(client: &ExtraHopClient) -> Result<Dashboards, Box<dyn std::error::Error>> {
+async fn get_dashboards(client: &ExtraHopClient) -> Result<Dashboards> {
     let response = reqwest_get(client, "dashboards").await?;
     let dashboards = Dashboards {
         dashboards: serde_json::from_str(&response.text().await?)?,
@@ -177,7 +170,7 @@ async fn get_dashboards(client: &ExtraHopClient) -> Result<Dashboards, Box<dyn s
     Ok(dashboards)
 }
 
-async fn get_detections(client: &ExtraHopClient) -> Result<Detections, Box<dyn std::error::Error>> {
+async fn get_detections(client: &ExtraHopClient) -> Result<Detections> {
     let response = reqwest_get(client, "detections").await?;
     let detections = Detections {
         detections: serde_json::from_str(&response.text().await?)?,
@@ -185,7 +178,7 @@ async fn get_detections(client: &ExtraHopClient) -> Result<Detections, Box<dyn s
     Ok(detections)
 }
 
-async fn get_devices(client: &ExtraHopClient) -> Result<Devices, Box<dyn std::error::Error>> {
+async fn get_devices(client: &ExtraHopClient) -> Result<Devices> {
     let response = reqwest_get(client, "devices").await?;
     let devices = Devices {
         devices: serde_json::from_str(&response.text().await?)?,
@@ -193,9 +186,7 @@ async fn get_devices(client: &ExtraHopClient) -> Result<Devices, Box<dyn std::er
     Ok(devices)
 }
 
-async fn get_device_groups(
-    client: &ExtraHopClient,
-) -> Result<DeviceGroups, Box<dyn std::error::Error>> {
+async fn get_device_groups(client: &ExtraHopClient) -> Result<DeviceGroups> {
     let response = reqwest_get(client, "devicegroups").await?;
     let device_groups = DeviceGroups {
         device_groups: serde_json::from_str(&response.text().await?)?,
@@ -203,9 +194,7 @@ async fn get_device_groups(
     Ok(device_groups)
 }
 
-async fn get_customizations(
-    client: &ExtraHopClient,
-) -> Result<Customizations, Box<dyn std::error::Error>> {
+async fn get_customizations(client: &ExtraHopClient) -> Result<Customizations> {
     let response = reqwest_get(client, "customizations").await?;
     let customizations = Customizations {
         customizations: serde_json::from_str(&response.text().await?)?,
@@ -213,7 +202,7 @@ async fn get_customizations(
     Ok(customizations)
 }
 
-async fn create_customization(client: &ExtraHopClient) -> Result<(), Box<dyn std::error::Error>> {
+async fn create_customization(client: &ExtraHopClient) -> Result<()> {
     let name = format!("{}-{}", client.hostname, client.timestamp);
     let body = serde_json::json!({ "name": name.to_string() });
 
@@ -236,10 +225,7 @@ async fn create_customization(client: &ExtraHopClient) -> Result<(), Box<dyn std
     Ok(())
 }
 
-async fn save_customization(
-    client: &ExtraHopClient,
-    id: &i64,
-) -> Result<(), Box<dyn std::error::Error>> {
+async fn save_customization(client: &ExtraHopClient, id: &i64) -> Result<()> {
     let name = format!("{}-{}", client.hostname, client.timestamp);
     let url = format!("{}/customizations/{}/download", client.base_url, id);
     let response = client.reqwest_client.post(url).send().await?;
@@ -258,9 +244,7 @@ async fn save_customization(
     }
 }
 
-async fn get_custom_devices(
-    client: &ExtraHopClient,
-) -> Result<CustomDevices, Box<dyn std::error::Error>> {
+async fn get_custom_devices(client: &ExtraHopClient) -> Result<CustomDevices> {
     let response = reqwest_get(client, "customdevices").await?;
     let custom_devices = CustomDevices {
         custom_devices: serde_json::from_str(&response.text().await?)?,
@@ -268,9 +252,7 @@ async fn get_custom_devices(
     Ok(custom_devices)
 }
 
-async fn get_email_groups(
-    client: &ExtraHopClient,
-) -> Result<EmailGroups, Box<dyn std::error::Error>> {
+async fn get_email_groups(client: &ExtraHopClient) -> Result<EmailGroups> {
     let response = reqwest_get(client, "emailgroups").await?;
     let email_groups = EmailGroups {
         email_groups: serde_json::from_str(&response.text().await?)?,
@@ -278,9 +260,7 @@ async fn get_email_groups(
     Ok(email_groups)
 }
 
-async fn get_exclusion_intervals(
-    client: &ExtraHopClient,
-) -> Result<ExclusionIntervals, Box<dyn std::error::Error>> {
+async fn get_exclusion_intervals(client: &ExtraHopClient) -> Result<ExclusionIntervals> {
     let response = reqwest_get(client, "exclusionintervals").await?;
     let exclusion_intervals = ExclusionIntervals {
         exclusion_intervals: serde_json::from_str(&response.text().await?)?,
@@ -288,13 +268,13 @@ async fn get_exclusion_intervals(
     Ok(exclusion_intervals)
 }
 
-async fn get_extrahop(client: &ExtraHopClient) -> Result<ExtraHop, Box<dyn std::error::Error>> {
+async fn get_extrahop(client: &ExtraHopClient) -> Result<ExtraHop> {
     let response = reqwest_get(client, "extrahop").await?;
     let extrahop: ExtraHop = serde_json::from_str(&response.text().await?)?;
     Ok(extrahop)
 }
 
-async fn get_running_config(client: &ExtraHopClient) -> Result<(), Box<dyn std::error::Error>> {
+async fn get_running_config(client: &ExtraHopClient) -> Result<()> {
     let response = reqwest_get(client, "runningconfig").await?;
     if response.status() == StatusCode::OK {
         let json_data: serde_json::Value = serde_json::from_str(&response.text().await?)?;
@@ -315,9 +295,7 @@ async fn get_running_config(client: &ExtraHopClient) -> Result<(), Box<dyn std::
     }
 }
 
-async fn get_identitiy_providers(
-    client: &ExtraHopClient,
-) -> Result<IdentitiyProviders, Box<dyn std::error::Error>> {
+async fn get_identitiy_providers(client: &ExtraHopClient) -> Result<IdentitiyProviders> {
     let response = reqwest_get(client, "/auth/identityproviders").await?;
     let identity_providers = IdentitiyProviders {
         identity_providers: serde_json::from_str(&response.text().await?)?,
@@ -325,13 +303,13 @@ async fn get_identitiy_providers(
     Ok(identity_providers)
 }
 
-async fn get_license(client: &ExtraHopClient) -> Result<License, Box<dyn std::error::Error>> {
+async fn get_license(client: &ExtraHopClient) -> Result<License> {
     let response = reqwest_get(client, "license").await?;
     let license: License = serde_json::from_str(&response.text().await?)?;
     Ok(license)
 }
 
-async fn get_networks(client: &ExtraHopClient) -> Result<Networks, Box<dyn std::error::Error>> {
+async fn get_networks(client: &ExtraHopClient) -> Result<Networks> {
     let response = reqwest_get(client, "networks").await?;
     let networks = Networks {
         networks: serde_json::from_str(&response.text().await?)?,
@@ -339,9 +317,7 @@ async fn get_networks(client: &ExtraHopClient) -> Result<Networks, Box<dyn std::
     Ok(networks)
 }
 
-async fn get_network_localities(
-    client: &ExtraHopClient,
-) -> Result<NetworkLocalities, Box<dyn std::error::Error>> {
+async fn get_network_localities(client: &ExtraHopClient) -> Result<NetworkLocalities> {
     let response = reqwest_get(client, "networklocalities").await?;
     let network_localities = NetworkLocalities {
         network_localities: serde_json::from_str(&response.text().await?)?,
@@ -349,7 +325,7 @@ async fn get_network_localities(
     Ok(network_localities)
 }
 
-async fn get_nodes(client: &ExtraHopClient) -> Result<Nodes, Box<dyn std::error::Error>> {
+async fn get_nodes(client: &ExtraHopClient) -> Result<Nodes> {
     let response = reqwest_get(client, "nodes").await?;
     let nodes = Nodes {
         nodes: serde_json::from_str(&response.text().await?)?,
@@ -357,9 +333,7 @@ async fn get_nodes(client: &ExtraHopClient) -> Result<Nodes, Box<dyn std::error:
     Ok(nodes)
 }
 
-async fn get_packet_captures(
-    client: &ExtraHopClient,
-) -> Result<PacketCaptures, Box<dyn std::error::Error>> {
+async fn get_packet_captures(client: &ExtraHopClient) -> Result<PacketCaptures> {
     let response = reqwest_get(client, "packetcaptures").await?;
     let packet_captures = PacketCaptures {
         packet_captures: serde_json::from_str(&response.text().await?)?,
@@ -367,7 +341,7 @@ async fn get_packet_captures(
     Ok(packet_captures)
 }
 
-async fn get_saml_sp(client: &ExtraHopClient) -> Result<SamlSps, Box<dyn std::error::Error>> {
+async fn get_saml_sp(client: &ExtraHopClient) -> Result<SamlSps> {
     let response = reqwest_get(client, "/auth/samlsp").await?;
     let saml_sps = SamlSps {
         saml_sps: serde_json::from_str(&response.text().await?)?,
@@ -375,7 +349,7 @@ async fn get_saml_sp(client: &ExtraHopClient) -> Result<SamlSps, Box<dyn std::er
     Ok(saml_sps)
 }
 
-async fn get_software(client: &ExtraHopClient) -> Result<Softwares, Box<dyn std::error::Error>> {
+async fn get_software(client: &ExtraHopClient) -> Result<Softwares> {
     let response = reqwest_get(client, "software").await?;
     let software = Softwares {
         softwares: serde_json::from_str(&response.text().await?)?,
@@ -383,7 +357,7 @@ async fn get_software(client: &ExtraHopClient) -> Result<Softwares, Box<dyn std:
     Ok(software)
 }
 
-async fn get_tags(client: &ExtraHopClient) -> Result<Tags, Box<dyn std::error::Error>> {
+async fn get_tags(client: &ExtraHopClient) -> Result<Tags> {
     let response = reqwest_get(client, "tags").await?;
     let tags = Tags {
         tags: serde_json::from_str(&response.text().await?)?,
@@ -391,9 +365,7 @@ async fn get_tags(client: &ExtraHopClient) -> Result<Tags, Box<dyn std::error::E
     Ok(tags)
 }
 
-async fn get_threat_collections(
-    client: &ExtraHopClient,
-) -> Result<ThreatCollections, Box<dyn std::error::Error>> {
+async fn get_threat_collections(client: &ExtraHopClient) -> Result<ThreatCollections> {
     let response = reqwest_get(client, "threatcollections").await?;
     let threat_collections = ThreatCollections {
         threat_collections: serde_json::from_str(&response.text().await?)?,
@@ -401,7 +373,7 @@ async fn get_threat_collections(
     Ok(threat_collections)
 }
 
-async fn get_triggers(client: &ExtraHopClient) -> Result<Triggers, Box<dyn std::error::Error>> {
+async fn get_triggers(client: &ExtraHopClient) -> Result<Triggers> {
     let response = reqwest_get(client, "triggers").await?;
     let triggers = Triggers {
         triggers: serde_json::from_str(&response.text().await?)?,
@@ -409,7 +381,7 @@ async fn get_triggers(client: &ExtraHopClient) -> Result<Triggers, Box<dyn std::
     Ok(triggers)
 }
 
-async fn get_vlans(client: &ExtraHopClient) -> Result<Vlans, Box<dyn std::error::Error>> {
+async fn get_vlans(client: &ExtraHopClient) -> Result<Vlans> {
     let response = reqwest_get(client, "vlans").await?;
     let vlans = Vlans {
         vlans: serde_json::from_str(&response.text().await?)?,
@@ -418,7 +390,7 @@ async fn get_vlans(client: &ExtraHopClient) -> Result<Vlans, Box<dyn std::error:
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> Result<()> {
     let cli = Cli::new();
 
     let time_now = Local::now();
@@ -648,6 +620,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         if cli.backup {
             match c.appliance_type {
                 ExtraHopAppliance::ECA | ExtraHopAppliance::EDA => create_customization(c).await?,
+                ExtraHopAppliance::EXA | ExtraHopAppliance::ETA => get_running_config(c).await?,
                 _ => {}
             }
         } else if cli.packet_search {
