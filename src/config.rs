@@ -24,6 +24,18 @@ pub struct ExtraHopCredential {
 
 impl ExtraHopConfig {
     pub fn new() -> Self {
+        // TODO: Check if windows or posix environment
+        // Set $HOME/$HOMEPATH variable
+        // EG1:
+        // env::var("EHCTL_CONFIG").ok().unwrap_or("{}{}", homedir, path);
+
+        // EG2:
+        // if std::env::var("DOES_EXIST").is_ok() {
+        //     println!("will be printed");
+        // }
+        // if std::env::var("DOES_NOT_EXIST").is_ok() {
+        //     println!("will NOT be printed");
+        // }
         let config_file = match env::var("EHCTL_CONFIG") {
             Ok(cf) => cf,
             Err(_) => {
