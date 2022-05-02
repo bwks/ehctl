@@ -62,58 +62,6 @@ async fn reqwest_get(client: &ExtraHopClient, endpoint: &str) -> Result<reqwest:
     }
 }
 
-async fn packet_search(client: &ExtraHopClient, options: &PacketSearch) -> Result<()> {
-    let name = format!("{}-{}", client.hostname, client.timestamp);
-    let filename = format!("{}.{}", name, options.output);
-    let url = format!("{}/packets/search", client.base_url);
-
-    let params = (
-        ("always_return_body", options.always_return_body),
-        ("bpf", options.bpf.to_owned()),
-        ("from", options.from.to_owned()),
-        ("ip1", options.ip1.to_owned()),
-        ("ip2", options.ip2.to_owned()),
-        ("limit_bytes", options.limit_bytes.to_owned()),
-        (
-            "limit_search_duration",
-            options.limit_search_duration.to_owned(),
-        ),
-        ("output", options.output.to_owned()),
-        ("port1", options.port1.to_owned()),
-        ("port2", options.port2.to_owned()),
-        ("until", options.until.to_owned()),
-    );
-
-    let response = client
-        .reqwest_client
-        .post(&url)
-        .form(&params)
-        .send()
-        .await?;
-
-    if response.status() == StatusCode::OK {
-        println!("=> downloading packets to `{}`", &filename);
-        let mut file = File::create(&filename)
-            .with_context(|| format!("=> failed to create `{}`", &filename))?;
-
-        let mut stream = response.bytes_stream();
-
-        while let Some(item) = stream.next().await {
-            let chunk =
-                item.with_context(|| format!("=> error while downloading `{}`", &filename))?;
-            file.write_all(&chunk)
-                .with_context(|| format!("=> error while writing to `{}`", &filename))?;
-        }
-    } else if response.status() == StatusCode::NO_CONTENT {
-        println!("=> no packets returned from query")
-    } else {
-        eprintln!("=> unable to save packets to `{}`", &filename);
-        eprintln!("{:#?}", response.error_for_status());
-        exit(1)
-    }
-    Ok(())
-}
-
 async fn get_api_keys(client: &ExtraHopClient) -> Result<ApiKeys> {
     let response = reqwest_get(client, "apikeys").await?;
     let api_keys = ApiKeys {
@@ -339,6 +287,62 @@ async fn get_packet_captures(client: &ExtraHopClient) -> Result<PacketCaptures> 
         packet_captures: serde_json::from_str(&response.text().await?)?,
     };
     Ok(packet_captures)
+}
+
+async fn packet_search(client: &ExtraHopClient, options: &PacketSearch) -> Result<()> {
+    let name = format!("{}-{}", client.hostname, client.timestamp);
+    let filename = format!("{}.{}", name, options.output);
+    let url = format!("{}/packets/search", client.base_url);
+
+    let params = (
+        ("always_return_body", options.always_return_body),
+        ("bpf", options.bpf.to_owned()),
+        ("from", options.from.to_owned()),
+        ("ip1", options.ip1.to_owned()),
+        ("ip2", options.ip2.to_owned()),
+        ("limit_bytes", options.limit_bytes.to_owned()),
+        (
+            "limit_search_duration",
+            options.limit_search_duration.to_owned(),
+        ),
+        ("output", options.output.to_owned()),
+        ("port1", options.port1.to_owned()),
+        ("port2", options.port2.to_owned()),
+        ("until", options.until.to_owned()),
+    );
+
+    let response = client
+        .reqwest_client
+        .post(&url)
+        .form(&params)
+        .send()
+        .await?;
+
+    match response.status() {
+        StatusCode::OK => {
+            println!("=> downloading packets to `{}`", &filename);
+            let mut file = File::create(&filename)
+                .with_context(|| format!("=> failed to create `{}`", &filename))?;
+
+            let mut stream = response.bytes_stream();
+
+            while let Some(item) = stream.next().await {
+                let chunk =
+                    item.with_context(|| format!("=> error while downloading `{}`", &filename))?;
+                file.write_all(&chunk)
+                    .with_context(|| format!("=> error while writing to `{}`", &filename))?;
+            }
+        }
+        StatusCode::NO_CONTENT => {
+            println!("=> no packets returned from query")
+        }
+        _ => {
+            eprintln!("=> unable to save packets to `{}`", &filename);
+            eprintln!("{:#?}", response.error_for_status());
+            exit(1)
+        }
+    }
+    Ok(())
 }
 
 async fn get_saml_sp(client: &ExtraHopClient) -> Result<SamlSps> {
