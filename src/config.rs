@@ -3,7 +3,7 @@ use std::env;
 use std::fs;
 use std::process::exit;
 
-#[derive(Default, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
 #[serde(default)]
 pub struct ExtraHopConfig {
     pub ccp: Vec<ExtraHopCredential>,
@@ -13,7 +13,7 @@ pub struct ExtraHopConfig {
     pub eta: Vec<ExtraHopCredential>,
 }
 
-#[derive(Default, Deserialize, PartialEq)]
+#[derive(Debug, Default, Deserialize, PartialEq)]
 #[serde(default)]
 pub struct ExtraHopCredential {
     pub hostname: String,
@@ -24,24 +24,46 @@ pub struct ExtraHopCredential {
 
 impl ExtraHopConfig {
     pub fn new() -> Self {
-        // TODO: Check if windows or posix environment
-        // Set $HOME/$HOMEPATH variable
-        // EG1:
-        // env::var("EHCTL_CONFIG").ok().unwrap_or("{}{}", homedir, path);
+        let os = env::consts::OS;
 
-        // EG2:
-        // if std::env::var("DOES_EXIST").is_ok() {
-        //     println!("will be printed");
-        // }
-        // if std::env::var("DOES_NOT_EXIST").is_ok() {
-        //     println!("will NOT be printed");
-        // }
-        let config_file = match env::var("EHCTL_CONFIG") {
-            Ok(cf) => cf,
+        let home_env = match os {
+            "windows" => "HOMEPATH",
+            _ => "HOME",
+        };
+
+        let path_seperator = match os {
+            "windows" => "\\",
+            _ => "/",
+        };
+
+        let config_path = match env::var("EHCTL_CONFIG") {
+            Ok(cp) => cp,
             Err(_) => {
-                eprintln!("=> could not access `EHCTL_CONFIG` environment variable");
-                exit(1);
+                println!("=> could not access `EHCTL_CONFIG` environment variable");
+                "".to_string()
             }
+        };
+
+        let mut home_dir = "".to_string();
+
+        if config_path.is_empty() {
+            match env::var(home_env) {
+                Ok(hd) => home_dir = hd,
+                Err(_) => {
+                    println!("=> could not access `{}` environment variable", home_env);
+                    "".to_string();
+                }
+            };
+        }
+
+        if config_path.is_empty() && home_dir.is_empty() {
+            eprintln!("unable to determine config path");
+            exit(1)
+        };
+
+        let config_file = match config_path.is_empty() {
+            false => config_path,
+            true => format!("{home_dir}{path_seperator}.ehctl{path_seperator}config.toml"),
         };
 
         let contents = match fs::read_to_string(&config_file) {

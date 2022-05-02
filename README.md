@@ -23,7 +23,7 @@ TODO
 ## Usage
 ```
 ./ehctl --help
-ehctl 0.1.10
+ehctl 0.1.11
 Extrahop CLI
 
 USAGE:
@@ -45,9 +45,11 @@ SUBCOMMANDS:
 ### Config File
 Configs are defined in the `TOML` format. 
 
-Config must be located in: 
+The default config file location is as follows: 
 * Linux/Mac - `$HOME/.ehctl/config.toml`
 * Windows - `$HOMEPATH\.ehctl\config.toml`
+
+The config file location can be set with the `EHCTL_CONFIG` environment variable.
 
 ```toml
 [[ccp]]
