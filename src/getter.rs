@@ -1,5 +1,7 @@
 use crate::client::ExtraHopAppliance;
 
+pub struct Getters {}
+
 #[derive(Eq, PartialEq)]
 pub enum GetterType {
     ActivityMaps,
@@ -33,37 +35,106 @@ pub enum GetterType {
     Unknown,
 }
 
-pub fn getter_list() -> Vec<String> {
-    vec![
-        "activitymaps".to_string(),
-        "auditlog".to_string(),
-        "alerts".to_string(),
-        "apikeys".to_string(),
-        "appliances".to_string(),
-        "bundles".to_string(),
-        "customizations".to_string(),
-        "customdevices".to_string(),
-        "dashboards".to_string(),
-        "detections".to_string(),
-        "devicegroups".to_string(),
-        "devices".to_string(),
-        "emailgroups".to_string(),
-        "exclusionintervals".to_string(),
-        "extrahop".to_string(),
-        "identityproviders".to_string(),
-        "license".to_string(),
-        "networks".to_string(),
-        "networklocalities".to_string(),
-        "nodes".to_string(),
-        "packetcaptures".to_string(),
-        "runningconfig".to_string(),
-        "samlsp".to_string(),
-        "software".to_string(),
-        "tags".to_string(),
-        "threatcollections".to_string(),
-        "triggers".to_string(),
-        "vlans".to_string(),
-    ]
+impl std::fmt::Display for GetterType {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            GetterType::ActivityMaps => write!(f, "activitymaps"),
+            GetterType::AuditLogs => write!(f, "auditlog"),
+            GetterType::Alerts => write!(f, "alerts"),
+            GetterType::Appliances => write!(f, "apikeys"),
+            GetterType::ApiKeys => write!(f, "appliances"),
+            GetterType::Bundles => write!(f, "bundles"),
+            GetterType::Customizations => write!(f, "customizations"),
+            GetterType::CustomDevices => write!(f, "customdevices"),
+            GetterType::Dashboards => write!(f, "dashboards"),
+            GetterType::Detections => write!(f, "detections"),
+            GetterType::Devices => write!(f, "devicegroups"),
+            GetterType::DeviceGroups => write!(f, "devices"),
+            GetterType::EmailGroups => write!(f, "emailgroups"),
+            GetterType::ExclusionIntervals => write!(f, "exclusionintervals"),
+            GetterType::ExtraHop => write!(f, "extrahop"),
+            GetterType::IdentityProviders => write!(f, "identityproviders"),
+            GetterType::License => write!(f, "license"),
+            GetterType::Nodes => write!(f, "networks"),
+            GetterType::Networks => write!(f, "networklocalities"),
+            GetterType::NetworkLocalities => write!(f, "nodes"),
+            GetterType::PacketCaptures => write!(f, "packetcaptures"),
+            GetterType::RunningConfig => write!(f, "runningconfig"),
+            GetterType::SamlSp => write!(f, "samlsp"),
+            GetterType::Software => write!(f, "software"),
+            GetterType::Tags => write!(f, "tags"),
+            GetterType::ThreatCollections => write!(f, "threatcollections"),
+            GetterType::Triggers => write!(f, "triggers"),
+            GetterType::Vlans => write!(f, "vlans"),
+            GetterType::Unknown => write!(f, "unknown"),
+        }
+    }
+}
+
+impl Getters {
+    pub fn all() -> Vec<String> {
+        vec![
+            GetterType::ActivityMaps.to_string(),
+            GetterType::AuditLogs.to_string(),
+            GetterType::Alerts.to_string(),
+            GetterType::Appliances.to_string(),
+            GetterType::ApiKeys.to_string(),
+            GetterType::Bundles.to_string(),
+            GetterType::Customizations.to_string(),
+            GetterType::CustomDevices.to_string(),
+            GetterType::Dashboards.to_string(),
+            GetterType::Detections.to_string(),
+            GetterType::Devices.to_string(),
+            GetterType::DeviceGroups.to_string(),
+            GetterType::EmailGroups.to_string(),
+            GetterType::ExclusionIntervals.to_string(),
+            GetterType::ExtraHop.to_string(),
+            GetterType::IdentityProviders.to_string(),
+            GetterType::License.to_string(),
+            GetterType::Nodes.to_string(),
+            GetterType::Networks.to_string(),
+            GetterType::NetworkLocalities.to_string(),
+            GetterType::PacketCaptures.to_string(),
+            GetterType::RunningConfig.to_string(),
+            GetterType::SamlSp.to_string(),
+            GetterType::Software.to_string(),
+            GetterType::Tags.to_string(),
+            GetterType::ThreatCollections.to_string(),
+            GetterType::Triggers.to_string(),
+            GetterType::Vlans.to_string(),
+            // GetterType::Unknown.to_string(),
+        ]
+    }
+    pub fn ccp() -> Vec<String> {
+        appliance_getters(&ExtraHopAppliance::CCP)
+            .into_iter()
+            .map(|a| a.to_string())
+            .collect()
+    }
+    pub fn eca() -> Vec<String> {
+        appliance_getters(&ExtraHopAppliance::ECA)
+            .into_iter()
+            .map(|a| a.to_string())
+            .collect()
+    }
+    pub fn eda() -> Vec<String> {
+        appliance_getters(&ExtraHopAppliance::EDA)
+            .into_iter()
+            .map(|a| a.to_string())
+            .collect()
+    }
+    pub fn exa() -> Vec<String> {
+        appliance_getters(&ExtraHopAppliance::EXA)
+            .into_iter()
+            .map(|a| a.to_string())
+            .collect()
+    }
+    pub fn eta() -> Vec<String> {
+        appliance_getters(&ExtraHopAppliance::ETA)
+            .into_iter()
+            .map(|a| a.to_string())
+            .collect()
+    }
 }
 
 pub fn appliance_getters(appliance_type: &ExtraHopAppliance) -> Vec<GetterType> {

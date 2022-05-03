@@ -1,5 +1,6 @@
-use crate::getter::{getter_list, GetterType};
+use crate::getter::{GetterType, Getters};
 use crate::model::packet_search::PacketSearch;
+use crate::util::print_list;
 use clap::{Arg, Command};
 use std::process::exit;
 
@@ -32,7 +33,7 @@ impl Cli {
     }
     pub fn new() -> Self {
         let matches = Command::new("ehctl")
-            .version("0.1.11")
+            .version("0.1.12")
             .about("Extrahop CLI")
             .subcommand(
                 Command::new("backup")
@@ -70,14 +71,16 @@ impl Cli {
             )
             .subcommand(
                 Command::new("list")
-                    .about("List available HTTP <endpoint> options")
+                    .about("List available HTTP <endpoint> options per device type")
+                    .subcommand(Command::new("get")
+                    .about("HTTP GET endpoints")
                     .arg(
-                        Arg::new("getters")
-                            .help("List available getters")
-                            .long("getters")
-                            .takes_value(false)
-                            .required(true),
-                    ),
+                        Arg::new("type")
+                            .help("Valid options: all, ccp, eca, eda, exa, eta")
+                            .takes_value(true)
+                            .required(false),
+                        )
+                    )
             )
             .subcommand(
                 Command::new("packet-search")
@@ -171,12 +174,40 @@ impl Cli {
         }
         // list
         if let Some(list_matches) = matches.subcommand_matches("list") {
-            if list_matches.is_present("getters") {
-                println!("Available GET endpoints");
-                for g in getter_list() {
-                    println!(" - {g}");
+            if let Some(get_matches) = list_matches.subcommand_matches("get") {
+                if let Some(device_type) = get_matches.value_of("type") {
+                    match device_type {
+                        "all" => {
+                            println!("Available GET endpoints");
+                            print_list(&Getters::all())
+                        }
+                        "ccp" => {
+                            println!("Available GET endpoints");
+                            print_list(&Getters::ccp())
+                        }
+                        "eca" => {
+                            println!("Available GET endpoints");
+                            print_list(&Getters::eca())
+                        }
+                        "eda" => {
+                            println!("Available GET endpoints");
+                            print_list(&Getters::eda())
+                        }
+                        "exa" => {
+                            println!("Available GET endpoints");
+                            print_list(&Getters::exa())
+                        }
+                        "eta" => {
+                            println!("Available GET endpoints");
+                            print_list(&Getters::eta())
+                        }
+                        _ => {
+                            eprintln!("=> unknown device type `{}`", device_type);
+                            exit(1)
+                        }
+                    }
+                    exit(0)
                 }
-                exit(0)
             }
         }
         // get

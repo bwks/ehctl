@@ -21,6 +21,12 @@ pub fn extrahop_to_human_time(time_milliseconds: &u64) -> String {
     datetime.format("%Y-%m-%d %H:%M:%S UTC %Z").to_string()
 }
 
+pub fn print_list(list: &[String]) {
+    for i in list.iter() {
+        println!(" - {i}");
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

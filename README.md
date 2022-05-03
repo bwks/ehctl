@@ -23,7 +23,7 @@ TODO
 ## Usage
 ```
 ./ehctl --help
-ehctl 0.1.11
+ehctl 0.1.12
 Extrahop CLI
 
 USAGE:
@@ -37,6 +37,7 @@ SUBCOMMANDS:
     backup           Backup device customizations (currently `all` devices are backed up)
     get              Get data from a HTTP GET <endpoint>
     help             Print this message or the help of the given subcommand(s)
+    list             List available HTTP <endpoint> options
     packet-search    Download a packet capture
 ```
 
