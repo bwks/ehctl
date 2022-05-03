@@ -2,14 +2,14 @@ mod cli;
 mod client;
 mod config;
 mod deserialize;
+mod getter;
 mod model;
 mod util;
 
-use config::ExtraHopConfig;
-
+use cli::{Cli, OutputOption};
 use client::{get_oauth_token, ExtraHopAppliance, ExtraHopClient};
-
-use cli::{Cli, GetterType, OutputOption};
+use config::ExtraHopConfig;
+use getter::{appliance_getters, GetterType};
 
 use model::activity_map::ActivityMaps;
 use model::alert::Alerts;
@@ -402,116 +402,6 @@ async fn main() -> Result<()> {
 
     let configs = ExtraHopConfig::new();
 
-    let mut getter_map: HashMap<ExtraHopAppliance, Vec<GetterType>> = HashMap::new();
-    getter_map.insert(
-        ExtraHopAppliance::CCP,
-        vec![
-            GetterType::ActivityMaps,
-            GetterType::AuditLogs,
-            GetterType::Alerts,
-            GetterType::Appliances,
-            GetterType::Bundles,
-            GetterType::Dashboards,
-            GetterType::Detections,
-            GetterType::Devices,
-            GetterType::DeviceGroups,
-            GetterType::ExclusionIntervals,
-            GetterType::Extrahop,
-            GetterType::Networks,
-            GetterType::NetworkLocalities,
-            GetterType::Tags,
-            GetterType::Triggers,
-            GetterType::Software,
-            GetterType::ThreatCollections,
-            GetterType::Vlans,
-        ],
-    );
-    getter_map.insert(
-        ExtraHopAppliance::ECA,
-        vec![
-            GetterType::ActivityMaps,
-            GetterType::AuditLogs,
-            GetterType::Alerts,
-            GetterType::ApiKeys,
-            GetterType::Appliances,
-            GetterType::Bundles,
-            GetterType::Customizations,
-            // TODO: This endpoint does not work on ECA
-            // API doc says its supported
-            // I suspect its required to select the sensor
-            // GetterType::CustomDevices,
-            GetterType::Dashboards,
-            GetterType::Detections,
-            GetterType::Devices,
-            GetterType::DeviceGroups,
-            GetterType::EmailGroups,
-            GetterType::ExclusionIntervals,
-            GetterType::Extrahop,
-            GetterType::IdentityProviders,
-            GetterType::License,
-            GetterType::Networks,
-            GetterType::NetworkLocalities,
-            GetterType::Nodes,
-            GetterType::RunningConfig,
-            GetterType::Software,
-            GetterType::Tags,
-            GetterType::ThreatCollections,
-            GetterType::Triggers,
-            GetterType::Vlans,
-        ],
-    );
-    getter_map.insert(
-        ExtraHopAppliance::EDA,
-        vec![
-            GetterType::ActivityMaps,
-            GetterType::AuditLogs,
-            GetterType::Alerts,
-            GetterType::ApiKeys,
-            GetterType::Appliances,
-            GetterType::Bundles,
-            GetterType::Customizations,
-            GetterType::CustomDevices,
-            GetterType::Dashboards,
-            GetterType::Detections,
-            GetterType::Devices,
-            GetterType::DeviceGroups,
-            GetterType::EmailGroups,
-            GetterType::ExclusionIntervals,
-            GetterType::Extrahop,
-            GetterType::IdentityProviders,
-            GetterType::License,
-            GetterType::Networks,
-            GetterType::NetworkLocalities,
-            GetterType::PacketCaptures,
-            GetterType::RunningConfig,
-            GetterType::Software,
-            GetterType::Tags,
-            GetterType::ThreatCollections,
-            GetterType::Triggers,
-            GetterType::Vlans,
-        ],
-    );
-    getter_map.insert(
-        ExtraHopAppliance::ETA,
-        vec![
-            GetterType::ApiKeys,
-            GetterType::Appliances,
-            GetterType::Extrahop,
-            GetterType::License,
-            GetterType::RunningConfig,
-        ],
-    );
-    getter_map.insert(
-        ExtraHopAppliance::EXA,
-        vec![
-            GetterType::ApiKeys,
-            GetterType::Appliances,
-            GetterType::Extrahop,
-            GetterType::License,
-            GetterType::RunningConfig,
-        ],
-    );
-
     let mut extrahop_appliaces: Vec<ExtraHopClient> = Vec::new();
 
     for c in configs.ccp {
@@ -637,168 +527,168 @@ async fn main() -> Result<()> {
         } else if cli.getter {
             match cli.getter_type {
                 GetterType::ActivityMaps => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
+                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
                         let result = get_activity_maps(c).await?;
                         activity_maps.insert(c.hostname.to_string(), result);
                     }
                 }
                 GetterType::AuditLogs => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
+                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
                         let result = get_audit_logs(c).await?;
                         audit_logs.insert(c.hostname.to_string(), result);
                     }
                 }
                 GetterType::Alerts => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
+                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
                         let result = get_alerts(c).await?;
                         alerts.insert(c.hostname.to_string(), result);
                     }
                 }
                 GetterType::ApiKeys => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
+                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
                         let result = get_api_keys(c).await?;
                         api_keys.insert(c.hostname.to_string(), result);
                     }
                 }
                 GetterType::Appliances => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
+                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
                         let result = get_appliances(c).await?;
                         appliances.insert(c.hostname.to_string(), result);
                     }
                 }
                 GetterType::Bundles => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
+                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
                         let result = get_bundles(c).await?;
                         bundles.insert(c.hostname.to_string(), result);
                     }
                 }
                 GetterType::Customizations => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
+                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
                         let result = get_customizations(c).await?;
                         customizations.insert(c.hostname.to_string(), result);
                     }
                 }
                 GetterType::CustomDevices => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
+                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
                         let result = get_custom_devices(c).await?;
                         custom_devices.insert(c.hostname.to_string(), result);
                     }
                 }
                 GetterType::Dashboards => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
+                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
                         let result = get_dashboards(c).await?;
                         dashboards.insert(c.hostname.to_string(), result);
                     }
                 }
                 GetterType::Detections => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
+                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
                         let result = get_detections(c).await?;
                         detections.insert(c.hostname.to_string(), result);
                     }
                 }
                 GetterType::Devices => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
+                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
                         let result = get_devices(c).await?;
                         devices.insert(c.hostname.to_string(), result);
                     }
                 }
                 GetterType::DeviceGroups => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
+                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
                         let result = get_device_groups(c).await?;
                         device_groups.insert(c.hostname.to_string(), result);
                     }
                 }
                 GetterType::EmailGroups => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
+                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
                         let result = get_email_groups(c).await?;
                         email_groups.insert(c.hostname.to_string(), result);
                     }
                 }
                 GetterType::ExclusionIntervals => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
+                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
                         let result = get_exclusion_intervals(c).await?;
                         exclusion_intervals.insert(c.hostname.to_string(), result);
                     }
                 }
-                GetterType::Extrahop => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
+                GetterType::ExtraHop => {
+                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
                         let result = get_extrahop(c).await?;
                         extrahops.push(result);
                     }
                 }
                 GetterType::IdentityProviders => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
+                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
                         let result = get_identitiy_providers(c).await?;
                         identity_providers.insert(c.hostname.to_string(), result);
                     }
                 }
                 GetterType::License => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
+                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
                         let result = get_license(c).await?;
                         licenses.insert(c.hostname.to_string(), result);
                     }
                 }
                 GetterType::Networks => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
+                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
                         let result = get_networks(c).await?;
                         networks.insert(c.hostname.to_string(), result);
                     }
                 }
                 GetterType::NetworkLocalities => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
+                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
                         let result = get_network_localities(c).await?;
                         network_localities.insert(c.hostname.to_string(), result);
                     }
                 }
                 GetterType::Nodes => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
+                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
                         let result = get_nodes(c).await?;
                         nodes.insert(c.hostname.to_string(), result);
                     }
                 }
                 GetterType::PacketCaptures => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
+                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
                         let result = get_packet_captures(c).await?;
                         packet_captures.insert(c.hostname.to_string(), result);
                     }
                 }
                 GetterType::RunningConfig => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
+                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
                         _ = get_running_config(c).await?;
                     }
                 }
                 GetterType::SamlSp => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
+                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
                         let result = get_saml_sp(c).await?;
                         saml_sps.insert(c.hostname.to_string(), result);
                     }
                 }
                 GetterType::Software => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
+                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
                         let result = get_software(c).await?;
                         software.insert(c.hostname.to_string(), result);
                     }
                 }
                 GetterType::Tags => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
+                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
                         let result = get_tags(c).await?;
                         tags.insert(c.hostname.to_string(), result);
                     }
                 }
                 GetterType::ThreatCollections => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
+                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
                         let result = get_threat_collections(c).await?;
                         threat_collections.insert(c.hostname.to_string(), result);
                     }
                 }
                 GetterType::Triggers => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
+                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
                         let result = get_triggers(c).await?;
                         triggers.insert(c.hostname.to_string(), result);
                     }
                 }
                 GetterType::Vlans => {
-                    if getter_map[&c.appliance_type].contains(&cli.getter_type) {
+                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
                         let result = get_vlans(c).await?;
                         vlans.insert(c.hostname.to_string(), result);
                     }
@@ -1064,7 +954,7 @@ async fn main() -> Result<()> {
                     }
                 }
             }
-            GetterType::Extrahop => {
+            GetterType::ExtraHop => {
                 let table = Table::new(extrahops).with(Disable::Column(1..=1));
                 println!("{table}");
             }

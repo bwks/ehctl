@@ -1,39 +1,7 @@
+use crate::getter::{getter_list, GetterType};
 use crate::model::packet_search::PacketSearch;
 use clap::{Arg, Command};
 use std::process::exit;
-
-#[derive(Eq, PartialEq)]
-pub enum GetterType {
-    ActivityMaps,
-    AuditLogs,
-    Alerts,
-    Appliances,
-    ApiKeys,
-    Bundles,
-    Customizations,
-    CustomDevices,
-    Dashboards,
-    Detections,
-    Devices,
-    DeviceGroups,
-    EmailGroups,
-    ExclusionIntervals,
-    Extrahop,
-    IdentityProviders,
-    License,
-    Nodes,
-    Networks,
-    NetworkLocalities,
-    PacketCaptures,
-    RunningConfig,
-    SamlSp,
-    Software,
-    Tags,
-    ThreatCollections,
-    Triggers,
-    Vlans,
-    Unknown,
-}
 
 pub enum OutputOption {
     Brief,
@@ -83,7 +51,7 @@ impl Cli {
                         Arg::new("endpoint")
                             .help("the uri endpoint to get")
                             .takes_value(true)
-                            .required(true),
+                            .required(false),
                     )
                     .arg(
                         Arg::new("detail")
@@ -91,6 +59,24 @@ impl Cli {
                             .long("detail")
                             .takes_value(false)
                             .required(false),
+                    )
+                    .arg(
+                        Arg::new("list")
+                            .help("List available getters")
+                            .long("list")
+                            .takes_value(false)
+                            .required(false),
+                    ),
+            )
+            .subcommand(
+                Command::new("list")
+                    .about("List available HTTP <endpoint> options")
+                    .arg(
+                        Arg::new("getters")
+                            .help("List available getters")
+                            .long("getters")
+                            .takes_value(false)
+                            .required(true),
                     ),
             )
             .subcommand(
@@ -183,6 +169,16 @@ impl Cli {
                 }
             };
         }
+        // list
+        if let Some(list_matches) = matches.subcommand_matches("list") {
+            if list_matches.is_present("getters") {
+                println!("Available GET endpoints");
+                for g in getter_list() {
+                    println!(" - {g}");
+                }
+                exit(0)
+            }
+        }
         // get
         else if let Some(get_matches) = matches.subcommand_matches("get") {
             cli.getter = true;
@@ -205,7 +201,7 @@ impl Cli {
                     "devices" => GetterType::Devices,
                     "emailgroups" => GetterType::EmailGroups,
                     "exclusionintervals" => GetterType::ExclusionIntervals,
-                    "extrahop" => GetterType::Extrahop,
+                    "extrahop" => GetterType::ExtraHop,
                     "identityproviders" => GetterType::IdentityProviders,
                     "license" => GetterType::License,
                     "networks" => GetterType::Networks,
