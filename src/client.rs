@@ -60,7 +60,7 @@ impl ExtraHopClient {
             api_token: api_token.to_string(),
             base_url: base_url.to_string(),
             timestamp: timestamp.to_string(),
-            allow_insecure_tls: allow_insecure_tls.to_owned(),
+            allow_insecure_tls: *allow_insecure_tls,
             appliance_type,
             reqwest_client: client,
         }
@@ -97,7 +97,7 @@ fn build_reqwest_client(
     let client = match reqwest::Client::builder()
         .default_headers(headers)
         .cookie_store(true)
-        .danger_accept_invalid_certs(allow_insecure_tls.to_owned())
+        .danger_accept_invalid_certs(*allow_insecure_tls)
         .build()
     {
         Ok(c) => c,

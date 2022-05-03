@@ -25,14 +25,14 @@ impl Tabled for AuditLog {
     const LENGTH: usize = 50;
 
     fn fields(&self) -> Vec<String> {
-        let mut details = self.body.details.to_owned();
+        let mut details = self.body.details.clone();
         details.truncate(50);
         let body = format!(
             "facility:  {}
 operation: {}
 priority:  {}
 user:      {}
-details:  {}",
+details:   {}",
             self.body.facility, self.body.operation, self.body.priority, self.body.user, details,
         );
         vec![

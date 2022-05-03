@@ -296,19 +296,19 @@ async fn packet_search(client: &ExtraHopClient, options: &PacketSearch) -> Resul
 
     let params = (
         ("always_return_body", options.always_return_body),
-        ("bpf", options.bpf.to_owned()),
-        ("from", options.from.to_owned()),
-        ("ip1", options.ip1.to_owned()),
-        ("ip2", options.ip2.to_owned()),
-        ("limit_bytes", options.limit_bytes.to_owned()),
+        ("bpf", options.bpf.clone()),
+        ("from", options.from.clone()),
+        ("ip1", options.ip1.clone()),
+        ("ip2", options.ip2.clone()),
+        ("limit_bytes", options.limit_bytes.clone()),
         (
             "limit_search_duration",
-            options.limit_search_duration.to_owned(),
+            options.limit_search_duration.clone(),
         ),
-        ("output", options.output.to_owned()),
-        ("port1", options.port1.to_owned()),
-        ("port2", options.port2.to_owned()),
-        ("until", options.until.to_owned()),
+        ("output", options.output.clone()),
+        ("port1", options.port1.clone()),
+        ("port2", options.port2.clone()),
+        ("until", options.until.clone()),
     );
 
     let response = client
