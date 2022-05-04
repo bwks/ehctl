@@ -62,8 +62,8 @@ impl ExtraHopConfig {
         };
 
         let config_file = match config_path.is_empty() {
-            false => config_path,
             true => format!("{home_dir}{path_seperator}.ehctl{path_seperator}config.toml"),
+            false => config_path,
         };
 
         let contents = match fs::read_to_string(&config_file) {
@@ -89,31 +89,26 @@ impl ExtraHopConfig {
 
         let empty_credential = vec![ExtraHopCredential::default()];
 
-        if config.ccp == empty_credential {
-            config.ccp = vec![]
-        } else {
-            get_credentials(&mut config.ccp);
-        };
-        if config.eca == empty_credential {
-            config.eca = vec![]
-        } else {
-            get_credentials(&mut config.eda);
-        };
-        if config.eda == empty_credential {
-            config.eda = vec![]
-        } else {
-            get_credentials(&mut config.eca);
-        };
-        if config.exa == empty_credential {
-            config.exa = vec![]
-        } else {
-            get_credentials(&mut config.exa);
-        };
-        if config.eta == empty_credential {
-            config.eta = vec![]
-        } else {
-            get_credentials(&mut config.eta);
-        };
+        match config.ccp == empty_credential {
+            true => config.ccp = vec![],
+            false => get_credentials(&mut config.ccp),
+        }
+        match config.eca == empty_credential {
+            true => config.eca = vec![],
+            false => get_credentials(&mut config.eca),
+        }
+        match config.eda == empty_credential {
+            true => config.eda = vec![],
+            false => get_credentials(&mut config.eda),
+        }
+        match config.exa == empty_credential {
+            true => config.exa = vec![],
+            false => get_credentials(&mut config.exa),
+        }
+        match config.eta == empty_credential {
+            true => config.eta = vec![],
+            false => get_credentials(&mut config.eta),
+        }
 
         config
     }
