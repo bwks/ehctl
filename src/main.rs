@@ -8,7 +8,7 @@ mod util;
 
 use cli::{Cli, OutputOption};
 use client::{get_oauth_token, ExtraHopAppliance, ExtraHopClient};
-use config::ExtraHopConfig;
+use config::{ExtraHopConfig, ExtraHopCredential};
 use getter::{appliance_getters, GetterType};
 
 use model::activity_map::ActivityMaps;
@@ -53,12 +53,14 @@ use tabled::{Alignment, Disable, Full, MaxWidth, MinWidth, Modify, Rotate, Rows,
 async fn reqwest_get(client: &ExtraHopClient, endpoint: &str) -> Result<reqwest::Response> {
     let url = format!("{}/{}", client.base_url, endpoint);
     let response = client.reqwest_client.get(url).send().await?;
-    if response.status() == StatusCode::OK {
-        Ok(response)
-    } else {
-        eprintln!("unable to get {endpoint}");
-        eprintln!("{:#?}", response.error_for_status());
-        exit(1)
+
+    match response.status() {
+        StatusCode::OK => Ok(response),
+        _ => {
+            eprintln!("unable to get {endpoint}");
+            eprintln!("{:#?}", response.error_for_status());
+            exit(1)
+        }
     }
 }
 
@@ -157,38 +159,46 @@ async fn create_customization(client: &ExtraHopClient) -> Result<()> {
     println!("=> adding customization: {}", name);
     let url = format!("{}/customizations", client.base_url);
     let response = client.reqwest_client.post(url).json(&body).send().await?;
-    if response.status() == StatusCode::CREATED {
-        println!("=> new customization added: {}", name);
-        let customizations = get_customizations(client).await?;
-        for c in customizations.customizations.iter() {
-            if c.name.starts_with(&name) {
-                save_customization(client, &c.id).await?;
+
+    match response.status() {
+        StatusCode::CREATED => {
+            println!("=> new customization added: {}", name);
+            let customizations = get_customizations(client).await?;
+            for c in customizations.customizations.iter() {
+                if c.name.starts_with(&name) {
+                    save_customization(client, &c.id).await?;
+                }
             }
+            Ok(())
         }
-    } else {
-        eprintln!("=> unable to add customization: {}", name);
-        eprintln!("{:#?}", response.error_for_status());
-        exit(1)
+        _ => {
+            eprintln!("=> unable to add customization: {}", name);
+            eprintln!("{:#?}", response.error_for_status());
+            exit(1)
+        }
     }
-    Ok(())
 }
 
 async fn save_customization(client: &ExtraHopClient, id: &i64) -> Result<()> {
     let name = format!("{}-{}", client.hostname, client.timestamp);
     let url = format!("{}/customizations/{}/download", client.base_url, id);
     let response = client.reqwest_client.post(url).send().await?;
-    if response.status() == StatusCode::OK {
-        println!("=> downloading customization: {}", name);
-        let bytes = response.bytes().await?;
-        let filename = format!("{}-{}.zip", client.hostname, client.timestamp);
-        let mut wf = File::create(&filename)?;
-        wf.write_all(&bytes)
-            .expect("=> error writing customization to file");
-        Ok(())
-    } else {
-        eprintln!("=> unable to save customization: {}", name);
-        eprintln!("{:#?}", response.error_for_status());
-        exit(1)
+
+    match response.status() {
+        StatusCode::OK => {
+            println!("=> downloading customization: {}", name);
+            let bytes = response.bytes().await?;
+            let filename = format!("{}-{}.zip", client.hostname, client.timestamp);
+            let mut wf = File::create(&filename)?;
+            wf.write_all(&bytes)
+                .expect("=> error writing customization to file");
+            Ok(())
+        }
+        _ => {
+            eprintln!("=> unable to save customization: {}", name);
+            eprintln!("=> {:#?}", response.error_for_status());
+            exit(1)
+        }
     }
 }
 
@@ -224,22 +234,26 @@ async fn get_extrahop(client: &ExtraHopClient) -> Result<ExtraHop> {
 
 async fn get_running_config(client: &ExtraHopClient) -> Result<()> {
     let response = reqwest_get(client, "runningconfig").await?;
-    if response.status() == StatusCode::OK {
-        let json_data: serde_json::Value = serde_json::from_str(&response.text().await?)?;
 
-        let config = RunningConfig { json: json_data };
+    match response.status() {
+        StatusCode::OK => {
+            let json_data: serde_json::Value = serde_json::from_str(&response.text().await?)?;
 
-        let filename = format!("{}-{}.json", client.hostname, client.timestamp);
-        let wf = serde_json::to_writer(&File::create(&filename)?, &config.json);
-        match wf {
-            Ok(_) => println!("wrote file: {}", &filename),
-            Err(_) => exit(1),
-        };
-        Ok(())
-    } else {
-        eprintln!("unable to get running config");
-        eprintln!("{:#?}", response.error_for_status());
-        exit(1)
+            let config = RunningConfig { json: json_data };
+
+            let filename = format!("{}-{}.json", client.hostname, client.timestamp);
+            let wf = serde_json::to_writer(&File::create(&filename)?, &config.json);
+            match wf {
+                Ok(_) => println!("=> wrote file: {}", &filename),
+                Err(_) => exit(1),
+            };
+            Ok(())
+        }
+        _ => {
+            eprintln!("=> unable to get running config");
+            eprintln!("=> {:#?}", response.error_for_status());
+            exit(1)
+        }
     }
 }
 
@@ -338,7 +352,7 @@ async fn packet_search(client: &ExtraHopClient, options: &PacketSearch) -> Resul
         }
         _ => {
             eprintln!("=> unable to save packets to `{}`", &filename);
-            eprintln!("{:#?}", response.error_for_status());
+            eprintln!("=> {:#?}", response.error_for_status());
             exit(1)
         }
     }
@@ -393,94 +407,73 @@ async fn get_vlans(client: &ExtraHopClient) -> Result<Vlans> {
     Ok(vlans)
 }
 
+async fn build_clients(
+    credentials: &Vec<ExtraHopCredential>,
+    appliance_type: ExtraHopAppliance,
+    timestamp: &str,
+) -> Result<Vec<ExtraHopClient>> {
+    let mut extrahop_appliances: Vec<ExtraHopClient> = Vec::new();
+
+    match appliance_type {
+        ExtraHopAppliance::CCP => {
+            for c in credentials {
+                let token = get_oauth_token(&c.hostname, &c.user_id, &c.api_key).await?;
+                let base_url = format!("https://{}/api/v1", &c.hostname);
+                let client = ExtraHopClient::new(
+                    &c.hostname,
+                    &c.user_id,
+                    &c.api_key,
+                    &base_url,
+                    timestamp,
+                    &token.access_token,
+                    &c.allow_insecure_tls,
+                    appliance_type,
+                );
+                extrahop_appliances.push(client);
+            }
+        }
+        _ => {
+            for c in credentials {
+                let base_url = format!("https://{}/api/v1", &c.hostname);
+                let client = ExtraHopClient::new(
+                    &c.hostname,
+                    &c.user_id,
+                    &c.api_key,
+                    &base_url,
+                    timestamp,
+                    "",
+                    &c.allow_insecure_tls,
+                    appliance_type,
+                );
+                extrahop_appliances.push(client);
+            }
+        }
+    }
+    Ok(extrahop_appliances)
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     let cli = Cli::new();
 
     let time_now = Local::now();
-    let timestamp = time_now.format("%Y-%m-%d--%H-%M-%S");
+    let timestamp = time_now.format("%Y-%m-%d--%H-%M-%S").to_string();
 
     let configs = ExtraHopConfig::new();
 
-    let mut extrahop_appliaces: Vec<ExtraHopClient> = Vec::new();
+    let mut extrahop_appliances: Vec<ExtraHopClient> = Vec::new();
 
-    for c in configs.ccp {
-        if !c.hostname.is_empty() {
-            let token = get_oauth_token(&c.hostname, &c.user_id, &c.api_key).await?;
-            let base_url = format!("https://{}/api/v1", &c.hostname);
-            let client = ExtraHopClient::new(
-                &c.hostname,
-                &c.user_id,
-                &c.api_key,
-                &base_url,
-                &timestamp.to_string(),
-                &token.access_token,
-                &c.allow_insecure_tls,
-                ExtraHopAppliance::CCP,
-            );
-            extrahop_appliaces.push(client);
-        };
-    }
+    let ccp_clients = build_clients(&configs.ccp, ExtraHopAppliance::CCP, &timestamp).await?;
+    let eca_clients = build_clients(&configs.eca, ExtraHopAppliance::ECA, &timestamp).await?;
+    let eda_clients = build_clients(&configs.eda, ExtraHopAppliance::EDA, &timestamp).await?;
+    let exa_clients = build_clients(&configs.exa, ExtraHopAppliance::EXA, &timestamp).await?;
+    let eta_clients = build_clients(&configs.eta, ExtraHopAppliance::ETA, &timestamp).await?;
 
-    for c in configs.eca {
-        let base_url = format!("https://{}/api/v1", &c.hostname);
-        let client = ExtraHopClient::new(
-            &c.hostname,
-            &c.user_id,
-            &c.api_key,
-            &base_url,
-            &timestamp.to_string(),
-            "",
-            &c.allow_insecure_tls,
-            ExtraHopAppliance::ECA,
-        );
-        extrahop_appliaces.push(client);
-    }
-
-    for c in configs.eda {
-        let base_url = format!("https://{}/api/v1", &c.hostname);
-        let client = ExtraHopClient::new(
-            &c.hostname,
-            &c.user_id,
-            &c.api_key,
-            &base_url,
-            &timestamp.to_string(),
-            "",
-            &c.allow_insecure_tls,
-            ExtraHopAppliance::EDA,
-        );
-        extrahop_appliaces.push(client);
-    }
-
-    for c in configs.exa {
-        let base_url = format!("https://{}/api/v1", &c.hostname);
-        let client = ExtraHopClient::new(
-            &c.hostname,
-            &c.user_id,
-            &c.api_key,
-            &base_url,
-            &timestamp.to_string(),
-            "",
-            &c.allow_insecure_tls,
-            ExtraHopAppliance::EXA,
-        );
-        extrahop_appliaces.push(client);
-    }
-
-    for c in configs.eta {
-        let base_url = format!("https://{}/api/v1", &c.hostname);
-        let client = ExtraHopClient::new(
-            &c.hostname,
-            &c.user_id,
-            &c.api_key,
-            &base_url,
-            &timestamp.to_string(),
-            "",
-            &c.allow_insecure_tls,
-            ExtraHopAppliance::ETA,
-        );
-        extrahop_appliaces.push(client);
-    }
+    extrahop_appliances.extend(ccp_clients);
+    extrahop_appliances.extend(eca_clients);
+    extrahop_appliances.extend(eda_clients);
+    extrahop_appliances.extend(exa_clients);
+    extrahop_appliances.extend(eta_clients);
 
     let mut activity_maps: HashMap<String, ActivityMaps> = HashMap::new();
     let mut audit_logs: HashMap<String, AuditLogs> = HashMap::new();
@@ -510,7 +503,7 @@ async fn main() -> Result<()> {
     let mut triggers: HashMap<String, Triggers> = HashMap::new();
     let mut vlans: HashMap<String, Vlans> = HashMap::new();
 
-    for c in extrahop_appliaces.iter() {
+    for c in extrahop_appliances.iter() {
         if cli.backup {
             match c.appliance_type {
                 ExtraHopAppliance::ECA | ExtraHopAppliance::EDA => create_customization(c).await?,
@@ -695,6 +688,8 @@ async fn main() -> Result<()> {
                 }
                 _ => {
                     // Should never get here
+                    eprintln!("should not be here, but yet I am.");
+                    exit(1);
                 }
             }
         }
@@ -1055,6 +1050,8 @@ async fn main() -> Result<()> {
             }
             _ => {
                 // Should never get here
+                eprintln!("should not be here, but here I am.");
+                exit(1);
             }
         }
     }

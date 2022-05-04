@@ -9,7 +9,7 @@ use serde::Deserialize;
 
 #[allow(clippy::upper_case_acronyms)]
 #[allow(dead_code)]
-#[derive(Debug, Eq, PartialEq, Hash)]
+#[derive(Debug, Eq, PartialEq, Copy, Clone)]
 pub enum ExtraHopAppliance {
     CCP,
     ECA,
