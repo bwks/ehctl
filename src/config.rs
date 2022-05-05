@@ -24,18 +24,7 @@ pub struct ExtraHopCredential {
 
 impl ExtraHopConfig {
     pub fn new() -> Self {
-        let os = env::consts::OS;
-
-        let home_env = match os {
-            "windows" => "HOMEPATH",
-            _ => "HOME",
-        };
-
-        let path_seperator = match os {
-            "windows" => "\\",
-            _ => "/",
-        };
-
+        // Determine if the `EHCTL_CONFIG` environment variable is set
         let config_path = match env::var("EHCTL_CONFIG") {
             Ok(cp) => cp,
             Err(_) => {
@@ -44,20 +33,31 @@ impl ExtraHopConfig {
             }
         };
 
+        // Determine the type of OS so we can figure out the default
+        // environment variable for the users home directory
+        let os = env::consts::OS;
+        let home_env = match os {
+            "windows" => "HOMEPATH",
+            _ => "HOME",
+        };
+        let path_seperator = match os {
+            "windows" => "\\",
+            _ => "/",
+        };
         let mut home_dir = "".to_string();
 
         if config_path.is_empty() {
             match env::var(home_env) {
                 Ok(hd) => home_dir = hd,
                 Err(_) => {
-                    println!("=> could not access `{}` environment variable", home_env);
+                    println!("=> could not access `{home_env}` environment variable");
                     "".to_string();
                 }
             };
         }
 
         if config_path.is_empty() && home_dir.is_empty() {
-            eprintln!("unable to determine config path");
+            eprintln!("=> unable to determine config file path");
             exit(1)
         };
 
