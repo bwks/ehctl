@@ -408,7 +408,7 @@ async fn get_vlans(client: &ExtraHopClient) -> Result<Vlans> {
 }
 
 async fn build_clients(
-    credentials: &Vec<ExtraHopCredential>,
+    credentials: &[ExtraHopCredential],
     appliance_type: ExtraHopAppliance,
     timestamp: &str,
 ) -> Result<Vec<ExtraHopClient>> {
