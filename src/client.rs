@@ -83,7 +83,7 @@ fn build_reqwest_client(
     let auth_value_header = match HeaderValue::from_str(&auth_value) {
         Ok(avh) => avh,
         Err(_) => {
-            eprintln!("API key error");
+            eprintln!("=> API key error");
             exit(1)
         }
     };
@@ -102,7 +102,7 @@ fn build_reqwest_client(
     {
         Ok(c) => c,
         _ => {
-            eprintln!("client builder error");
+            eprintln!("=> client builder error");
             exit(1)
         }
     };
@@ -126,7 +126,7 @@ pub async fn get_oauth_token(
     let key = match HeaderValue::from_str(&format!("Basic {auth}")) {
         Ok(k) => k,
         Err(_) => {
-            eprintln!("API key error");
+            eprintln!("=> API key error");
             exit(1)
         }
     };
@@ -144,7 +144,7 @@ pub async fn get_oauth_token(
     {
         Ok(c) => c,
         Err(e) => {
-            eprintln!("error building oauth client");
+            eprintln!("=> error building oauth client");
             eprintln!("{:#?}", e);
             exit(1)
         }
@@ -153,7 +153,7 @@ pub async fn get_oauth_token(
     let response = match client.post(auth_url).form(&params).send().await {
         Ok(r) => r,
         Err(e) => {
-            eprintln!("error getting token");
+            eprintln!("=> error getting token");
             eprintln!("{:#?}", e);
             exit(1)
         }
@@ -163,7 +163,7 @@ pub async fn get_oauth_token(
         let token: ExtraHopToken = serde_json::from_str(&response.text().await?)?;
         Ok(token)
     } else {
-        eprintln!("unable to get token");
+        eprintln!("=> unable to get token");
         eprintln!("{:#?}", response.error_for_status());
         exit(1)
     }
