@@ -32,7 +32,8 @@ impl Cli {
         }
     }
     pub fn new() -> Self {
-        let matches = Command::new("ehctl")
+        let matches = 
+        Command::new("ehctl")
             .version("0.1.12")
             .about("Extrahop CLI")
             .subcommand(
@@ -52,7 +53,7 @@ impl Cli {
                         Arg::new("endpoint")
                             .help("the uri endpoint to get")
                             .takes_value(true)
-                            .required(false),
+                            .required(true),
                     )
                     .arg(
                         Arg::new("detail")
@@ -61,25 +62,33 @@ impl Cli {
                             .takes_value(false)
                             .required(false),
                     )
-                    .arg(
-                        Arg::new("list")
-                            .help("List available getters")
-                            .long("list")
-                            .takes_value(false)
-                            .required(false),
-                    ),
             )
             .subcommand(
-                Command::new("list")
-                    .about("List available HTTP <endpoint> options per device type")
-                    .subcommand(Command::new("get")
-                    .about("HTTP GET endpoints")
-                    .arg(
-                        Arg::new("type")
-                            .help("Valid options: all, ccp, eca, eda, exa, eta")
-                            .takes_value(true)
-                            .required(false),
-                        )
+                Command::new("show")
+                    .about("Show ehctl information")
+                    .subcommand(
+                        Command::new("config")
+                            .about("ExtraHop CLI configuration details")
+                            .subcommand(
+                                Command::new("devices")
+                                    .about("ExtraHop CLI configuration details")
+                                    .arg(
+                                        Arg::new("type")
+                                            .help("Valid options: all, ccp, eca, eda, exa, eta")
+                                            .takes_value(true)
+                                            .required(true),
+                                    ),
+                            )
+                    )
+                    .subcommand(
+                        Command::new("get")
+                            .about("List available HTTP GET endpoints")
+                            .arg(
+                                Arg::new("type")
+                                    .help("Valid options: all, ccp, eca, eda, exa, eta")
+                                    .takes_value(true)
+                                    .required(false),
+                                )
                     )
             )
             .subcommand(
@@ -173,8 +182,8 @@ impl Cli {
             };
         }
         // list
-        if let Some(list_matches) = matches.subcommand_matches("list") {
-            if let Some(get_matches) = list_matches.subcommand_matches("get") {
+        if let Some(show_matches) = matches.subcommand_matches("show") {
+            if let Some(get_matches) = show_matches.subcommand_matches("get") {
                 if let Some(device_type) = get_matches.value_of("type") {
                     match device_type {
                         "all" => {
