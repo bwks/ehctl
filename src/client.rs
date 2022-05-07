@@ -8,7 +8,6 @@ use reqwest::StatusCode;
 use serde::Deserialize;
 
 #[allow(clippy::upper_case_acronyms)]
-#[allow(dead_code)]
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
 pub enum ExtraHopAppliance {
     CCP,
@@ -18,7 +17,6 @@ pub enum ExtraHopAppliance {
     EXA,
 }
 
-#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 pub struct ExtraHopToken {
     pub access_token: String,
@@ -159,12 +157,15 @@ pub async fn get_oauth_token(
         }
     };
 
-    if response.status() == StatusCode::OK {
-        let token: ExtraHopToken = serde_json::from_str(&response.text().await?)?;
-        Ok(token)
-    } else {
-        eprintln!("=> unable to get token");
-        eprintln!("{:#?}", response.error_for_status());
-        exit(1)
+    match response.status() {
+        StatusCode::OK => {
+            let token: ExtraHopToken = serde_json::from_str(&response.text().await?)?;
+            Ok(token)
+        }
+        _ => {
+            eprintln!("=> unable to get token");
+            eprintln!("{:#?}", response.error_for_status());
+            exit(1)
+        }
     }
 }
