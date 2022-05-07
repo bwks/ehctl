@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fmt::{Display, Formatter};
 use std::process::exit;
 
 use anyhow::Result;
@@ -6,6 +7,13 @@ use base64::encode;
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, AUTHORIZATION, CONTENT_TYPE};
 use reqwest::StatusCode;
 use serde::Deserialize;
+
+#[derive(Debug, Deserialize)]
+pub struct ExtraHopToken {
+    pub access_token: String,
+    pub expires_in: u16,
+    pub token_type: String,
+}
 
 #[allow(clippy::upper_case_acronyms)]
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
@@ -17,14 +25,18 @@ pub enum ExtraHopAppliance {
     EXA,
 }
 
-#[derive(Debug, Deserialize)]
-pub struct ExtraHopToken {
-    pub access_token: String,
-    pub expires_in: u16,
-    pub token_type: String,
+impl Display for ExtraHopAppliance {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+        match self {
+            ExtraHopAppliance::CCP => write!(f, "ccp"),
+            ExtraHopAppliance::ECA => write!(f, "eca"),
+            ExtraHopAppliance::EDA => write!(f, "eda"),
+            ExtraHopAppliance::EXA => write!(f, "exa"),
+            ExtraHopAppliance::ETA => write!(f, "eta"),
+        }
+    }
 }
 
-#[derive(Debug)]
 pub struct ExtraHopClient {
     pub allow_insecure_tls: bool,
     pub api_token: String,

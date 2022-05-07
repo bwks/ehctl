@@ -1,5 +1,5 @@
 use crate::client::ExtraHopAppliance;
-use std::fmt::{Display, Formatter, Result};
+use std::fmt::{Display, Formatter};
 pub struct Getters {}
 
 #[derive(Eq, PartialEq)]
@@ -36,7 +36,7 @@ pub enum GetterType {
 }
 
 impl Display for GetterType {
-    fn fmt(&self, f: &mut Formatter) -> Result {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
         match self {
             GetterType::ActivityMaps => write!(f, "activitymaps"),
             GetterType::AuditLogs => write!(f, "auditlog"),
