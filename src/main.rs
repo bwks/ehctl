@@ -6,7 +6,7 @@ mod getter;
 mod model;
 mod util;
 
-use cli::{Cli, OutputOption};
+use cli::{CliOpts, OutputOption};
 use client::{get_oauth_token, ExtraHopAppliance, ExtraHopClient};
 use config::{ExtraHopConfig, ExtraHopCredential};
 use getter::{appliance_getters, GetterType};
@@ -454,7 +454,7 @@ async fn build_clients(
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let cli = Cli::new();
+    let cli = CliOpts::new();
 
     let time_now = Local::now();
     let timestamp = time_now.format("%Y-%m-%d--%H-%M-%S").to_string();
