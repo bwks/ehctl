@@ -33,11 +33,3 @@ impl Default for PacketSearch {
         }
     }
 }
-
-impl PacketSearch {
-    pub fn new() -> Self {
-        Self {
-            ..PacketSearch::default()
-        }
-    }
-}
