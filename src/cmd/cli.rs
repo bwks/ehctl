@@ -48,16 +48,17 @@ impl CliOptions {
         let mut cli_opts = CliOptions::default();
 
         match &cli.commands {
-            Commands::Backup(backup) => {
-                if backup.device == "all" {
+            Commands::Backup(backup) => match backup.device.as_str() {
+                "all" => {
                     let dev = backup.device.clone();
                     cli_opts.backup = true;
                     cli_opts.backup_device = dev
-                } else {
+                }
+                _ => {
                     eprintln!("=> unknown device `{}`", backup.device);
                     exit(1)
                 }
-            }
+            },
             Commands::Get(get) => {
                 cli_opts.getter = true;
                 if get.detail {
