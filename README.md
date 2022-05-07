@@ -23,22 +23,22 @@ TODO
 ## Usage
 ```
 ./ehctl --help
-ehctl 0.1.12
-Extrahop CLI
+ehctl 0.1.13
+ExtraHop CLI
 
 USAGE:
-    ehctl.exe [SUBCOMMAND]
+    ehctl.exe <SUBCOMMAND>
 
 OPTIONS:
     -h, --help       Print help information
     -V, --version    Print version information
 
 SUBCOMMANDS:
-    backup           Backup device customizations (currently `all` devices are backed up)
+    backup           Backup device customizations and/or running-config
     get              Get data from a HTTP GET <endpoint>
     help             Print this message or the help of the given subcommand(s)
-    list             List available HTTP <endpoint> options
     packet-search    Download a packet capture
+    show             Show ehctl information
 ```
 
 ## Config
