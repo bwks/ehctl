@@ -1,4 +1,3 @@
-mod client;
 mod cmd;
 mod config;
 mod deserialize;
@@ -6,10 +5,10 @@ mod http;
 mod model;
 mod util;
 
-use crate::client::{get_oauth_token, ExtraHopAppliance, ExtraHopClient};
 use crate::cmd::cli::{CliOptions, OutputOption};
 use crate::cmd::command::CliCommand;
 use crate::config::{ExtraHopConfig, ExtraHopCredential};
+use crate::http::client::{get_oauth_token, ExtraHopAppliance, ExtraHopClient};
 use crate::http::common::reqwest_get;
 use crate::http::firmware::{get_firmware_next, get_firmware_previous, upload_firmware};
 use crate::http::getter::{appliance_getters, GetterType};

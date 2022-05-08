@@ -1,4 +1,4 @@
-use crate::client::ExtraHopAppliance;
+use crate::http::client::ExtraHopAppliance;
 use std::fmt::{Display, Formatter};
 pub struct Getters {}
 

@@ -1,4 +1,4 @@
-use crate::client::ExtraHopClient;
+use crate::http::client::ExtraHopClient;
 
 use anyhow::Result;
 use reqwest::StatusCode;

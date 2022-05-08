@@ -4,7 +4,7 @@ use reqwest::StatusCode;
 use std::process::exit;
 use tokio::fs::File;
 
-use crate::client::ExtraHopClient;
+use crate::http::client::ExtraHopClient;
 use crate::http::common::reqwest_get;
 use crate::model::firmware::{FirmwarePrevious, FirmwaresNext};
 use crate::util::file::file_to_body;
