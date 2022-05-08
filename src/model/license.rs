@@ -2,7 +2,7 @@ use serde::Deserialize;
 use std::collections::HashMap;
 use tabled::Tabled;
 
-use crate::deserialize::null_to_default;
+use crate::util::deserialize::null_to_default;
 
 #[derive(Default, Deserialize)]
 #[serde(default)]

@@ -1,7 +1,7 @@
 use serde::Deserialize;
 use tabled::Tabled;
 
-use crate::deserialize::null_to_default;
+use crate::util::deserialize::null_to_default;
 use crate::util::time::extrahop_to_human_time;
 
 #[derive(Default)]
