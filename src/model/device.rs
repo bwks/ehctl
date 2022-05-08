@@ -32,7 +32,7 @@ pub struct Device {
     #[serde(deserialize_with = "null_to_default")]
     pub analysis: String,
     #[serde(deserialize_with = "null_to_default")]
-    pub analysis_level: i64,
+    pub analysis_level: u64,
     #[serde(deserialize_with = "null_to_default")]
     pub auto_role: String,
     #[serde(deserialize_with = "null_to_default")]
@@ -65,7 +65,7 @@ pub struct Device {
     #[serde(deserialize_with = "null_to_default")]
     pub dhcp_name: String,
     #[serde(deserialize_with = "null_to_default")]
-    pub discover_time: i64,
+    pub discover_time: u64,
     #[serde(deserialize_with = "null_to_default")]
     pub discovery_id: String,
     #[serde(deserialize_with = "null_to_default")]
@@ -75,18 +75,18 @@ pub struct Device {
     #[serde(deserialize_with = "null_to_default")]
     pub extrahop_id: String,
     #[serde(deserialize_with = "null_to_default")]
-    pub id: i64,
+    pub id: u64,
     #[serde(deserialize_with = "null_to_default")]
     pub ipaddr4: String,
     #[serde(deserialize_with = "null_to_default")]
     pub ipaddr6: String,
     pub is_l3: bool,
     #[serde(deserialize_with = "null_to_default")]
-    pub last_seen_time: i64,
+    pub last_seen_time: u64,
     #[serde(deserialize_with = "null_to_default")]
     pub macaddr: String,
     #[serde(deserialize_with = "null_to_default")]
-    pub mod_time: i64,
+    pub mod_time: u64,
     #[serde(deserialize_with = "null_to_default")]
     pub model: String,
     #[serde(deserialize_with = "null_to_default")]
@@ -94,20 +94,20 @@ pub struct Device {
     #[serde(deserialize_with = "null_to_default")]
     pub netbios_name: String,
     #[serde(deserialize_with = "null_to_default")]
-    pub node_id: i64,
+    pub node_id: u64,
     pub on_watchlist: bool,
     #[serde(deserialize_with = "null_to_default")]
-    pub parent_id: i64,
+    pub parent_id: u64,
     #[serde(deserialize_with = "null_to_default")]
     pub role: String,
     #[serde(deserialize_with = "null_to_default")]
     pub subnet_id: String,
     #[serde(deserialize_with = "null_to_default")]
-    pub user_mod_time: i64,
+    pub user_mod_time: u64,
     #[serde(deserialize_with = "null_to_default")]
     pub vendor: String,
     #[serde(deserialize_with = "null_to_default")]
-    pub vlanid: i64,
+    pub vlanid: u64,
     #[serde(deserialize_with = "null_to_default")]
     pub vpc_id: String,
 }

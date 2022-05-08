@@ -9,8 +9,11 @@ mod util;
 
 use client::{get_oauth_token, ExtraHopAppliance, ExtraHopClient};
 use cmd::cli::{CliOptions, OutputOption};
+use cmd::command::CliCommand;
 use config::{ExtraHopConfig, ExtraHopCredential};
 use getter::{appliance_getters, GetterType};
+use http::common::reqwest_get;
+use http::firmware::{get_firmware_next, get_firmware_previous, upload_firmware};
 
 use model::activity_map::ActivityMaps;
 use model::alert::Alerts;
@@ -28,6 +31,7 @@ use model::device_group::DeviceGroups;
 use model::email_group::EmailGroups;
 use model::exclusion_interval::ExclusionIntervals;
 use model::extrahop::ExtraHop;
+use model::firmware::{FirmwarePrevious, FirmwaresNext};
 use model::license::License;
 use model::network::Networks;
 use model::network_locality::NetworkLocalities;
@@ -50,20 +54,6 @@ use std::fs::File;
 use std::io::Write;
 use std::process::exit;
 use tabled::{Alignment, Disable, Full, MaxWidth, MinWidth, Modify, Rotate, Rows, Table};
-
-async fn reqwest_get(client: &ExtraHopClient, endpoint: &str) -> Result<reqwest::Response> {
-    let url = format!("{}/{}", client.base_url, endpoint);
-    let response = client.reqwest_client.get(url).send().await?;
-
-    match response.status() {
-        StatusCode::OK => Ok(response),
-        _ => {
-            eprintln!("unable to get {endpoint}");
-            eprintln!("{:#?}", response.error_for_status());
-            exit(1)
-        }
-    }
-}
 
 async fn get_api_keys(client: &ExtraHopClient) -> Result<ApiKeys> {
     let response = reqwest_get(client, "apikeys").await?;
@@ -180,7 +170,7 @@ async fn create_customization(client: &ExtraHopClient) -> Result<()> {
     }
 }
 
-async fn save_customization(client: &ExtraHopClient, id: &i64) -> Result<()> {
+async fn save_customization(client: &ExtraHopClient, id: &u64) -> Result<()> {
     let name = format!("{}-{}", client.hostname, client.timestamp);
     let url = format!("{}/customizations/{}/download", client.base_url, id);
     let response = client.reqwest_client.post(url).send().await?;
@@ -491,6 +481,8 @@ async fn main() -> Result<()> {
     let mut email_groups: HashMap<String, EmailGroups> = HashMap::new();
     let mut exclusion_intervals: HashMap<String, ExclusionIntervals> = HashMap::new();
     let mut extrahops: Vec<ExtraHop> = Vec::new();
+    let mut firmwares_next: HashMap<String, FirmwaresNext> = HashMap::new();
+    let mut firmwares_previous: HashMap<String, FirmwarePrevious> = HashMap::new();
     let mut identity_providers: HashMap<String, IdentitiyProviders> = HashMap::new();
     let mut licenses: HashMap<String, License> = HashMap::new();
     let mut networks: HashMap<String, Networks> = HashMap::new();
@@ -505,198 +497,226 @@ async fn main() -> Result<()> {
     let mut vlans: HashMap<String, Vlans> = HashMap::new();
 
     for c in extrahop_appliances.iter() {
-        if cli.backup {
-            match c.appliance_type {
+        match cli.command {
+            CliCommand::Backup => match c.appliance_type {
                 ExtraHopAppliance::ECA | ExtraHopAppliance::EDA => create_customization(c).await?,
                 ExtraHopAppliance::EXA | ExtraHopAppliance::ETA => get_running_config(c).await?,
                 _ => {}
+            },
+            CliCommand::Firmware => {
+                if c.hostname == cli.firmware_options.hostname {
+                    println!("c.hostname {}", c.hostname);
+                    println!(
+                        "cli.firmware_options.hostname {}",
+                        cli.firmware_options.hostname
+                    );
+                    upload_firmware(c, cli.firmware_options.filename.as_str()).await?
+                }
             }
-        } else if cli.packet_search {
-            match c.appliance_type {
+            CliCommand::Get => {
+                match cli.getter_type {
+                    GetterType::ActivityMaps => {
+                        if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
+                            let result = get_activity_maps(c).await?;
+                            activity_maps.insert(c.hostname.to_string(), result);
+                        }
+                    }
+                    GetterType::AuditLogs => {
+                        if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
+                            let result = get_audit_logs(c).await?;
+                            audit_logs.insert(c.hostname.to_string(), result);
+                        }
+                    }
+                    GetterType::Alerts => {
+                        if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
+                            let result = get_alerts(c).await?;
+                            alerts.insert(c.hostname.to_string(), result);
+                        }
+                    }
+                    GetterType::ApiKeys => {
+                        if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
+                            let result = get_api_keys(c).await?;
+                            api_keys.insert(c.hostname.to_string(), result);
+                        }
+                    }
+                    GetterType::Appliances => {
+                        if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
+                            let result = get_appliances(c).await?;
+                            appliances.insert(c.hostname.to_string(), result);
+                        }
+                    }
+                    GetterType::Bundles => {
+                        if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
+                            let result = get_bundles(c).await?;
+                            bundles.insert(c.hostname.to_string(), result);
+                        }
+                    }
+                    GetterType::Customizations => {
+                        if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
+                            let result = get_customizations(c).await?;
+                            customizations.insert(c.hostname.to_string(), result);
+                        }
+                    }
+                    GetterType::CustomDevices => {
+                        if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
+                            let result = get_custom_devices(c).await?;
+                            custom_devices.insert(c.hostname.to_string(), result);
+                        }
+                    }
+                    GetterType::Dashboards => {
+                        if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
+                            let result = get_dashboards(c).await?;
+                            dashboards.insert(c.hostname.to_string(), result);
+                        }
+                    }
+                    GetterType::Detections => {
+                        if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
+                            let result = get_detections(c).await?;
+                            detections.insert(c.hostname.to_string(), result);
+                        }
+                    }
+                    GetterType::Devices => {
+                        if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
+                            let result = get_devices(c).await?;
+                            devices.insert(c.hostname.to_string(), result);
+                        }
+                    }
+                    GetterType::DeviceGroups => {
+                        if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
+                            let result = get_device_groups(c).await?;
+                            device_groups.insert(c.hostname.to_string(), result);
+                        }
+                    }
+                    GetterType::EmailGroups => {
+                        if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
+                            let result = get_email_groups(c).await?;
+                            email_groups.insert(c.hostname.to_string(), result);
+                        }
+                    }
+                    GetterType::ExclusionIntervals => {
+                        if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
+                            let result = get_exclusion_intervals(c).await?;
+                            exclusion_intervals.insert(c.hostname.to_string(), result);
+                        }
+                    }
+                    GetterType::ExtraHop => {
+                        if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
+                            let result = get_extrahop(c).await?;
+                            extrahops.push(result);
+                        }
+                    }
+                    GetterType::FirmwareNext => {
+                        if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
+                            let result = get_firmware_next(c).await?;
+                            firmwares_next.insert(c.hostname.to_string(), result);
+                        }
+                    }
+                    GetterType::FirmwarePrevious => {
+                        if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
+                            let result = get_firmware_previous(c).await?;
+                            firmwares_previous.insert(c.hostname.to_string(), result);
+                        }
+                    }
+                    GetterType::IdentityProviders => {
+                        if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
+                            let result = get_identitiy_providers(c).await?;
+                            identity_providers.insert(c.hostname.to_string(), result);
+                        }
+                    }
+                    GetterType::License => {
+                        if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
+                            let result = get_license(c).await?;
+                            licenses.insert(c.hostname.to_string(), result);
+                        }
+                    }
+                    GetterType::Networks => {
+                        if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
+                            let result = get_networks(c).await?;
+                            networks.insert(c.hostname.to_string(), result);
+                        }
+                    }
+                    GetterType::NetworkLocalities => {
+                        if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
+                            let result = get_network_localities(c).await?;
+                            network_localities.insert(c.hostname.to_string(), result);
+                        }
+                    }
+                    GetterType::Nodes => {
+                        if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
+                            let result = get_nodes(c).await?;
+                            nodes.insert(c.hostname.to_string(), result);
+                        }
+                    }
+                    GetterType::PacketCaptures => {
+                        if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
+                            let result = get_packet_captures(c).await?;
+                            packet_captures.insert(c.hostname.to_string(), result);
+                        }
+                    }
+                    GetterType::RunningConfig => {
+                        if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
+                            _ = get_running_config(c).await?;
+                        }
+                    }
+                    GetterType::SamlSp => {
+                        if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
+                            let result = get_saml_sp(c).await?;
+                            saml_sps.insert(c.hostname.to_string(), result);
+                        }
+                    }
+                    GetterType::Software => {
+                        if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
+                            let result = get_software(c).await?;
+                            software.insert(c.hostname.to_string(), result);
+                        }
+                    }
+                    GetterType::Tags => {
+                        if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
+                            let result = get_tags(c).await?;
+                            tags.insert(c.hostname.to_string(), result);
+                        }
+                    }
+                    GetterType::ThreatCollections => {
+                        if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
+                            let result = get_threat_collections(c).await?;
+                            threat_collections.insert(c.hostname.to_string(), result);
+                        }
+                    }
+                    GetterType::Triggers => {
+                        if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
+                            let result = get_triggers(c).await?;
+                            triggers.insert(c.hostname.to_string(), result);
+                        }
+                    }
+                    GetterType::Vlans => {
+                        if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
+                            let result = get_vlans(c).await?;
+                            vlans.insert(c.hostname.to_string(), result);
+                        }
+                    }
+                    // Should never get here
+                    _ => {
+                        eprintln!("should not be here, but yet I am.");
+                        exit(1);
+                    }
+                }
+            }
+            CliCommand::PacketSearch => match c.appliance_type {
                 ExtraHopAppliance::CCP | ExtraHopAppliance::ECA => {
                     packet_search(c, &cli.packet_search_options).await?
                 }
+                // No other appliance types can be searched for packets
                 _ => {}
-            }
-        } else if cli.getter {
-            match cli.getter_type {
-                GetterType::ActivityMaps => {
-                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
-                        let result = get_activity_maps(c).await?;
-                        activity_maps.insert(c.hostname.to_string(), result);
-                    }
-                }
-                GetterType::AuditLogs => {
-                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
-                        let result = get_audit_logs(c).await?;
-                        audit_logs.insert(c.hostname.to_string(), result);
-                    }
-                }
-                GetterType::Alerts => {
-                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
-                        let result = get_alerts(c).await?;
-                        alerts.insert(c.hostname.to_string(), result);
-                    }
-                }
-                GetterType::ApiKeys => {
-                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
-                        let result = get_api_keys(c).await?;
-                        api_keys.insert(c.hostname.to_string(), result);
-                    }
-                }
-                GetterType::Appliances => {
-                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
-                        let result = get_appliances(c).await?;
-                        appliances.insert(c.hostname.to_string(), result);
-                    }
-                }
-                GetterType::Bundles => {
-                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
-                        let result = get_bundles(c).await?;
-                        bundles.insert(c.hostname.to_string(), result);
-                    }
-                }
-                GetterType::Customizations => {
-                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
-                        let result = get_customizations(c).await?;
-                        customizations.insert(c.hostname.to_string(), result);
-                    }
-                }
-                GetterType::CustomDevices => {
-                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
-                        let result = get_custom_devices(c).await?;
-                        custom_devices.insert(c.hostname.to_string(), result);
-                    }
-                }
-                GetterType::Dashboards => {
-                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
-                        let result = get_dashboards(c).await?;
-                        dashboards.insert(c.hostname.to_string(), result);
-                    }
-                }
-                GetterType::Detections => {
-                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
-                        let result = get_detections(c).await?;
-                        detections.insert(c.hostname.to_string(), result);
-                    }
-                }
-                GetterType::Devices => {
-                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
-                        let result = get_devices(c).await?;
-                        devices.insert(c.hostname.to_string(), result);
-                    }
-                }
-                GetterType::DeviceGroups => {
-                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
-                        let result = get_device_groups(c).await?;
-                        device_groups.insert(c.hostname.to_string(), result);
-                    }
-                }
-                GetterType::EmailGroups => {
-                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
-                        let result = get_email_groups(c).await?;
-                        email_groups.insert(c.hostname.to_string(), result);
-                    }
-                }
-                GetterType::ExclusionIntervals => {
-                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
-                        let result = get_exclusion_intervals(c).await?;
-                        exclusion_intervals.insert(c.hostname.to_string(), result);
-                    }
-                }
-                GetterType::ExtraHop => {
-                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
-                        let result = get_extrahop(c).await?;
-                        extrahops.push(result);
-                    }
-                }
-                GetterType::IdentityProviders => {
-                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
-                        let result = get_identitiy_providers(c).await?;
-                        identity_providers.insert(c.hostname.to_string(), result);
-                    }
-                }
-                GetterType::License => {
-                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
-                        let result = get_license(c).await?;
-                        licenses.insert(c.hostname.to_string(), result);
-                    }
-                }
-                GetterType::Networks => {
-                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
-                        let result = get_networks(c).await?;
-                        networks.insert(c.hostname.to_string(), result);
-                    }
-                }
-                GetterType::NetworkLocalities => {
-                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
-                        let result = get_network_localities(c).await?;
-                        network_localities.insert(c.hostname.to_string(), result);
-                    }
-                }
-                GetterType::Nodes => {
-                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
-                        let result = get_nodes(c).await?;
-                        nodes.insert(c.hostname.to_string(), result);
-                    }
-                }
-                GetterType::PacketCaptures => {
-                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
-                        let result = get_packet_captures(c).await?;
-                        packet_captures.insert(c.hostname.to_string(), result);
-                    }
-                }
-                GetterType::RunningConfig => {
-                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
-                        _ = get_running_config(c).await?;
-                    }
-                }
-                GetterType::SamlSp => {
-                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
-                        let result = get_saml_sp(c).await?;
-                        saml_sps.insert(c.hostname.to_string(), result);
-                    }
-                }
-                GetterType::Software => {
-                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
-                        let result = get_software(c).await?;
-                        software.insert(c.hostname.to_string(), result);
-                    }
-                }
-                GetterType::Tags => {
-                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
-                        let result = get_tags(c).await?;
-                        tags.insert(c.hostname.to_string(), result);
-                    }
-                }
-                GetterType::ThreatCollections => {
-                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
-                        let result = get_threat_collections(c).await?;
-                        threat_collections.insert(c.hostname.to_string(), result);
-                    }
-                }
-                GetterType::Triggers => {
-                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
-                        let result = get_triggers(c).await?;
-                        triggers.insert(c.hostname.to_string(), result);
-                    }
-                }
-                GetterType::Vlans => {
-                    if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
-                        let result = get_vlans(c).await?;
-                        vlans.insert(c.hostname.to_string(), result);
-                    }
-                }
-                _ => {
-                    // Should never get here
-                    eprintln!("should not be here, but yet I am.");
-                    exit(1);
-                }
+            },
+            // Should never get here
+            _ => {
+                eprintln!("I should not be here, but I am help.");
+                exit(1);
             }
         }
     }
 
-    if cli.getter {
+    if cli.command == CliCommand::Get {
         match cli.getter_type {
             GetterType::ActivityMaps => {
                 for (key, value) in activity_maps {
@@ -845,7 +865,6 @@ async fn main() -> Result<()> {
                         let table = Table::new(vec![d])
                             .with(
                                 Modify::new(Full)
-                                    // Not released yet, will be in future version.
                                     .with(MinWidth::new(30))
                                     .with(MaxWidth::wrapping(30))
                                     .with(Alignment::left()),
@@ -862,7 +881,6 @@ async fn main() -> Result<()> {
                         let table = Table::new(vec![d])
                             .with(
                                 Modify::new(Full)
-                                    // Not released yet, will be in future version.
                                     // .with(MinWidth::new(20))
                                     // .with(MaxWidth::wrapping(100))
                                     .with(Alignment::left()),
@@ -906,7 +924,6 @@ async fn main() -> Result<()> {
                         let table = Table::new(vec![d])
                             .with(
                                 Modify::new(Full)
-                                    // Not released yet, will be in future version.
                                     .with(MinWidth::new(30))
                                     .with(MaxWidth::wrapping(30))
                                     .with(Alignment::left()),
@@ -923,7 +940,6 @@ async fn main() -> Result<()> {
                         let table = Table::new(vec![d])
                             .with(
                                 Modify::new(Full)
-                                    // Not released yet, will be in future version.
                                     .with(MinWidth::new(30))
                                     .with(MaxWidth::wrapping(30))
                                     .with(Alignment::left()),
@@ -940,7 +956,6 @@ async fn main() -> Result<()> {
                         let table = Table::new(vec![d])
                             .with(
                                 Modify::new(Full)
-                                    // Not released yet, will be in future version.
                                     .with(MinWidth::new(30))
                                     .with(MaxWidth::wrapping(30))
                                     .with(Alignment::left()),
@@ -948,6 +963,37 @@ async fn main() -> Result<()> {
                             .with(Rotate::Left);
                         println!("{}", table);
                     }
+                }
+            }
+            GetterType::FirmwareNext => {
+                for (key, value) in firmwares_next {
+                    println!("{}:", key);
+                    for d in value.firmware.iter() {
+                        let table = Table::new(vec![d])
+                            .with(
+                                Modify::new(Full)
+                                    .with(MinWidth::new(30))
+                                    .with(MaxWidth::wrapping(30))
+                                    .with(Alignment::left()),
+                            )
+                            .with(Rotate::Left);
+                        println!("{}", table);
+                    }
+                }
+            }
+            GetterType::FirmwarePrevious => {
+                for (key, value) in firmwares_previous {
+                    println!("{}:", key);
+                    let table = Table::new(vec![value])
+                        .with(
+                            Modify::new(Full)
+                                // Not released yet, will be in future version.
+                                .with(MinWidth::new(30))
+                                .with(MaxWidth::wrapping(30))
+                                .with(Alignment::left()),
+                        )
+                        .with(Rotate::Left);
+                    println!("{}", table);
                 }
             }
             GetterType::ExtraHop => {
@@ -1030,7 +1076,6 @@ async fn main() -> Result<()> {
                         let table = Table::new(vec![d])
                             .with(
                                 Modify::new(Full)
-                                    // Not released yet, will be in future version.
                                     // .with(MinWidth::new(30))
                                     // .with(MaxWidth::wrapping(30))
                                     .with(Alignment::left()),

@@ -13,9 +13,9 @@ pub struct Tags {
 #[serde(default)]
 pub struct Tag {
     #[serde(deserialize_with = "null_to_default")]
-    pub id: i64,
+    pub id: u64,
     #[serde(deserialize_with = "null_to_default")]
-    pub mod_time: i64,
+    pub mod_time: u64,
     #[serde(deserialize_with = "null_to_default")]
     pub name: String,
 }

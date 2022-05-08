@@ -15,13 +15,13 @@ pub struct ApiKey {
     #[serde(deserialize_with = "null_to_default")]
     pub description: String,
     #[serde(deserialize_with = "null_to_default")]
-    pub id: i64,
+    pub id: u64,
     #[serde(deserialize_with = "null_to_default")]
     pub key: String,
     #[serde(deserialize_with = "null_to_default")]
-    pub time_added: i64,
+    pub time_added: u64,
     #[serde(deserialize_with = "null_to_default")]
-    pub user_id: i64,
+    pub user_id: u64,
     #[serde(deserialize_with = "null_to_default")]
     pub username: String,
 }

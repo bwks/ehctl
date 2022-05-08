@@ -14,13 +14,13 @@ pub struct Bundles {
 pub struct Bundle {
     pub built_in: bool,
     #[serde(deserialize_with = "null_to_default")]
-    pub created_time: i64,
+    pub created_time: u64,
     #[serde(deserialize_with = "null_to_default")]
     pub description: String,
     #[serde(deserialize_with = "null_to_default")]
-    pub id: i64,
+    pub id: u64,
     #[serde(deserialize_with = "null_to_default")]
-    pub mod_time: i64,
+    pub mod_time: u64,
     #[serde(deserialize_with = "null_to_default")]
     pub name: String,
 }

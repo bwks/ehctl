@@ -19,17 +19,17 @@ pub struct ExclusionInterval {
     #[serde(deserialize_with = "null_to_default")]
     pub description: String,
     #[serde(deserialize_with = "null_to_default")]
-    pub end: i64,
+    pub end: u64,
     #[serde(deserialize_with = "null_to_default")]
-    pub id: i64,
+    pub id: u64,
     #[serde(deserialize_with = "null_to_default")]
     pub interval_type: String,
     #[serde(deserialize_with = "null_to_default")]
-    pub mod_time: i64,
+    pub mod_time: u64,
     #[serde(deserialize_with = "null_to_default")]
     pub name: String,
     #[serde(deserialize_with = "null_to_default")]
-    pub start: i64,
+    pub start: u64,
     #[serde(deserialize_with = "null_to_default")]
     pub trend_apply_all: bool,
 }

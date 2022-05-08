@@ -14,16 +14,16 @@ pub struct Detections {
 #[serde(default)]
 pub struct Detection {
     #[serde(deserialize_with = "null_to_default")]
-    pub appliance_id: i64,
+    pub appliance_id: u64,
     #[serde(deserialize_with = "null_to_default")]
     pub assignee: String,
     pub categories: Vec<String>,
     #[serde(deserialize_with = "null_to_default")]
     pub description: String,
     #[serde(deserialize_with = "null_to_default")]
-    pub end_time: i64,
+    pub end_time: u64,
     #[serde(deserialize_with = "null_to_default")]
-    pub id: i64,
+    pub id: u64,
     #[serde(deserialize_with = "null_to_default")]
     pub is_user_created: bool,
     pub mitre_tactics: Vec<MitreField>,
@@ -33,9 +33,9 @@ pub struct Detection {
     #[serde(deserialize_with = "null_to_default")]
     pub resolution: String,
     #[serde(deserialize_with = "null_to_default")]
-    pub risk_score: i64,
+    pub risk_score: u64,
     #[serde(deserialize_with = "null_to_default")]
-    pub start_time: i64,
+    pub start_time: u64,
     #[serde(deserialize_with = "null_to_default")]
     pub status: String,
     #[serde(deserialize_with = "null_to_default")]
@@ -48,7 +48,7 @@ pub struct Detection {
     #[serde(rename = "type")]
     pub _type: String,
     #[serde(deserialize_with = "null_to_default")]
-    pub update_time: i64,
+    pub update_time: u64,
 }
 
 impl Default for Detection {
@@ -205,9 +205,9 @@ pub struct Participant {
     #[serde(deserialize_with = "null_to_default")]
     pub hostname: String,
     #[serde(deserialize_with = "null_to_default")]
-    pub id: i64,
+    pub id: u64,
     #[serde(deserialize_with = "null_to_default")]
-    pub object_id: i64,
+    pub object_id: u64,
     #[serde(deserialize_with = "null_to_default")]
     pub object_type: String,
     #[serde(deserialize_with = "null_to_default")]

@@ -25,9 +25,9 @@ pub struct Trigger {
     #[serde(deserialize_with = "null_to_default")]
     pub events: Vec<String>,
     #[serde(deserialize_with = "null_to_default")]
-    pub id: i64,
+    pub id: u64,
     #[serde(deserialize_with = "null_to_default")]
-    pub mod_time: i64,
+    pub mod_time: u64,
     #[serde(deserialize_with = "null_to_default")]
     pub name: String,
     #[serde(deserialize_with = "null_to_default")]
@@ -39,19 +39,19 @@ pub struct Trigger {
 #[serde(default, rename_all = "camelCase")]
 pub struct TriggerHints {
     #[serde(deserialize_with = "null_to_default")]
-    pub flow_client_portmin: i64,
+    pub flow_client_portmin: u64,
     #[serde(deserialize_with = "null_to_default")]
-    pub flow_client_bytes: i64,
+    pub flow_client_bytes: u64,
     #[serde(deserialize_with = "null_to_default")]
-    pub flow_client_port_max: i64,
+    pub flow_client_port_max: u64,
     #[serde(deserialize_with = "null_to_default")]
-    pub flow_server_bytes: i64,
+    pub flow_server_bytes: u64,
     #[serde(deserialize_with = "null_to_default")]
     pub flow_payload_turn: bool,
     #[serde(deserialize_with = "null_to_default")]
-    pub flow_server_port_min: i64,
+    pub flow_server_port_min: u64,
     #[serde(deserialize_with = "null_to_default")]
-    pub flow_server_port_max: i64,
+    pub flow_server_port_max: u64,
 }
 
 // TODO: This needs works to get working

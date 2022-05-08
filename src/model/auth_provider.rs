@@ -19,7 +19,7 @@ pub struct IdentitiyProvider {
     #[serde(deserialize_with = "null_to_default")]
     pub entity_id: String,
     #[serde(deserialize_with = "null_to_default")]
-    pub id: i64,
+    pub id: u64,
     #[serde(deserialize_with = "null_to_default")]
     pub name: String,
     #[serde(deserialize_with = "null_to_default")]

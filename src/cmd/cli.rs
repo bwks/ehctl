@@ -1,8 +1,10 @@
-use crate::cmd::command::Commands;
+use crate::cmd::command::{CliCommand, Commands};
+use crate::cmd::firmware::Firmware;
 use crate::cmd::show::Show;
 use crate::getter::{GetterType, Getters};
+use crate::model::firmware::FirmwareOptions;
 use crate::model::packet_search::PacketSearch;
-use crate::util::print_list;
+use crate::util::print::print_list;
 use clap::Parser;
 use std::process::exit;
 
@@ -20,23 +22,21 @@ struct Cli {
 }
 
 pub struct CliOptions {
-    pub backup: bool,
     pub backup_device: String,
-    pub packet_search: bool,
-    pub packet_search_options: PacketSearch,
-    pub getter: bool,
+    pub command: CliCommand,
+    pub firmware_options: FirmwareOptions,
     pub getter_type: GetterType,
     pub output_option: OutputOption,
+    pub packet_search_options: PacketSearch,
 }
 
 impl CliOptions {
     fn default() -> Self {
         Self {
-            backup: false,
             backup_device: "".to_string(),
-            packet_search: false,
+            command: CliCommand::None,
+            firmware_options: FirmwareOptions::default(),
             packet_search_options: PacketSearch::default(),
-            getter: false,
             getter_type: GetterType::Unknown,
             output_option: OutputOption::Brief,
         }
@@ -51,7 +51,7 @@ impl CliOptions {
             Commands::Backup(backup) => match backup.device.as_str() {
                 "all" => {
                     let dev = backup.device.clone();
-                    cli_opts.backup = true;
+                    cli_opts.command = CliCommand::Backup;
                     cli_opts.backup_device = dev
                 }
                 _ => {
@@ -59,8 +59,19 @@ impl CliOptions {
                     exit(1)
                 }
             },
+            Commands::Firmware(firmware_command) => match firmware_command {
+                Firmware::Upload(x) => {
+                    cli_opts.command = CliCommand::Firmware;
+                    cli_opts.firmware_options.hostname = x.hostname.to_string();
+                    cli_opts.firmware_options.filename = x.filename.to_string();
+                }
+                Firmware::Upgrade(x) => {
+                    cli_opts.command = CliCommand::Firmware;
+                    cli_opts.firmware_options.hostname = x.hostname.to_string();
+                }
+            },
             Commands::Get(get) => {
-                cli_opts.getter = true;
+                cli_opts.command = CliCommand::Get;
                 if get.detail {
                     cli_opts.output_option = OutputOption::Detail
                 }
@@ -80,6 +91,8 @@ impl CliOptions {
                     "emailgroups" => GetterType::EmailGroups,
                     "exclusionintervals" => GetterType::ExclusionIntervals,
                     "extrahop" => GetterType::ExtraHop,
+                    "firmware-next" => GetterType::FirmwareNext,
+                    "firmware-previous" => GetterType::FirmwarePrevious,
                     "identityproviders" => GetterType::IdentityProviders,
                     "license" => GetterType::License,
                     "networks" => GetterType::Networks,
@@ -115,7 +128,7 @@ impl CliOptions {
                     ip2: packet_search.ip2.clone(),
                     port2: packet_search.port2.clone(),
                 };
-                cli_opts.packet_search = true;
+                cli_opts.command = CliCommand::PacketSearch;
                 cli_opts.packet_search_options = options;
             }
             Commands::Show(show_command) => match show_command {

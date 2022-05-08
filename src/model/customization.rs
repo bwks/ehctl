@@ -14,9 +14,9 @@ pub struct Customizations {
 pub struct Customization {
     pub auto: bool,
     #[serde(deserialize_with = "null_to_default")]
-    pub create_time: i64,
+    pub create_time: u64,
     #[serde(deserialize_with = "null_to_default")]
-    pub id: i64,
+    pub id: u64,
     #[serde(deserialize_with = "null_to_default")]
     pub name: String,
     pub recovered: bool,
