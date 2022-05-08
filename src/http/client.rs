@@ -8,6 +8,8 @@ use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, AUTHORIZATION, CONTENT_TYP
 use reqwest::StatusCode;
 use serde::Deserialize;
 
+use crate::core::config::ExtraHopCredential;
+
 #[derive(Debug, Deserialize)]
 pub struct ExtraHopToken {
     pub access_token: String,
@@ -180,4 +182,49 @@ pub async fn get_oauth_token(
             exit(1)
         }
     }
+}
+
+pub async fn build_clients(
+    credentials: &[ExtraHopCredential],
+    appliance_type: ExtraHopAppliance,
+    timestamp: &str,
+) -> Result<Vec<ExtraHopClient>> {
+    let mut extrahop_appliances: Vec<ExtraHopClient> = Vec::new();
+
+    match appliance_type {
+        ExtraHopAppliance::CCP => {
+            for c in credentials {
+                let token = get_oauth_token(&c.hostname, &c.user_id, &c.api_key).await?;
+                let base_url = format!("https://{}/api/v1", &c.hostname);
+                let client = ExtraHopClient::new(
+                    &c.hostname,
+                    &c.user_id,
+                    &c.api_key,
+                    &base_url,
+                    timestamp,
+                    &token.access_token,
+                    &c.allow_insecure_tls,
+                    appliance_type,
+                );
+                extrahop_appliances.push(client);
+            }
+        }
+        _ => {
+            for c in credentials {
+                let base_url = format!("https://{}/api/v1", &c.hostname);
+                let client = ExtraHopClient::new(
+                    &c.hostname,
+                    &c.user_id,
+                    &c.api_key,
+                    &base_url,
+                    timestamp,
+                    "",
+                    &c.allow_insecure_tls,
+                    appliance_type,
+                );
+                extrahop_appliances.push(client);
+            }
+        }
+    }
+    Ok(extrahop_appliances)
 }

@@ -6,8 +6,8 @@ mod util;
 
 use crate::cmd::cli::{CliOptions, OutputOption};
 use crate::cmd::command::CliCommand;
-use crate::core::config::{ExtraHopConfig, ExtraHopCredential};
-use crate::http::client::{get_oauth_token, ExtraHopAppliance, ExtraHopClient};
+use crate::core::config::ExtraHopConfig;
+use crate::http::client::{build_clients, ExtraHopAppliance, ExtraHopClient};
 use crate::http::common::reqwest_get;
 use crate::http::firmware::{get_firmware_next, get_firmware_previous, upload_firmware};
 use crate::http::getter::{appliance_getters, GetterType};
@@ -393,51 +393,6 @@ async fn get_vlans(client: &ExtraHopClient) -> Result<Vlans> {
         vlans: serde_json::from_str(&response.text().await?)?,
     };
     Ok(vlans)
-}
-
-async fn build_clients(
-    credentials: &[ExtraHopCredential],
-    appliance_type: ExtraHopAppliance,
-    timestamp: &str,
-) -> Result<Vec<ExtraHopClient>> {
-    let mut extrahop_appliances: Vec<ExtraHopClient> = Vec::new();
-
-    match appliance_type {
-        ExtraHopAppliance::CCP => {
-            for c in credentials {
-                let token = get_oauth_token(&c.hostname, &c.user_id, &c.api_key).await?;
-                let base_url = format!("https://{}/api/v1", &c.hostname);
-                let client = ExtraHopClient::new(
-                    &c.hostname,
-                    &c.user_id,
-                    &c.api_key,
-                    &base_url,
-                    timestamp,
-                    &token.access_token,
-                    &c.allow_insecure_tls,
-                    appliance_type,
-                );
-                extrahop_appliances.push(client);
-            }
-        }
-        _ => {
-            for c in credentials {
-                let base_url = format!("https://{}/api/v1", &c.hostname);
-                let client = ExtraHopClient::new(
-                    &c.hostname,
-                    &c.user_id,
-                    &c.api_key,
-                    &base_url,
-                    timestamp,
-                    "",
-                    &c.allow_insecure_tls,
-                    appliance_type,
-                );
-                extrahop_appliances.push(client);
-            }
-        }
-    }
-    Ok(extrahop_appliances)
 }
 
 #[tokio::main]
