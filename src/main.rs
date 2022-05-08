@@ -2,18 +2,17 @@ mod client;
 mod cmd;
 mod config;
 mod deserialize;
-mod getter;
 mod http;
 mod model;
 mod util;
 
-use client::{get_oauth_token, ExtraHopAppliance, ExtraHopClient};
-use cmd::cli::{CliOptions, OutputOption};
-use cmd::command::CliCommand;
-use config::{ExtraHopConfig, ExtraHopCredential};
-use getter::{appliance_getters, GetterType};
-use http::common::reqwest_get;
-use http::firmware::{get_firmware_next, get_firmware_previous, upload_firmware};
+use crate::client::{get_oauth_token, ExtraHopAppliance, ExtraHopClient};
+use crate::cmd::cli::{CliOptions, OutputOption};
+use crate::cmd::command::CliCommand;
+use crate::config::{ExtraHopConfig, ExtraHopCredential};
+use crate::http::common::reqwest_get;
+use crate::http::firmware::{get_firmware_next, get_firmware_previous, upload_firmware};
+use crate::http::getter::{appliance_getters, GetterType};
 
 use model::activity_map::ActivityMaps;
 use model::alert::Alerts;

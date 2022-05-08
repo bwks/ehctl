@@ -1,7 +1,7 @@
 use crate::cmd::command::{CliCommand, Commands};
 use crate::cmd::firmware::Firmware;
 use crate::cmd::show::Show;
-use crate::getter::{GetterType, Getters};
+use crate::http::getter::{GetterType, Getters};
 use crate::model::firmware::FirmwareOptions;
 use crate::model::packet_search::PacketSearch;
 use crate::util::print::print_list;
