@@ -7,6 +7,9 @@ mod util;
 use crate::cmd::cli::{CliOptions, OutputOption};
 use crate::cmd::command::CliCommand;
 use crate::core::config::ExtraHopConfig;
+use crate::http::activity_map::get_activity_maps;
+use crate::http::api_key::get_api_keys;
+use crate::http::audit_log::get_audit_logs;
 use crate::http::client::{build_clients, ExtraHopAppliance, ExtraHopClient};
 use crate::http::common::reqwest_get;
 use crate::http::firmware::{get_firmware_next, get_firmware_previous, upload_firmware};
@@ -51,30 +54,6 @@ use std::fs::File;
 use std::io::Write;
 use std::process::exit;
 use tabled::{Alignment, Disable, Full, MaxWidth, MinWidth, Modify, Rotate, Rows, Table};
-
-async fn get_api_keys(client: &ExtraHopClient) -> Result<ApiKeys> {
-    let response = reqwest_get(client, "apikeys").await?;
-    let api_keys = ApiKeys {
-        api_keys: serde_json::from_str(&response.text().await?)?,
-    };
-    Ok(api_keys)
-}
-
-async fn get_activity_maps(client: &ExtraHopClient) -> Result<ActivityMaps> {
-    let response = reqwest_get(client, "activitymaps").await?;
-    let activity_maps = ActivityMaps {
-        activity_maps: serde_json::from_str(&response.text().await?)?,
-    };
-    Ok(activity_maps)
-}
-
-async fn get_audit_logs(client: &ExtraHopClient) -> Result<AuditLogs> {
-    let response = reqwest_get(client, "auditlog").await?;
-    let audit_logs = AuditLogs {
-        audit_logs: serde_json::from_str(&response.text().await?)?,
-    };
-    Ok(audit_logs)
-}
 
 async fn get_alerts(client: &ExtraHopClient) -> Result<Alerts> {
     let response = reqwest_get(client, "alerts").await?;
