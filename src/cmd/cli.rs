@@ -14,7 +14,7 @@ pub enum OutputOption {
 }
 
 #[derive(Parser)]
-#[clap(author, version = "0.1.13", about = "ExtraHop CLI")]
+#[clap(author, version = "0.2.1", about = "ExtraHop CLI")]
 #[clap(propagate_version = true)]
 struct Cli {
     #[clap(subcommand)]
