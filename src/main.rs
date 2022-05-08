@@ -3,6 +3,7 @@ mod cmd;
 mod config;
 mod deserialize;
 mod getter;
+mod http;
 mod model;
 mod util;
 
