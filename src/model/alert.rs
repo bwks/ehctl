@@ -3,16 +3,16 @@ use std::collections::HashMap;
 use serde::Deserialize;
 use tabled::Tabled;
 
-use crate::deserialize::null_to_default;
+use crate::util::deserialize::null_to_default;
 
 #[derive(Default, Deserialize, Tabled)]
 #[serde(default)]
 pub struct AlertBrief {
-    pub mod_time: i64,
+    pub mod_time: u64,
     #[serde(deserialize_with = "null_to_default")]
     pub name: String,
     #[serde(deserialize_with = "null_to_default")]
-    pub severity: i64,
+    pub severity: u64,
     #[serde(deserialize_with = "null_to_default")]
     #[serde(rename = "type")]
     pub _type: String,
@@ -43,11 +43,11 @@ pub struct Alert {
     #[serde(deserialize_with = "null_to_default")]
     pub field_op: String,
     #[serde(deserialize_with = "null_to_default")]
-    pub id: i64,
+    pub id: u64,
     #[serde(deserialize_with = "null_to_default")]
-    pub interval_length: i64,
+    pub interval_length: u64,
     #[serde(deserialize_with = "null_to_default")]
-    pub mod_time: i64,
+    pub mod_time: u64,
     #[serde(deserialize_with = "null_to_default")]
     pub name: String,
     #[serde(deserialize_with = "null_to_default")]
@@ -61,9 +61,9 @@ pub struct Alert {
     pub param2: HashMap<String, String>,
     pub protocols: Vec<String>,
     #[serde(deserialize_with = "null_to_default")]
-    pub refire_interval: i64,
+    pub refire_interval: u64,
     #[serde(deserialize_with = "null_to_default")]
-    pub severity: i64,
+    pub severity: u64,
     #[serde(deserialize_with = "null_to_default")]
     pub stat_name: String,
     #[serde(deserialize_with = "null_to_default")]

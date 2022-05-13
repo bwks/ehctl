@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+
 use chrono::prelude::DateTime;
 use chrono::Local;
 use std::time::{Duration, UNIX_EPOCH};
@@ -19,12 +20,6 @@ pub fn extrahop_to_human_time(time_milliseconds: &u64) -> String {
     let time_seconds = UNIX_EPOCH + Duration::from_secs(time_milliseconds / 1000);
     let datetime = DateTime::<Local>::from(time_seconds);
     datetime.format("%Y-%m-%d %H:%M:%S UTC %Z").to_string()
-}
-
-pub fn print_list(list: &[String]) {
-    for i in list.iter() {
-        println!(" - {i}");
-    }
 }
 
 #[cfg(test)]

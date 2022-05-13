@@ -1,0 +1,67 @@
+pub mod activity_map;
+pub mod alert;
+pub mod api_key;
+pub mod appliance;
+pub mod audit_log;
+pub mod auth_provider;
+pub mod bundle;
+pub mod client;
+pub mod common;
+pub mod custom_device;
+pub mod customization;
+pub mod dashboard;
+pub mod detection;
+pub mod device;
+pub mod device_group;
+pub mod email_group;
+pub mod exclusion_interval;
+pub mod extrahop;
+pub mod firmware;
+pub mod getter;
+pub mod job;
+pub mod license;
+pub mod network;
+pub mod network_locality;
+pub mod node;
+pub mod packet_capture;
+pub mod packet_search;
+pub mod running_config;
+pub mod software;
+pub mod tag;
+pub mod threat_collection;
+pub mod trigger;
+pub mod vlan;
+
+pub mod action {
+    pub use crate::http::activity_map::get_activity_maps;
+    pub use crate::http::alert::get_alerts;
+    pub use crate::http::api_key::get_api_keys;
+    pub use crate::http::appliance::get_appliances;
+    pub use crate::http::audit_log::get_audit_logs;
+    pub use crate::http::auth_provider::{get_identitiy_providers, get_saml_sp};
+    pub use crate::http::bundle::get_bundles;
+    pub use crate::http::custom_device::get_custom_devices;
+    pub use crate::http::customization::{
+        create_customization, get_customizations, save_customization,
+    };
+    pub use crate::http::dashboard::get_dashboards;
+    pub use crate::http::detection::get_detections;
+    pub use crate::http::device::get_devices;
+    pub use crate::http::device_group::get_device_groups;
+    pub use crate::http::email_group::get_email_groups;
+    pub use crate::http::exclusion_interval::get_exclusion_intervals;
+    pub use crate::http::extrahop::get_extrahop;
+    pub use crate::http::job::get_jobs;
+    pub use crate::http::license::get_license;
+    pub use crate::http::network::get_networks;
+    pub use crate::http::network_locality::get_network_localities;
+    pub use crate::http::node::get_nodes;
+    pub use crate::http::packet_capture::get_packet_captures;
+    pub use crate::http::packet_search::packet_search;
+    pub use crate::http::running_config::get_running_config;
+    pub use crate::http::software::get_software;
+    pub use crate::http::tag::get_tags;
+    pub use crate::http::threat_collection::get_threat_collections;
+    pub use crate::http::trigger::get_triggers;
+    pub use crate::http::vlan::get_vlans;
+}

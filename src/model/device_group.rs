@@ -1,7 +1,7 @@
 use serde::Deserialize;
 use tabled::Tabled;
 
-use crate::deserialize::null_to_default;
+use crate::util::deserialize::null_to_default;
 
 #[derive(Default, Deserialize)]
 #[serde(default)]
@@ -23,11 +23,11 @@ pub struct DeviceGroup {
     // #[serde(deserialize_with = "null_to_default")]
     // pub filter: {},
     #[serde(deserialize_with = "null_to_default")]
-    pub id: i64,
+    pub id: u64,
     #[serde(deserialize_with = "null_to_default")]
     pub include_custom_devices: bool,
     #[serde(deserialize_with = "null_to_default")]
-    pub mod_time: i64,
+    pub mod_time: u64,
     #[serde(deserialize_with = "null_to_default")]
     pub name: String,
     #[serde(deserialize_with = "null_to_default")]

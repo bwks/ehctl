@@ -2,7 +2,7 @@ use serde::Deserialize;
 use std::collections::HashMap;
 use tabled::Tabled;
 
-use crate::deserialize::null_to_default;
+use crate::util::deserialize::null_to_default;
 
 #[derive(Default, Deserialize)]
 #[serde(default)]
@@ -12,10 +12,10 @@ pub struct License {
     #[serde(deserialize_with = "null_to_default")]
     pub edition: String,
     #[serde(deserialize_with = "null_to_default")]
-    pub expires_at: i64,
+    pub expires_at: u64,
     pub modules: HashMap<String, serde_json::Value>,
     pub options: HashMap<String, serde_json::Value>,
-    pub expires_in: i64,
+    pub expires_in: u64,
     #[serde(deserialize_with = "null_to_default")]
     pub platform: String,
     #[serde(deserialize_with = "null_to_default")]

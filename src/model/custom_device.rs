@@ -1,7 +1,7 @@
 use serde::Deserialize;
 use tabled::Tabled;
 
-use crate::deserialize::null_to_default;
+use crate::util::deserialize::null_to_default;
 
 #[derive(Debug, Default, Deserialize)]
 #[serde(default)]
@@ -23,9 +23,9 @@ pub struct CustomDevice {
     #[serde(deserialize_with = "null_to_default")]
     pub extrahop_id: String,
     #[serde(deserialize_with = "null_to_default")]
-    pub id: i64,
+    pub id: u64,
     #[serde(deserialize_with = "null_to_default")]
-    pub mod_time: i64,
+    pub mod_time: u64,
     #[serde(deserialize_with = "null_to_default")]
     pub name: String,
 }
@@ -34,9 +34,9 @@ pub struct CustomDevice {
 #[serde(default)]
 pub struct CustomDeviceCriteria {
     #[serde(deserialize_with = "null_to_default")]
-    pub dst_port_max: i64,
+    pub dst_port_max: u64,
     #[serde(deserialize_with = "null_to_default")]
-    pub dst_port_min: i64,
+    pub dst_port_min: u64,
     #[serde(deserialize_with = "null_to_default")]
     pub ipaddr: String,
     #[serde(deserialize_with = "null_to_default")]
@@ -44,13 +44,13 @@ pub struct CustomDeviceCriteria {
     #[serde(deserialize_with = "null_to_default")]
     pub ipaddr_peer: String,
     #[serde(deserialize_with = "null_to_default")]
-    pub src_port_max: i64,
+    pub src_port_max: u64,
     #[serde(deserialize_with = "null_to_default")]
-    pub src_port_min: i64,
+    pub src_port_min: u64,
     #[serde(deserialize_with = "null_to_default")]
-    pub vlan_max: i64,
+    pub vlan_max: u64,
     #[serde(deserialize_with = "null_to_default")]
-    pub vlan_min: i64,
+    pub vlan_min: u64,
 }
 
 impl Tabled for CustomDevice {

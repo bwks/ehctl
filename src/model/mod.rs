@@ -14,6 +14,8 @@ pub mod device_group;
 pub mod email_group;
 pub mod exclusion_interval;
 pub mod extrahop;
+pub mod firmware;
+pub mod job;
 pub mod license;
 pub mod network;
 pub mod network_locality;

@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use serde::Deserialize;
 use tabled::Tabled;
 
-use crate::deserialize::null_to_default;
+use crate::util::deserialize::null_to_default;
 
 #[derive(Deserialize)]
 pub struct ActivityMaps {
@@ -16,9 +16,9 @@ pub struct ActivityMap {
     #[serde(deserialize_with = "null_to_default")]
     pub description: String,
     #[serde(deserialize_with = "null_to_default")]
-    pub id: i64,
+    pub id: u64,
     #[serde(deserialize_with = "null_to_default")]
-    pub mod_time: i64,
+    pub mod_time: u64,
     #[serde(deserialize_with = "null_to_default")]
     pub mode: String,
     #[serde(deserialize_with = "null_to_default")]
@@ -92,7 +92,7 @@ pub struct Walks {
 #[serde(default)]
 pub struct ObjectIdType {
     #[serde(deserialize_with = "null_to_default")]
-    pub object_id: i64,
+    pub object_id: u64,
     #[serde(deserialize_with = "null_to_default")]
     pub object_type: String,
 }

@@ -1,4 +1,4 @@
-use crate::client::ExtraHopAppliance;
+use crate::http::client::ExtraHopAppliance;
 use std::fmt::{Display, Formatter};
 pub struct Getters {}
 
@@ -19,7 +19,10 @@ pub enum GetterType {
     EmailGroups,
     ExclusionIntervals,
     ExtraHop,
+    FirmwareNext,
+    FirmwarePrevious,
     IdentityProviders,
+    Jobs,
     License,
     Nodes,
     Networks,
@@ -53,7 +56,10 @@ impl Display for GetterType {
             GetterType::EmailGroups => write!(f, "emailgroups"),
             GetterType::ExclusionIntervals => write!(f, "exclusionintervals"),
             GetterType::ExtraHop => write!(f, "extrahop"),
+            GetterType::FirmwareNext => write!(f, "firmware-next"),
+            GetterType::FirmwarePrevious => write!(f, "firmware-previous"),
             GetterType::IdentityProviders => write!(f, "identityproviders"),
+            GetterType::Jobs => write!(f, "jobs"),
             GetterType::License => write!(f, "license"),
             GetterType::Nodes => write!(f, "networks"),
             GetterType::Networks => write!(f, "networklocalities"),
@@ -89,8 +95,11 @@ impl Getters {
             GetterType::EmailGroups.to_string(),
             GetterType::ExclusionIntervals.to_string(),
             GetterType::ExtraHop.to_string(),
+            GetterType::FirmwareNext.to_string(),
+            GetterType::FirmwarePrevious.to_string(),
             GetterType::IdentityProviders.to_string(),
             GetterType::License.to_string(),
+            GetterType::Jobs.to_string(),
             GetterType::Nodes.to_string(),
             GetterType::Networks.to_string(),
             GetterType::NetworkLocalities.to_string(),
@@ -181,7 +190,10 @@ pub fn appliance_getters(appliance_type: &ExtraHopAppliance) -> Vec<GetterType> 
                 GetterType::EmailGroups,
                 GetterType::ExclusionIntervals,
                 GetterType::ExtraHop,
+                GetterType::FirmwareNext,
+                GetterType::FirmwarePrevious,
                 GetterType::IdentityProviders,
+                GetterType::Jobs,
                 GetterType::License,
                 GetterType::Networks,
                 GetterType::NetworkLocalities,
@@ -211,7 +223,10 @@ pub fn appliance_getters(appliance_type: &ExtraHopAppliance) -> Vec<GetterType> 
                 GetterType::EmailGroups,
                 GetterType::ExclusionIntervals,
                 GetterType::ExtraHop,
+                GetterType::FirmwareNext,
+                GetterType::FirmwarePrevious,
                 GetterType::IdentityProviders,
+                GetterType::Jobs,
                 GetterType::License,
                 GetterType::Networks,
                 GetterType::NetworkLocalities,
@@ -229,6 +244,7 @@ pub fn appliance_getters(appliance_type: &ExtraHopAppliance) -> Vec<GetterType> 
                 GetterType::ApiKeys,
                 GetterType::Appliances,
                 GetterType::ExtraHop,
+                GetterType::Jobs,
                 GetterType::License,
                 GetterType::RunningConfig,
             ]
@@ -238,6 +254,7 @@ pub fn appliance_getters(appliance_type: &ExtraHopAppliance) -> Vec<GetterType> 
                 GetterType::ApiKeys,
                 GetterType::Appliances,
                 GetterType::ExtraHop,
+                GetterType::Jobs,
                 GetterType::License,
                 GetterType::RunningConfig,
             ]
