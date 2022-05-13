@@ -2,7 +2,7 @@ use crate::cmd::command::{CliCommand, Commands};
 use crate::cmd::firmware::Firmware;
 use crate::cmd::show::Show;
 use crate::http::getter::{GetterType, Getters};
-use crate::model::firmware::FirmwareOptions;
+use crate::model::firmware::{FirmwareAction, FirmwareOptions};
 use crate::model::packet_search::PacketSearch;
 use crate::util::print::print_list;
 use clap::Parser;
@@ -64,10 +64,12 @@ impl CliOptions {
                     cli_opts.command = CliCommand::Firmware;
                     cli_opts.firmware_options.hostname = x.hostname.to_string();
                     cli_opts.firmware_options.filename = x.filename.to_string();
+                    cli_opts.firmware_options.action = FirmwareAction::LocalUpload;
                 }
                 Firmware::Upgrade(x) => {
                     cli_opts.command = CliCommand::Firmware;
                     cli_opts.firmware_options.hostname = x.hostname.to_string();
+                    cli_opts.firmware_options.action = FirmwareAction::LocalUpgrade;
                 }
             },
             Commands::Get(get) => {
@@ -94,6 +96,7 @@ impl CliOptions {
                     "firmware-next" => GetterType::FirmwareNext,
                     "firmware-previous" => GetterType::FirmwarePrevious,
                     "identityproviders" => GetterType::IdentityProviders,
+                    "jobs" => GetterType::Jobs,
                     "license" => GetterType::License,
                     "networks" => GetterType::Networks,
                     "networklocalities" => GetterType::NetworkLocalities,

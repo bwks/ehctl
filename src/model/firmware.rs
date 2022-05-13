@@ -4,10 +4,30 @@ use tabled::Tabled;
 use crate::util::deserialize::null_to_default;
 use crate::util::time::extrahop_to_human_time;
 
-#[derive(Default)]
+#[allow(dead_code)]
+pub enum FirmwareAction {
+    LocalUpload,
+    LocalUpgrade,
+    UrlUpload,
+    UrlUpgrade,
+    CloudUpgrade,
+    None,
+}
+
 pub struct FirmwareOptions {
     pub hostname: String,
     pub filename: String,
+    pub action: FirmwareAction,
+}
+
+impl Default for FirmwareOptions {
+    fn default() -> Self {
+        Self {
+            hostname: "".to_string(),
+            filename: "".to_string(),
+            action: FirmwareAction::None,
+        }
+    }
 }
 
 #[derive(Default, Deserialize)]

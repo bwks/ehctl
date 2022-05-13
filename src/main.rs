@@ -10,7 +10,9 @@ use crate::cmd::command::CliCommand;
 use crate::core::config::ExtraHopConfig;
 use crate::http::action::*;
 use crate::http::client::{build_clients, ExtraHopAppliance, ExtraHopClient};
-use crate::http::firmware::{get_firmware_next, get_firmware_previous, upload_firmware};
+use crate::http::firmware::{
+    firmware_upgrade, firmware_upload, get_firmware_next, get_firmware_previous,
+};
 use crate::http::getter::{appliance_getters, GetterType};
 
 use model::activity_map::ActivityMaps;
@@ -29,7 +31,8 @@ use model::device_group::DeviceGroups;
 use model::email_group::EmailGroups;
 use model::exclusion_interval::ExclusionIntervals;
 use model::extrahop::ExtraHop;
-use model::firmware::{FirmwarePrevious, FirmwaresNext};
+use model::firmware::{FirmwareAction, FirmwarePrevious, FirmwaresNext};
+use model::job::Jobs;
 use model::license::License;
 use model::network::Networks;
 use model::network_locality::NetworkLocalities;
@@ -88,6 +91,7 @@ async fn main() -> Result<()> {
     let mut firmwares_next: HashMap<String, FirmwaresNext> = HashMap::new();
     let mut firmwares_previous: HashMap<String, FirmwarePrevious> = HashMap::new();
     let mut identity_providers: HashMap<String, IdentitiyProviders> = HashMap::new();
+    let mut jobs: HashMap<String, Jobs> = HashMap::new();
     let mut licenses: HashMap<String, License> = HashMap::new();
     let mut networks: HashMap<String, Networks> = HashMap::new();
     let mut network_localities: HashMap<String, NetworkLocalities> = HashMap::new();
@@ -109,12 +113,16 @@ async fn main() -> Result<()> {
             },
             CliCommand::Firmware => {
                 if c.hostname == cli.firmware_options.hostname {
-                    println!("c.hostname {}", c.hostname);
-                    println!(
-                        "cli.firmware_options.hostname {}",
-                        cli.firmware_options.hostname
-                    );
-                    upload_firmware(c, cli.firmware_options.filename.as_str()).await?
+                    match cli.firmware_options.action {
+                        FirmwareAction::LocalUpload => {
+                            firmware_upload(c, cli.firmware_options.filename.as_str()).await?
+                        }
+                        FirmwareAction::LocalUpgrade => firmware_upgrade(c).await?,
+                        _ => {
+                            eprintln!("should not be here, alas yet I am.");
+                            exit(1);
+                        }
+                    }
                 }
             }
             CliCommand::Get => {
@@ -225,6 +233,12 @@ async fn main() -> Result<()> {
                         if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
                             let result = get_identitiy_providers(c).await?;
                             identity_providers.insert(c.hostname.to_string(), result);
+                        }
+                    }
+                    GetterType::Jobs => {
+                        if appliance_getters(&c.appliance_type).contains(&cli.getter_type) {
+                            let result = get_jobs(c).await?;
+                            jobs.insert(c.hostname.to_string(), result);
                         }
                     }
                     GetterType::License => {
@@ -608,6 +622,13 @@ async fn main() -> Result<()> {
                 for (key, value) in identity_providers {
                     println!("{}:", key);
                     let table = Table::new(value.identity_providers);
+                    println!("{table}");
+                }
+            }
+            GetterType::Jobs => {
+                for (key, value) in jobs {
+                    println!("{}:", key);
+                    let table = Table::new(value.jobs).with(Rotate::Left);
                     println!("{table}");
                 }
             }

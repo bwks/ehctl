@@ -18,6 +18,7 @@ pub mod exclusion_interval;
 pub mod extrahop;
 pub mod firmware;
 pub mod getter;
+pub mod job;
 pub mod license;
 pub mod network;
 pub mod network_locality;
@@ -50,6 +51,7 @@ pub mod action {
     pub use crate::http::email_group::get_email_groups;
     pub use crate::http::exclusion_interval::get_exclusion_intervals;
     pub use crate::http::extrahop::get_extrahop;
+    pub use crate::http::job::get_jobs;
     pub use crate::http::license::get_license;
     pub use crate::http::network::get_networks;
     pub use crate::http::network_locality::get_network_localities;
