@@ -21,11 +21,11 @@ pub struct RemoteJob {
     #[serde(deserialize_with = "null_to_default")]
     pub step_description: String,
     #[serde(deserialize_with = "null_to_default")]
-    pub step_number: u64,
+    pub step_number: u32,
     #[serde(deserialize_with = "null_to_default")]
-    pub system_id: u64,
+    pub system_id: u32,
     #[serde(deserialize_with = "null_to_default")]
-    pub total_steps: u64,
+    pub total_steps: u32,
 }
 
 #[derive(Default, Deserialize)]
@@ -41,9 +41,9 @@ pub struct Job {
     #[serde(deserialize_with = "null_to_default")]
     pub step_description: String,
     #[serde(deserialize_with = "null_to_default")]
-    pub step_number: u64,
+    pub step_number: u32,
     #[serde(deserialize_with = "null_to_default")]
-    pub total_steps: u64,
+    pub total_steps: u32,
     #[serde(deserialize_with = "null_to_default")]
     pub _type: String,
 }
