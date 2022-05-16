@@ -15,6 +15,7 @@ use crate::http::firmware::{
 };
 use crate::http::getter::{appliance_getters, GetterType};
 
+use cmd::cli::ShowConfig;
 use model::activity_map::ActivityMaps;
 use model::alert::Alerts;
 use model::api_key::ApiKeys;
@@ -72,6 +73,71 @@ async fn main() -> Result<()> {
     extrahop_appliances.extend(eda_clients);
     extrahop_appliances.extend(exa_clients);
     extrahop_appliances.extend(eta_clients);
+
+    match cli.show_config_options {
+        ShowConfig::All => {
+            match toml::to_string(&configs) {
+                Ok(c) => println!("{c}"),
+                Err(e) => {
+                    eprintln!("error converting config to toml {}", e);
+                    exit(1);
+                }
+            };
+            exit(0)
+        }
+        ShowConfig::Ccp => {
+            match toml::to_string(&configs.ccp) {
+                Ok(c) => println!("{c}"),
+                Err(e) => {
+                    eprintln!("error converting config to toml {}", e);
+                    exit(1);
+                }
+            };
+            exit(0)
+        }
+        ShowConfig::Eca => {
+            match toml::to_string(&configs.eca) {
+                Ok(c) => println!("{c}"),
+                Err(e) => {
+                    eprintln!("error converting config to toml {}", e);
+                    exit(1);
+                }
+            };
+            exit(0)
+        }
+        ShowConfig::Eda => {
+            match toml::to_string(&configs.eda) {
+                Ok(c) => println!("{c}"),
+                Err(e) => {
+                    eprintln!("error converting config to toml {}", e);
+                    exit(1);
+                }
+            };
+            exit(0)
+        }
+        ShowConfig::Exa => {
+            match toml::to_string(&configs.exa) {
+                Ok(c) => println!("{c}"),
+                Err(e) => {
+                    eprintln!("error converting config to toml {}", e);
+                    exit(1);
+                }
+            };
+            exit(0)
+        }
+        ShowConfig::Eta => {
+            match toml::to_string(&configs.eta) {
+                Ok(c) => println!("{c}"),
+                Err(e) => {
+                    eprintln!("error converting config to toml {}", e);
+                    exit(1);
+                }
+            };
+            exit(0)
+        }
+        // Default case, do nothing
+        ShowConfig::None => {}
+    }
 
     let mut activity_maps: HashMap<String, ActivityMaps> = HashMap::new();
     let mut audit_logs: HashMap<String, AuditLogs> = HashMap::new();

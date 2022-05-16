@@ -1,9 +1,9 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::env;
 use std::fs;
 use std::process::exit;
 
-#[derive(Debug, Default, Deserialize)]
+#[derive(Debug, Default, Deserialize, Serialize)]
 #[serde(default)]
 pub struct ExtraHopConfig {
     pub ccp: Vec<ExtraHopCredential>,
@@ -13,7 +13,7 @@ pub struct ExtraHopConfig {
     pub eta: Vec<ExtraHopCredential>,
 }
 
-#[derive(Debug, Default, Deserialize, PartialEq)]
+#[derive(Debug, Default, Deserialize, Serialize, PartialEq)]
 #[serde(default)]
 pub struct ExtraHopCredential {
     pub hostname: String,

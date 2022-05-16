@@ -13,6 +13,16 @@ pub enum OutputOption {
     Detail,
 }
 
+pub enum ShowConfig {
+    All,
+    Ccp,
+    Eca,
+    Eda,
+    Exa,
+    Eta,
+    None,
+}
+
 #[derive(Parser)]
 #[clap(author, version = "0.2.1", about = "ExtraHop CLI")]
 #[clap(propagate_version = true)]
@@ -28,6 +38,7 @@ pub struct CliOptions {
     pub getter_type: GetterType,
     pub output_option: OutputOption,
     pub packet_search_options: PacketSearch,
+    pub show_config_options: ShowConfig,
 }
 
 impl CliOptions {
@@ -39,6 +50,7 @@ impl CliOptions {
             packet_search_options: PacketSearch::default(),
             getter_type: GetterType::Unknown,
             output_option: OutputOption::Brief,
+            show_config_options: ShowConfig::None,
         }
     }
 
@@ -135,34 +147,31 @@ impl CliOptions {
                 cli_opts.packet_search_options = options;
             }
             Commands::Show(show_command) => match show_command {
-                // TODO: add some mechanism to show config settings 
-                Show::Config(config) => {
-                    match config.devices.as_str() {
-                        "all" => {
-                            println!("All configs")
-                        }
-                        "ccp" => {
-                            println!("CCP configs")
-                        }
-                        "eca" => {
-                            println!("ECA configs")
-                        }
-                        "eda" => {
-                            println!("EDA configs")
-                        }
-                        "exa" => {
-                            println!("EXA configs")
-                        }
-                        "eta" => {
-                            println!("ETA configs")
-                        }
-                        _ => {
-                            eprintln!("=> unknown device type `{}`", config.devices);
-                            exit(1)
-                        }
+                // TODO: add some mechanism to show config settings
+                Show::Config(config) => match config.devices.as_str() {
+                    "all" => {
+                        cli_opts.show_config_options = ShowConfig::All;
                     }
-                    exit(0)
-                }
+                    "ccp" => {
+                        cli_opts.show_config_options = ShowConfig::Ccp;
+                    }
+                    "eca" => {
+                        cli_opts.show_config_options = ShowConfig::Eca;
+                    }
+                    "eda" => {
+                        cli_opts.show_config_options = ShowConfig::Eda;
+                    }
+                    "exa" => {
+                        cli_opts.show_config_options = ShowConfig::Exa;
+                    }
+                    "eta" => {
+                        cli_opts.show_config_options = ShowConfig::Eta;
+                    }
+                    _ => {
+                        eprintln!("=> unknown device type `{}`", config.devices);
+                        exit(1)
+                    }
+                },
                 Show::Get(get) => {
                     match get._type.as_str() {
                         "all" => {
