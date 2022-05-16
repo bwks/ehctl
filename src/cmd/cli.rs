@@ -135,6 +135,7 @@ impl CliOptions {
                 cli_opts.packet_search_options = options;
             }
             Commands::Show(show_command) => match show_command {
+                // TODO: add some mechanism to show config settings 
                 Show::Config(config) => {
                     match config.devices.as_str() {
                         "all" => {
