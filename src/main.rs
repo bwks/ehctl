@@ -7,6 +7,7 @@ mod util;
 
 use crate::cmd::cli::{CliOptions, OutputOption};
 use crate::cmd::command::CliCommand;
+use crate::cmd::show::ShowConfigOption;
 use crate::core::config::ExtraHopConfig;
 use crate::http::action::*;
 use crate::http::client::{build_clients, ExtraHopAppliance, ExtraHopClient};
@@ -15,7 +16,6 @@ use crate::http::firmware::{
 };
 use crate::http::getter::{appliance_getters, GetterType};
 
-use cmd::cli::ShowConfig;
 use model::activity_map::ActivityMaps;
 use model::alert::Alerts;
 use model::api_key::ApiKeys;
@@ -75,68 +75,38 @@ async fn main() -> Result<()> {
     extrahop_appliances.extend(eta_clients);
 
     match cli.show_config_options {
-        ShowConfig::All => {
-            match toml::to_string(&configs) {
-                Ok(c) => println!("{c}"),
-                Err(e) => {
-                    eprintln!("error converting config to toml {}", e);
-                    exit(1);
-                }
-            };
-            exit(0)
+        ShowConfigOption::All => {
+            let c = toml::to_string(&configs).expect("error converting config to toml");
+            println!("{c}");
+            exit(0);
         }
-        ShowConfig::Ccp => {
-            match toml::to_string(&configs.ccp) {
-                Ok(c) => println!("{c}"),
-                Err(e) => {
-                    eprintln!("error converting config to toml {}", e);
-                    exit(1);
-                }
-            };
-            exit(0)
+        ShowConfigOption::Ccp => {
+            let c = toml::to_string(&configs.ccp).expect("error converting config to toml");
+            println!("{c}");
+            exit(0);
         }
-        ShowConfig::Eca => {
-            match toml::to_string(&configs.eca) {
-                Ok(c) => println!("{c}"),
-                Err(e) => {
-                    eprintln!("error converting config to toml {}", e);
-                    exit(1);
-                }
-            };
-            exit(0)
+        ShowConfigOption::Eca => {
+            let c = toml::to_string(&configs.eca).expect("error converting config to toml");
+            println!("{c}");
+            exit(0);
         }
-        ShowConfig::Eda => {
-            match toml::to_string(&configs.eda) {
-                Ok(c) => println!("{c}"),
-                Err(e) => {
-                    eprintln!("error converting config to toml {}", e);
-                    exit(1);
-                }
-            };
-            exit(0)
+        ShowConfigOption::Eda => {
+            let c = toml::to_string(&configs.eda).expect("error converting config to toml");
+            println!("{c}");
+            exit(0);
         }
-        ShowConfig::Exa => {
-            match toml::to_string(&configs.exa) {
-                Ok(c) => println!("{c}"),
-                Err(e) => {
-                    eprintln!("error converting config to toml {}", e);
-                    exit(1);
-                }
-            };
-            exit(0)
+        ShowConfigOption::Exa => {
+            let c = toml::to_string(&configs.exa).expect("error converting config to toml");
+            println!("{c}");
+            exit(0);
         }
-        ShowConfig::Eta => {
-            match toml::to_string(&configs.eta) {
-                Ok(c) => println!("{c}"),
-                Err(e) => {
-                    eprintln!("error converting config to toml {}", e);
-                    exit(1);
-                }
-            };
-            exit(0)
+        ShowConfigOption::Eta => {
+            let c = toml::to_string(&configs.eta).expect("error converting config to toml");
+            println!("{c}");
+            exit(0);
         }
         // Default case, do nothing
-        ShowConfig::None => {}
+        ShowConfigOption::None => {}
     }
 
     let mut activity_maps: HashMap<String, ActivityMaps> = HashMap::new();

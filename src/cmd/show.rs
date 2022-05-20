@@ -1,5 +1,15 @@
 use clap::{Args, Subcommand};
 
+pub enum ShowConfigOption {
+    All,
+    Ccp,
+    Eca,
+    Eda,
+    Exa,
+    Eta,
+    None,
+}
+
 #[derive(Subcommand)]
 pub enum Show {
     #[clap(about = "ExtraHop CLI configuration details")]

@@ -1,6 +1,6 @@
 use crate::cmd::command::{CliCommand, Commands};
 use crate::cmd::firmware::Firmware;
-use crate::cmd::show::Show;
+use crate::cmd::show::{Show, ShowConfigOption};
 use crate::http::getter::{GetterType, Getters};
 use crate::model::firmware::{FirmwareAction, FirmwareOptions};
 use crate::model::packet_search::PacketSearch;
@@ -11,16 +11,6 @@ use std::process::exit;
 pub enum OutputOption {
     Brief,
     Detail,
-}
-
-pub enum ShowConfig {
-    All,
-    Ccp,
-    Eca,
-    Eda,
-    Exa,
-    Eta,
-    None,
 }
 
 #[derive(Parser)]
@@ -38,7 +28,7 @@ pub struct CliOptions {
     pub getter_type: GetterType,
     pub output_option: OutputOption,
     pub packet_search_options: PacketSearch,
-    pub show_config_options: ShowConfig,
+    pub show_config_options: ShowConfigOption,
 }
 
 impl CliOptions {
@@ -50,7 +40,7 @@ impl CliOptions {
             packet_search_options: PacketSearch::default(),
             getter_type: GetterType::Unknown,
             output_option: OutputOption::Brief,
-            show_config_options: ShowConfig::None,
+            show_config_options: ShowConfigOption::None,
         }
     }
 
@@ -150,22 +140,22 @@ impl CliOptions {
                 // TODO: add some mechanism to show config settings
                 Show::Config(config) => match config.devices.as_str() {
                     "all" => {
-                        cli_opts.show_config_options = ShowConfig::All;
+                        cli_opts.show_config_options = ShowConfigOption::All;
                     }
                     "ccp" => {
-                        cli_opts.show_config_options = ShowConfig::Ccp;
+                        cli_opts.show_config_options = ShowConfigOption::Ccp;
                     }
                     "eca" => {
-                        cli_opts.show_config_options = ShowConfig::Eca;
+                        cli_opts.show_config_options = ShowConfigOption::Eca;
                     }
                     "eda" => {
-                        cli_opts.show_config_options = ShowConfig::Eda;
+                        cli_opts.show_config_options = ShowConfigOption::Eda;
                     }
                     "exa" => {
-                        cli_opts.show_config_options = ShowConfig::Exa;
+                        cli_opts.show_config_options = ShowConfigOption::Exa;
                     }
                     "eta" => {
-                        cli_opts.show_config_options = ShowConfig::Eta;
+                        cli_opts.show_config_options = ShowConfigOption::Eta;
                     }
                     _ => {
                         eprintln!("=> unknown device type `{}`", config.devices);
