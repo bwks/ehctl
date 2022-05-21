@@ -14,6 +14,7 @@ Concurrently perform common tasks across multiple ExtraHop devices.
 * Firmware Update
 * Packet Download
 * Report Generation
+* Record Search
 
 ## Install
 ```
@@ -23,7 +24,7 @@ TODO
 ## Usage
 ```
 ./ehctl --help
-ehctl 0.2.1
+ehctl 0.2.2
 ExtraHop CLI
 
 USAGE:
